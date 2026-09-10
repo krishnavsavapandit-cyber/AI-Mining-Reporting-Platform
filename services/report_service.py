@@ -279,72 +279,88 @@ class ReportService:
             pdf.add_page()
 
             # Executive Summary
+            pdf.set_x(pdf.l_margin)
             pdf.set_font("Helvetica", "B", 12)
             pdf.set_text_color(24, 43, 73)
-            pdf.cell(0, 8, "1. Executive Summary", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(pdf.epw, 8, "1. Executive Summary", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.set_font("Helvetica", "", 10)
             pdf.set_text_color(51, 65, 85)
             summary_clean = self._clean_pdf_text(data.get("executive_summary", "No summary."))
-            pdf.multi_cell(0, 5, summary_clean)
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(w=pdf.epw, h=5, text=summary_clean, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.ln(3)
 
             # Key Figures
             if data.get("key_figures"):
+                pdf.set_x(pdf.l_margin)
                 pdf.set_font("Helvetica", "B", 12)
                 pdf.set_text_color(24, 43, 73)
-                pdf.cell(0, 8, "2. Key Operational Figures", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.cell(pdf.epw, 8, "2. Key Operational Figures", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.set_font("Helvetica", "B", 9)
                 pdf.set_fill_color(241, 245, 249)
-                pdf.cell(65, 7, "Metric", border=1, fill=True)
-                pdf.cell(45, 7, "Value", border=1, fill=True)
-                pdf.cell(75, 7, "Source", border=1, fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                
+                col1_w = round(pdf.epw * 0.35, 1)
+                col2_w = round(pdf.epw * 0.25, 1)
+                col3_w = round(pdf.epw - col1_w - col2_w, 1)
+
+                pdf.set_x(pdf.l_margin)
+                pdf.cell(col1_w, 7, "Metric", border=1, fill=True)
+                pdf.cell(col2_w, 7, "Value", border=1, fill=True)
+                pdf.cell(col3_w, 7, "Source", border=1, fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 
                 pdf.set_font("Helvetica", "", 9)
                 for fig in data.get("key_figures"):
                     metric_str = self._clean_pdf_text(str(fig.get("metric", "")))[:35]
                     val_str = self._clean_pdf_text(f"{fig.get('value','')} {fig.get('unit','')}")[:25]
                     src_str = self._clean_pdf_text(str(fig.get("source", "")))[:40]
-                    pdf.cell(65, 6, metric_str, border=1)
-                    pdf.cell(45, 6, val_str, border=1)
-                    pdf.cell(75, 6, src_str, border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                    pdf.set_x(pdf.l_margin)
+                    pdf.cell(col1_w, 6, metric_str, border=1)
+                    pdf.cell(col2_w, 6, val_str, border=1)
+                    pdf.cell(col3_w, 6, src_str, border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.ln(3)
 
             # Sections
             sec_idx = 3
             for sec in data.get("sections", []):
+                pdf.set_x(pdf.l_margin)
                 pdf.set_font("Helvetica", "B", 12)
                 pdf.set_text_color(24, 43, 73)
-                pdf.cell(0, 8, f"{sec_idx}. {self._clean_pdf_text(sec.get('title', ''))}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.cell(pdf.epw, 8, f"{sec_idx}. {self._clean_pdf_text(sec.get('title', ''))}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.set_font("Helvetica", "", 10)
                 pdf.set_text_color(51, 65, 85)
                 clean_content = self._clean_pdf_text(sec.get("content", ""))
-                pdf.multi_cell(0, 5, clean_content)
+                pdf.set_x(pdf.l_margin)
+                pdf.multi_cell(w=pdf.epw, h=5, text=clean_content, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.ln(3)
                 sec_idx += 1
 
             # Discrepancies / Conflicts
             if data.get("inconsistencies"):
+                pdf.set_x(pdf.l_margin)
                 pdf.set_font("Helvetica", "B", 12)
                 pdf.set_text_color(180, 83, 9)
-                pdf.cell(0, 8, f"{sec_idx}. Data Discrepancies & Conflict Notices", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.cell(pdf.epw, 8, f"{sec_idx}. Data Discrepancies & Conflict Notices", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.set_font("Helvetica", "", 9)
                 pdf.set_text_color(51, 65, 85)
                 for inc in data.get("inconsistencies"):
                     inc_text = self._clean_pdf_text(f"- {inc.get('field_name')}: {inc.get('doc_a_name')} (Pg {inc.get('doc_a_page')}: {inc.get('doc_a_value')}) vs {inc.get('doc_b_name')} (Pg {inc.get('doc_b_page')}: {inc.get('doc_b_value')}) [Variance: {inc.get('variance_percentage')}%]")
-                    pdf.multi_cell(0, 5, inc_text)
+                    pdf.set_x(pdf.l_margin)
+                    pdf.multi_cell(w=pdf.epw, h=5, text=inc_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.ln(3)
                 sec_idx += 1
 
             # Source Provenance Appendix
             if data.get("sources"):
+                pdf.set_x(pdf.l_margin)
                 pdf.set_font("Helvetica", "B", 12)
                 pdf.set_text_color(24, 43, 73)
-                pdf.cell(0, 8, f"{sec_idx}. Source Provenance Appendix", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+                pdf.cell(pdf.epw, 8, f"{sec_idx}. Source Provenance Appendix", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.set_font("Helvetica", "I", 8)
                 pdf.set_text_color(100, 116, 139)
                 for s in data.get("sources"):
                     src_text = self._clean_pdf_text(f"- [{s.get('document_name')}, Page {s.get('page_number', 1)}] {s.get('source_text', '')[:160]}...")
-                    pdf.multi_cell(0, 5, src_text)
+                    pdf.set_x(pdf.l_margin)
+                    pdf.multi_cell(w=pdf.epw, h=5, text=src_text, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
                 pdf.ln(3)
 
             file_path.parent.mkdir(parents=True, exist_ok=True)

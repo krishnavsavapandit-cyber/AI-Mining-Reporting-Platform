@@ -12,9 +12,16 @@ topic_bp = Blueprint("topics", __name__, url_prefix="/api/topics")
 
 @topic_bp.route("", methods=["GET"])
 def get_topics():
-    """Discover topic clusters from all indexed documents."""
+    """Discover topic clusters from indexed documents with optional filters."""
+    subsidiary = request.args.get("subsidiary")
+    period = request.args.get("period")
+    doc_type = request.args.get("doc_type")
     try:
-        topics = topic_service.discover_topics()
+        topics = topic_service.discover_topics(
+            subsidiary=subsidiary,
+            period=period,
+            doc_type=doc_type
+        )
         return jsonify({
             "status": "success",
             "count": len(topics),

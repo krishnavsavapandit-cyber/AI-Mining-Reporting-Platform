@@ -571,27 +571,58 @@
                     <!-- WORD CLOUD CANVAS -->
                     <div class="panel">
                         <div class="panel-header flex justify-between items-center">
-                            <h3 class="panel-title">Interactive Mining Word Cloud</h3>
-                            <div class="flex gap-2">
+                            <div>
+                                <h3 class="panel-title">Interactive Mining Word Cloud</h3>
+                                <span class="text-xs text-slate-400">Click any keyword to inspect frequency, linked topic cluster, and source documents.</span>
+                            </div>
+                            <div class="flex items-center gap-2">
                                 <select id="wc-sub-filter" class="form-select form-select-sm">
                                     <option value="">All Subsidiaries</option>
                                     <option value="ECL">ECL</option>
                                     <option value="BCCL">BCCL</option>
+                                    <option value="CCL">CCL</option>
                                     <option value="SECL">SECL</option>
                                     <option value="CMPDI">CMPDI</option>
                                     <option value="WCL">WCL</option>
+                                    <option value="MCL">MCL</option>
+                                    <option value="NCL">NCL</option>
                                 </select>
                             </div>
                         </div>
                         <div class="word-cloud-wrapper" id="word-cloud-container">
-                            <canvas id="word-cloud-canvas" width="550" height="340"></canvas>
+                            <canvas id="word-cloud-canvas"></canvas>
+                            <div id="word-cloud-tooltip" class="word-cloud-tooltip"></div>
+                        </div>
+                        <!-- SELECTED TERM INSPECTOR -->
+                        <div id="word-cloud-inspector" class="word-cloud-inspector mt-4" style="display: none;">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-800">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Selected Term:</span>
+                                    <span id="inspector-term-name" class="font-bold text-amber-400 text-sm"></span>
+                                    <span id="inspector-term-badge" class="badge badge-amber font-mono"></span>
+                                </div>
+                                <button type="button" class="btn btn-xs btn-outline" id="btn-clear-inspector">Deselect</button>
+                            </div>
+                            <div class="grid-2col gap-3 text-xs">
+                                <div>
+                                    <span class="text-slate-400 font-bold block mb-1">Associated Topic Cluster:</span>
+                                    <span id="inspector-topic-name" class="badge badge-cyan"></span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 font-bold block mb-1">Source Document References:</span>
+                                    <div id="inspector-docs-list" class="text-slate-300"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- DISCOVERED TOPIC CLUSTERS -->
                     <div class="panel">
-                        <div class="panel-header">
-                            <h3 class="panel-title">Discovered Mining Topic Clusters</h3>
+                        <div class="panel-header flex justify-between items-center">
+                            <div>
+                                <h3 class="panel-title">Discovered Mining Topic Clusters</h3>
+                                <span class="text-xs text-slate-400">Extracted from processed CIL document chunks.</span>
+                            </div>
                         </div>
                         <div class="topic-clusters-list" id="topic-clusters-list">
                             <div class="empty-state-sm">Discovering topic clusters...</div>

@@ -113,11 +113,11 @@ class ReportGenerationAgent(BaseAgent):
                 """
                 params = []
                 if subsidiary:
-                    sql += " AND e.subsidiary = ?"
-                    params.append(subsidiary)
+                    sql += " AND (e.subsidiary = ? OR d.subsidiary = ?)"
+                    params.extend([subsidiary, subsidiary])
                 if period:
-                    sql += " AND e.reporting_period = ?"
-                    params.append(period)
+                    sql += " AND (e.reporting_period = ? OR d.reporting_period = ?)"
+                    params.extend([period, period])
 
                 sql += " ORDER BY e.id DESC LIMIT 8"
                 rows = conn.execute(sql, params).fetchall()
