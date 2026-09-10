@@ -1,0 +1,5 @@
+Borehole_ID,Subsidiary,Coalfield,Seam_Name,Depth_From_m,Depth_To_m,Thickness_m,Coal_Grade,Ash_Pct,Moisture_Pct,GCV_kcal_kg
+BH-TL-201,CMPDI,Talcher,Seam-I,42.5,58.2,15.7,G12,41.2,8.1,3450
+BH-TL-202,CMPDI,Talcher,Seam-II,84.0,96.5,12.5,G10,35.8,7.4,3900
+BH-TL-203,CMPDI,Talcher,Queen Seam,135.2,144.8,9.6,G9,32.4,6.8,4350
+BH-TL-204,CMPDI,Talcher,King Seam,190.0,204.2,14.2,G8,29.5,6.2,4700

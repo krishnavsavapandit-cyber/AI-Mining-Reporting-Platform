@@ -1,0 +1,26 @@
+# SIH26023 -- Comprehensive Project Risk Register & Mitigation Strategy
+
+**Problem Statement ID**: SIH26023 (Ministry of Coal / Coal India Limited / CMPDI)  
+**Evaluation Standard**: ISO/IEC 27005 Information Security Risk Management & ISO/IEC 25010 System Quality
+
+---
+
+## Risk Evaluation Matrix
+
+| Risk ID | Risk Category | Specific Risk Description | Impact | Likelihood | Technical Mitigation in Platform | Current Status |
+|---|---|---|---|---|---|---|
+| **RSK-01** | **AI Grounding** | **AI Hallucination**: Model generating unverified coal production, geological reserves, or safety figures. | Critical | High (if unconstrained) | Strict prompt engineering injecting retrieved source chunks only; strict keyword overlap gating; verbatim fallback to *"Insufficient information found in the available documents."* | **MITIGATED & VERIFIED** |
+| **RSK-02** | **Extraction Quality** | **Incorrect Structured Extraction**: Regex or entity extractor misinterpreting tabular row or column alignments. | High | Medium | Dual-pass extraction combining openpyxl cell metadata with regex confidence scoring; extracted facts store explicit cell coordinates. | **MITIGATED & VERIFIED** |
+| **RSK-03** | **Image Processing** | **OCR Errors on Scanned Records**: Low-resolution scans producing garbled text or missing digits. | Medium | High | Multi-stage image preprocessing (adaptive thresholding, Otsu binarization) via Tesseract OCR; fallback to raw image inspection pointers. | **MITIGATED & VERIFIED** |
+| **RSK-04** | **Data Integrity** | **Conflicting Cross-Document Data**: Discrepancies between monthly reports, annual reviews, and railway dispatch logs. | High | High | Dedicated **ValidationAgent** and **ValidationService** performing automated cross-document scans, computing variance %, and flagging warnings without silent resolution. | **MITIGATED & VERIFIED** |
+| **RSK-05** | **Cloud Reliability** | **Unavailable Gemini API**: Quota exhaustion (HTTP 429), network timeout, or cloud outage. | High | Medium | Cascading 3-tier fallback: Gemini API -> OpenModelProvider (local Ollama/vLLM) -> Deterministic Grounded Engine. Zero crash on outage. | **MITIGATED & VERIFIED** |
+| **RSK-06** | **Local AI Reliability** | **Unavailable Local Model**: Local Ollama/vLLM endpoint offline or not running. | Medium | Medium | Immediate seamless fallback to Tier-3 Deterministic Grounded Engine (<50 MB RAM, pure Python rule-based RAG). | **MITIGATED & VERIFIED** |
+| **RSK-07** | **System Infrastructure** | **Database / Storage Failure**: SQLite database corruption or unexpected power failure. | Critical | Low | SQLite configured with Write-Ahead Logging (WAL) mode, atomic transactions, VACUUM online backup procedures, and integrity checks. | **MITIGATED & VERIFIED** |
+| **RSK-08** | **Access Control** | **Unauthorized Access / Privilege Escalation**: Read-only viewers deleting documents or modifying system settings. | High | Medium | Header-based RBAC middleware (`routes/auth_middleware.py`) enforcing 4 roles (`ADMIN`, `OFFICER`, `ANALYST`, `VIEWER`) returning HTTP 403. | **MITIGATED & VERIFIED** |
+| **RSK-09** | **Data Privacy** | **Confidential Data Exposure**: Secret API keys or internal credentials leaked in logs or error traces. | Critical | Low | Environment variable isolation; key scrubbing middleware; zero secret leakage in audit logs or client API payloads. | **MITIGATED & VERIFIED** |
+| **RSK-10** | **Document Quality** | **Low-Quality / Degraded Source Documents**: Corrupted PDFs or unsupported formats uploaded by users. | Medium | Medium | Defensive exception wrappers inside `document_processor.py`, setting document status to `FAILED` with descriptive diagnostic error codes. | **MITIGATED & VERIFIED** |
+| **RSK-11** | **Provider Failure** | **Simultaneous Multi-Model Failure**: All external LLM providers and local endpoints unreachable. | High | Low | DeterministicProvider executes heuristic pattern extraction and verbatim citation compilation completely offline. | **MITIGATED & VERIFIED** |
+| **RSK-12** | **Evidence Sufficiency** | **Insufficient Evidence Query**: User asking out-of-domain or unsubstantiated questions. | Medium | High | Relevance threshold gating (>0.15 RRF score) emitting exact required string *"Insufficient information found in the available documents."* | **MITIGATED & VERIFIED** |
+| **RSK-13** | **Governance Compliance** | **Incorrect Parliamentary Response**: AI draft prematurely released as official government submission. | Critical | Low | Mandatory watermarking `DRAFT -- REQUIRES HUMAN VERIFICATION` on all drafts; requires explicit Reviewing Officer sign-off. | **MITIGATED & VERIFIED** |
+| **RSK-14** | **Hardware Sizing** | **Scaling / Memory Limitations**: Large documents crashing low-end (4 GB RAM / Intel i3) hardware. | High | Medium | Sublinear TF-IDF + BM25 local indexing; zero heavy GPU dependencies; sub-10 second test execution on CPU. | **MITIGATED & VERIFIED** |
+| **RSK-15** | **Enterprise Integration** | **CIL Integration Dependency**: Live production deployment depending on legacy CIL SAP/Oracle databases. | Medium | High | Decoupled REST ingestion architecture allows synthetic data during hackathon evaluation, and direct ERP ingestion in production. | **PLANNED FOR PROD** |

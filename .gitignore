@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Database Files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+database/*.db
+database/*.sqlite
+database/*.sqlite3
+
+# Vector Store Cache
+vector_store/*.pkl
+
+# Uploads & Generated Output (keep directory structure)
+uploads/*
+!uploads/.gitkeep
+generated_reports/*
+!generated_reports/.gitkeep
+
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test & Coverage
+.pytest_cache/
+.coverage
+htmlcov/

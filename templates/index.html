@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIL Multi-Agent Document Intelligence Platform | SIH26023</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="theme-dark">
+    <div class="app-layout">
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">COAL INDIA</span>
+                        <span class="brand-sub">CMPDI AI Platform</span>
+                    </div>
+                </div>
+                <div class="hackathon-tag">
+                    <span class="badge badge-amber">SIH26023</span>
+                </div>
+            </div>
+
+            <!-- AI PROVIDER STATUS BADGE -->
+            <div class="provider-status-card" id="sidebar-provider-status">
+                <div class="status-indicator online" id="provider-dot"></div>
+                <div class="provider-details">
+                    <span class="provider-label">ACTIVE AI ENGINE</span>
+                    <span class="provider-name" id="provider-display-name">Gemini / Local Fallback</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">MAIN WORKSPACE</div>
+                <a href="#dashboard" class="nav-link active" data-tab="dashboard">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#documents" class="nav-link" data-tab="documents">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span>Document Center</span>
+                    <span class="nav-counter" id="nav-doc-count">0</span>
+                </a>
+                <a href="#search" class="nav-link" data-tab="search">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <span>Semantic Search</span>
+                </a>
+                <a href="#assistant" class="nav-link" data-tab="assistant">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <span>AI Assistant</span>
+                </a>
+
+                <div class="nav-section-label">ANALYSIS & REPORTING</div>
+                <a href="#reports" class="nav-link" data-tab="reports">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    <span>Report Generator</span>
+                </a>
+                <a href="#inquiries" class="nav-link" data-tab="inquiries">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    <span>Parliamentary Inquiries</span>
+                </a>
+                <a href="#validation" class="nav-link" data-tab="validation">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>Validation & Conflicts</span>
+                    <span class="nav-badge-alert" id="nav-val-count">0</span>
+                </a>
+                <a href="#topics" class="nav-link" data-tab="topics">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                    <span>Topics & Word Cloud</span>
+                </a>
+                <a href="#analytics" class="nav-link" data-tab="analytics">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    <span>Analytics Dashboard</span>
+                </a>
+
+                <div class="nav-section-label">SYSTEM & OBSERVABILITY</div>
+                <a href="#agents" class="nav-link" data-tab="agents">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <span>Multi-Agent Monitor</span>
+                </a>
+                <a href="#audit" class="nav-link" data-tab="audit">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span>Audit Trail</span>
+                </a>
+                <a href="#settings" class="nav-link" data-tab="settings">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                    <span>Settings & Data</span>
+                </a>
+                <a href="#help" class="nav-link" data-tab="help">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>Help & Training</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="current-user-avatar">AO</div>
+                    <div class="user-info">
+                        <span class="user-name">Role Selection</span>
+                        <select id="user-role-selector" class="form-select form-select-sm" style="margin-top: 4px; padding: 2px 6px; font-size: 11px; background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 4px; width: 100%;">
+                            <option value="ANALYST">ANALYST (Mining Analyst)</option>
+                            <option value="OFFICER">OFFICER (Reviewing Officer)</option>
+                            <option value="ADMIN">ADMIN (System Administrator)</option>
+                            <option value="VIEWER">VIEWER (Read-Only Viewer)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="main-content">
+            <!-- TOP APP BAR -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <h1 class="page-title" id="page-title">Executive Dashboard</h1>
+                    <span class="page-subtitle" id="page-subtitle">Central Mine Planning and Design Institute (CMPDI) Intelligence Suite</span>
+                </div>
+                <div class="top-bar-right">
+                    <button class="btn btn-outline" id="btn-quick-seed">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Seed Demo Documents</span>
+                    </button>
+                    <button class="btn btn-primary" id="btn-upload-modal-trigger">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>Upload Documents</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- NOTIFICATION TOAST CONTAINER -->
+            <div id="toast-container" class="toast-container"></div>
+
+            <!-- TAB 1: DASHBOARD OVERVIEW -->
+            <section id="tab-dashboard" class="tab-pane active">
+                <!-- METRIC COUNTERS ROW -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">TOTAL DOCUMENTS</span>
+                            <div class="metric-icon bg-blue">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="kpi-total-docs">0</div>
+                        <div class="metric-sub" id="kpi-pages-sub">0 pages processed</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">TOTAL PRODUCTION (MT)</span>
+                            <div class="metric-icon bg-amber">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-amber" id="kpi-production-mt">0.00</div>
+                        <div class="metric-sub">Across all CIL subsidiaries</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-label">OVERBURDEN REMOVAL (OBR)</span>
+                            <div class="metric-icon bg-emerald">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-emerald" id="kpi-obr-mcum">0.00 <span class="unit-text">M.Cum</span></div>
+                        <div class="metric-sub">Stripping & excavation volume</div>
+                    </div>
+
+                    <div class="metric-card alert-card">
+                        <div class="metric-header">
+                            <span class="metric-label">CONFLICTS FLAGGED</span>
+                            <div class="metric-icon bg-rose">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value text-rose" id="kpi-conflicts-count">0</div>
+                        <div class="metric-sub">Cross-doc discrepancies</div>
+                    </div>
+                </div>
+
+                <!-- QUICK DASHBOARD CHARTS & RECENT WORKFLOWS -->
+                <div class="dashboard-grid-2col mt-6">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Production Share by Subsidiary (Million Tonnes)</h3>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 260px;">
+                            <canvas id="chart-subsidiary-prod"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Active Multi-Agent Orchestration Stream</h3>
+                            <button class="btn btn-xs btn-ghost" onclick="app.switchTab('agents')">View All</button>
+                        </div>
+                        <div class="workflow-stream-list" id="dashboard-workflow-list">
+                            <div class="empty-state-sm">No agent workflows executed yet.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECENT INCONSISTENCY ALERTS & DOCUMENTS -->
+                <div class="dashboard-grid-2col mt-6">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title flex items-center gap-2">
+                                <span class="status-dot alert"></span>
+                                Cross-Document Validation Warnings
+                            </h3>
+                            <button class="btn btn-xs btn-ghost" onclick="app.switchTab('validation')">Inspect Matrix</button>
+                        </div>
+                        <div class="discrepancy-list" id="dashboard-discrepancies-list">
+                            <div class="empty-state-sm">No discrepancies detected across current documents.</div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Recent Ingested Documents</h3>
+                            <button class="btn btn-xs btn-ghost" onclick="app.switchTab('documents')">Manage All</button>
+                        </div>
+                        <div class="doc-table-mini" id="dashboard-recent-docs">
+                            <div class="empty-state-sm">No documents uploaded yet. Click 'Seed Demo Documents' above.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: DOCUMENT CENTER -->
+            <section id="tab-documents" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header flex justify-between items-center">
+                        <div class="filter-group flex gap-3 items-center">
+                            <div class="search-input-wrapper">
+                                <input type="text" id="doc-search-input" class="form-input" placeholder="Search documents by name or mine...">
+                            </div>
+                            <select id="doc-subsidiary-filter" class="form-select">
+                                <option value="">All Subsidiaries</option>
+                                <option value="ECL">Eastern Coalfields (ECL)</option>
+                                <option value="BCCL">Bharat Coking Coal (BCCL)</option>
+                                <option value="CCL">Central Coalfields (CCL)</option>
+                                <option value="WCL">Western Coalfields (WCL)</option>
+                                <option value="SECL">South Eastern Coalfields (SECL)</option>
+                                <option value="MCL">Mahanadi Coalfields (MCL)</option>
+                                <option value="NCL">Northern Coalfields (NCL)</option>
+                                <option value="CMPDI">CMPDI</option>
+                            </select>
+                            <select id="doc-status-filter" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="PROCESSED">PROCESSED</option>
+                                <option value="FAILED">FAILED</option>
+                                <option value="PENDING">PENDING</option>
+                            </select>
+                        </div>
+                        <div class="action-buttons flex gap-2">
+                            <button class="btn btn-secondary btn-sm" id="btn-doc-refresh">Refresh</button>
+                            <button class="btn btn-primary btn-sm" id="btn-doc-upload-open">Upload New</button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table" id="documents-table">
+                            <thead>
+                                <tr>
+                                    <th>Document Name</th>
+                                    <th>Subsidiary / Mine</th>
+                                    <th>Period</th>
+                                    <th>Type</th>
+                                    <th>Pages</th>
+                                    <th>Status</th>
+                                    <th>Uploaded At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documents-tbody">
+                                <tr><td colspan="8" class="text-center py-6">Loading documents...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: SEMANTIC SEARCH -->
+            <section id="tab-search" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Hybrid Keyword & Semantic Vector Retrieval Engine</h3>
+                    </div>
+                    <div class="search-hero-box p-4">
+                        <div class="search-input-large flex gap-3">
+                            <input type="text" id="main-search-input" class="form-input form-input-lg" placeholder="Ask or search: e.g. 'Rajmahal May production', 'Seam-II ash content', 'Dragline availability SECL'...">
+                            <button class="btn btn-primary px-6" id="btn-execute-search">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <span>Search</span>
+                            </button>
+                        </div>
+                        <div class="search-filters flex gap-4 mt-3 text-xs text-slate-400">
+                            <span>Filter by Subsidiary:</span>
+                            <label><input type="radio" name="search_sub" value="" checked> All</label>
+                            <label><input type="radio" name="search_sub" value="ECL"> ECL</label>
+                            <label><input type="radio" name="search_sub" value="BCCL"> BCCL</label>
+                            <label><input type="radio" name="search_sub" value="SECL"> SECL</label>
+                            <label><input type="radio" name="search_sub" value="CMPDI"> CMPDI</label>
+                            <label><input type="radio" name="search_sub" value="WCL"> WCL</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="search-results-container" id="search-results-container">
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <h4>Search CIL Document Knowledge Base</h4>
+                        <p>Enter any mining operational keyword, geological term, or production figure.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: MINING INTELLIGENCE ASSISTANT -->
+            <section id="tab-assistant" class="tab-pane">
+                <div class="chat-layout-grid">
+                    <!-- CHAT MESSAGES AREA -->
+                    <div class="panel chat-main-panel">
+                        <div class="panel-header flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <div class="ai-avatar">AI</div>
+                                <div>
+                                    <h3 class="panel-title">Mining Intelligence Assistant</h3>
+                                    <span class="text-xs text-slate-400">Evidence-Grounded RAG with Live Multi-Agent Workflow Execution</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-xs btn-outline" id="btn-clear-chat">Clear Conversation</button>
+                        </div>
+
+                        <div class="chat-messages-scroll" id="chat-messages">
+                            <div class="chat-message assistant">
+                                <div class="msg-avatar">AI</div>
+                                <div class="msg-content">
+                                    <div class="msg-bubble">
+                                        <p>Hello! I am the <strong>Mining Intelligence Assistant</strong> for Coal India Limited & CMPDI subsidiaries.</p>
+                                        <p>I synthesize answers <strong>strictly from verified document records</strong>, cite exact document names and page numbers, and flag any cross-document data conflicts detected by the Validation Agent.</p>
+                                        <div class="suggested-prompts mt-3">
+                                            <span class="text-xs font-bold text-slate-400 block mb-1">SUGGESTED QUERIES:</span>
+                                            <button class="prompt-chip" onclick="aiChat.askSuggested('What was the reported coal production and target for May 2025 in ECL Rajmahal?')">ECL Rajmahal May 2025 Production & Target</button>
+                                            <button class="prompt-chip" onclick="aiChat.askSuggested('Which geological seams and coal grades were identified in Jharia Coalfield by CMPDI?')">BCCL Jharia Geological Seams & Coal Grades</button>
+                                            <button class="prompt-chip" onclick="aiChat.askSuggested('Compare coal production and HEMM availability across Gevra and Kusmunda in SECL.')">SECL Gevra & Kusmunda Performance</button>
+                                            <button class="prompt-chip" onclick="aiChat.askSuggested('Were any safety accidents or DGMS issues reported in the uploaded files?')">Safety & DGMS Incident Review</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CHAT INPUT FORM -->
+                        <div class="chat-input-box">
+                            <form id="chat-form" class="flex gap-2">
+                                <input type="text" id="chat-input-text" class="form-input flex-1" placeholder="Ask a question about CIL production, geology, safety, or equipment..." autocomplete="off">
+                                <button type="submit" class="btn btn-primary" id="btn-chat-send">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                    <span>Ask AI</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- LIVE MULTI-AGENT EXECUTION & EVIDENCE INSPECTOR -->
+                    <div class="panel chat-side-panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Multi-Agent Workflow Trace</h3>
+                        </div>
+                        <div class="agent-live-trace" id="agent-live-trace">
+                            <div class="trace-empty-hint text-xs text-slate-400 p-4">
+                                Ask a query to observe Manager Agent coordinating Retrieval Agent, Validation Agent, and AI reasoning.
+                            </div>
+                        </div>
+
+                        <div class="evidence-side-drawer mt-4 pt-4 border-t border-slate-800">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Grounding Evidence Chunks</h4>
+                            <div class="evidence-scroll-box" id="chat-evidence-list">
+                                <div class="text-xs text-slate-500 italic">No active evidence loaded.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: REPORT GENERATOR -->
+            <section id="tab-reports" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Automated Executive Report Generator</h3>
+                    </div>
+                    <div class="report-wizard p-4 bg-slate-900/60 rounded-lg border border-slate-800">
+                        <div class="grid-3col gap-4">
+                            <div>
+                                <label class="form-label">Report Type</label>
+                                <select id="rep-type-select" class="form-select">
+                                    <option value="Consolidated Mining Production Report">1. Consolidated Production Report</option>
+                                    <option value="Mining Performance & OBR Report">2. Mining Performance & OBR Report</option>
+                                    <option value="Geological Exploration & Seam Summary">3. Geological Exploration & Seam Summary</option>
+                                    <option value="HEMM Fleet & Equipment Operations">4. HEMM Fleet & Equipment Operations</option>
+                                    <option value="Mine Safety & Statutory DGMS Review">5. Mine Safety & Statutory DGMS Review</option>
+                                    <option value="Environmental Compliance & Afforestation">6. Environmental Compliance Audit</option>
+                                    <option value="Custom Executive Summary">7. Custom Executive Summary</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Subsidiary Scope</label>
+                                <select id="rep-sub-select" class="form-select">
+                                    <option value="">All CIL Subsidiaries (Consolidated)</option>
+                                    <option value="ECL">Eastern Coalfields (ECL)</option>
+                                    <option value="BCCL">Bharat Coking Coal (BCCL)</option>
+                                    <option value="CCL">Central Coalfields (CCL)</option>
+                                    <option value="WCL">Western Coalfields (WCL)</option>
+                                    <option value="SECL">South Eastern Coalfields (SECL)</option>
+                                    <option value="MCL">Mahanadi Coalfields (MCL)</option>
+                                    <option value="NCL">Northern Coalfields (NCL)</option>
+                                    <option value="CMPDI">CMPDI</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Reporting Period</label>
+                                <input type="text" id="rep-period-input" class="form-input" placeholder="e.g. May 2025 or Q1 FY25-26">
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <input type="text" id="rep-custom-inst" class="form-input flex-1 mr-4" placeholder="Optional specific instructions or executive focus areas...">
+                            <button class="btn btn-primary" id="btn-generate-report">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                <span>Generate Official Report</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REPORT VIEWER & PREVIOUS REPORTS -->
+                <div class="report-view-container" id="report-view-container">
+                    <div class="panel">
+                        <div class="panel-header flex justify-between items-center">
+                            <h3 class="panel-title">Generated CIL Reports Repository</h3>
+                            <button class="btn btn-xs btn-secondary" id="btn-refresh-reports">Refresh</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="reports-table">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Type</th>
+                                        <th>Subsidiary</th>
+                                        <th>Period</th>
+                                        <th>Approval Status</th>
+                                        <th>Generated At</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reports-tbody">
+                                    <tr><td colspan="7" class="text-center py-4 text-slate-400">No reports generated yet. Select criteria above to compile.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: PARLIAMENTARY INQUIRIES -->
+            <section id="tab-inquiries" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-amber font-bold">GOVERNMENT DRAFT ASSISTANCE</span>
+                            <h3 class="panel-title">Parliamentary & Ministry Inquiry Response Assistant</h3>
+                        </div>
+                    </div>
+                    <div class="inquiry-composer p-4 bg-slate-900/60 rounded-lg border border-slate-800">
+                        <div class="grid-2col gap-4 mb-3">
+                            <div>
+                                <label class="form-label">Inquiry Reference / Question Number</label>
+                                <input type="text" id="inq-ref-input" class="form-input" placeholder="e.g. Lok Sabha Starred Question No. 142">
+                            </div>
+                            <div>
+                                <label class="form-label">Target Ministry / Committee</label>
+                                <input type="text" id="inq-body-input" class="form-input" value="Ministry of Coal / Parliament of India">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Full Parliamentary Question Text (including sub-clauses (a), (b), (c))</label>
+                            <textarea id="inq-question-text" rows="4" class="form-textarea" placeholder="Enter full question text here..."></textarea>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex gap-2">
+                                <button type="button" class="btn btn-xs btn-outline" id="btn-load-sample-inquiry">Load Sample LS Question No. 142</button>
+                            </div>
+                            <button class="btn btn-primary" id="btn-generate-inquiry">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                <span>Draft Evidence-Backed Response</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INQUIRY DRAFTS LIST & ACTIVE DRAFT VIEWER -->
+                <div id="inquiry-draft-display" class="inquiry-draft-display mb-6"></div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Recorded Parliamentary Drafts History</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="inquiries-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Question Excerpt</th>
+                                    <th>Status</th>
+                                    <th>Human Sign-off</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inquiries-tbody">
+                                <tr><td colspan="6" class="text-center py-4 text-slate-400">No inquiry drafts yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 7: VALIDATION & CONFLICTS -->
+            <section id="tab-validation" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header flex justify-between items-center">
+                        <div>
+                            <h3 class="panel-title flex items-center gap-2">
+                                <svg width="18" height="18" class="text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+                                Cross-Document Consistency & Conflict Resolution Center
+                            </h3>
+                            <span class="text-xs text-slate-400">Validation Agent detects numerical conflicts, variance %, and highlights exact document excerpts.</span>
+                        </div>
+                        <button class="btn btn-primary btn-sm" id="btn-run-validation-scan">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            <span>Trigger Fresh Consistency Scan</span>
+                        </button>
+                    </div>
+
+                    <div class="validation-matrix-list mt-4" id="validation-issues-list">
+                        <div class="empty-state">Loading validation data...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 8: TOPICS & WORD CLOUD -->
+            <section id="tab-topics" class="tab-pane">
+                <div class="dashboard-grid-2col mb-6">
+                    <!-- WORD CLOUD CANVAS -->
+                    <div class="panel">
+                        <div class="panel-header flex justify-between items-center">
+                            <h3 class="panel-title">Interactive Mining Word Cloud</h3>
+                            <div class="flex gap-2">
+                                <select id="wc-sub-filter" class="form-select form-select-sm">
+                                    <option value="">All Subsidiaries</option>
+                                    <option value="ECL">ECL</option>
+                                    <option value="BCCL">BCCL</option>
+                                    <option value="SECL">SECL</option>
+                                    <option value="CMPDI">CMPDI</option>
+                                    <option value="WCL">WCL</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="word-cloud-wrapper" id="word-cloud-container">
+                            <canvas id="word-cloud-canvas" width="550" height="340"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- DISCOVERED TOPIC CLUSTERS -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Discovered Mining Topic Clusters</h3>
+                        </div>
+                        <div class="topic-clusters-list" id="topic-clusters-list">
+                            <div class="empty-state-sm">Discovering topic clusters...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 9: ANALYTICS DASHBOARD -->
+            <section id="tab-analytics" class="tab-pane">
+                <div class="dashboard-grid-2col mb-6">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Month-over-Month Coal Production Trend (MT)</h3>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 260px;">
+                            <canvas id="chart-production-trend"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Target vs Actual Achievement by Subsidiary (MT)</h3>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 260px;">
+                            <canvas id="chart-target-actual"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid-2col">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Safety Incident Distribution (Fatal vs Serious)</h3>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 260px;">
+                            <canvas id="chart-safety-kpi"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Validation Discrepancy Severity Breakdown</h3>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 260px;">
+                            <canvas id="chart-val-severity"></canvas>
+                        </div>
+                    </div>
+                <div class="panel mt-6">
+                    <div class="panel-header flex justify-between items-center">
+                        <div>
+                            <h3 class="panel-title">KPI & Operational Measurement Framework</h3>
+                            <span class="text-xs text-slate-400">Formal mathematical formulas, sample sizes, benchmark targets, and empirical measured outcomes.</span>
+                        </div>
+                        <span class="badge badge-blue">ISO/IEC 25010 Quality Model</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="kpi-framework-table">
+                            <thead>
+                                <tr>
+                                    <th>KPI ID & Name</th>
+                                    <th>Formula & Definition</th>
+                                    <th>Target (Benchmark)</th>
+                                    <th>Actual Measured Result</th>
+                                    <th>Sample Size & Data Source</th>
+                                    <th>Measurement Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kpi-framework-table-body">
+                                <tr><td colspan="7" class="text-center py-4 text-slate-400">Loading KPI framework data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 10: MULTI-AGENT MONITOR -->
+            <section id="tab-agents" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Multi-Agent Registry & Operational Status</h3>
+                    </div>
+                    <div class="agent-cards-grid" id="agent-registry-grid">
+                        <div class="empty-state-sm">Loading registered agents...</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Multi-Agent Workflow Execution Log & Provenance DAGs</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="workflows-table">
+                            <thead>
+                                <tr>
+                                    <th>Workflow ID</th>
+                                    <th>Type</th>
+                                    <th>Initial Prompt / Goal</th>
+                                    <th>Status</th>
+                                    <th>Start Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workflows-tbody">
+                                <tr><td colspan="6" class="text-center py-4 text-slate-400">Loading workflows...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 11: AUDIT TRAIL -->
+            <section id="tab-audit" class="tab-pane">
+                <div class="panel">
+                    <div class="panel-header flex justify-between items-center">
+                        <h3 class="panel-title">Audit Logging & Governance Compliance</h3>
+                        <div class="flex gap-2">
+                            <select id="audit-action-filter" class="form-select form-select-sm">
+                                <option value="">All Actions</option>
+                                <option value="DOCUMENT_UPLOADED">DOCUMENT_UPLOADED</option>
+                                <option value="DOCUMENT_PROCESSED">DOCUMENT_PROCESSED</option>
+                                <option value="AI_QUERY_EXECUTED">AI_QUERY_EXECUTED</option>
+                                <option value="REPORT_GENERATED">REPORT_GENERATED</option>
+                                <option value="INQUIRY_DRAFT_GENERATED">INQUIRY_DRAFT_GENERATED</option>
+                                <option value="VALIDATION_ISSUE_DETECTED">VALIDATION_ISSUE_DETECTED</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="audit-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Action Type</th>
+                                    <th>User Role</th>
+                                    <th>Resource</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-tbody">
+                                <tr><td colspan="6" class="text-center py-4 text-slate-400">Loading audit log...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 12: SETTINGS & SYSTEM CONFIGURATION -->
+            <section id="tab-settings" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header">
+                        <h3 class="panel-title">AI Provider & Fallback Engine Configuration</h3>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <div class="grid-2col gap-4">
+                            <div>
+                                <label class="form-label">Preferred AI Provider</label>
+                                <select id="cfg-preferred-provider" class="form-select">
+                                    <option value="gemini">Google Gemini API (Primary Cloud AI)</option>
+                                    <option value="open_model">Open-Source Endpoint (vLLM / Ollama)</option>
+                                    <option value="deterministic">Deterministic Grounded Engine (100% Offline)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Gemini API Key</label>
+                                <input type="password" id="cfg-gemini-key" class="form-input" placeholder="AIzaSy... (Leave empty to use env/fallback)">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Open-Model Endpoint (OpenAI-compatible / Ollama / vLLM)</label>
+                            <input type="text" id="cfg-open-endpoint" class="form-input" value="http://localhost:11434/v1/chat/completions">
+                        </div>
+                        <div class="flex justify-end">
+                            <button class="btn btn-primary" id="btn-save-ai-settings">Save AI Settings</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">System & Demonstration Management</h3>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-slate-900 rounded-lg border border-slate-800">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Synthetic CIL Demonstration Dataset</h4>
+                                <p class="text-xs text-slate-400">Pre-loads realistic ECL, BCCL, SECL, WCL, and CMPDI sample documents with verified figures and cross-document validation test cases.</p>
+                            </div>
+                            <button class="btn btn-secondary" id="btn-settings-seed">Seed Demo Files</button>
+                        </div>
+
+                        <div class="p-3 bg-amber-950/20 border border-amber-800/40 rounded-lg text-xs text-amber-300">
+                            <strong>Compliance Notice:</strong> All pre-generated demo documents are explicitly tagged as <em>SYNTHETIC DEMONSTRATION DATA -- NOT OFFICIAL CIL DATA</em>. In a live deployment, authorized Coal India SAP/ERP feeds, CMPDI borehole repositories, and DGMS portals connect directly via the REST ingestion endpoints.
+                        </div>
+            </section>
+
+            <!-- TAB 13: HELP & TRAINING CENTER -->
+            <section id="tab-help" class="tab-pane">
+                <div class="panel mb-6">
+                    <div class="panel-header flex justify-between items-center">
+                        <div>
+                            <h3 class="panel-title flex items-center gap-2">
+                                <svg width="20" height="20" class="text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                CIL Mining Intelligence Platform -- Operational Manual & Training Guide
+                            </h3>
+                            <span class="text-xs text-slate-400">Standard Operating Procedures for Coal India & CMPDI Reviewing Officers</span>
+                        </div>
+                        <span class="badge badge-amber">SIH26023 Training Reference</span>
+                    </div>
+
+                    <div class="p-6 space-y-6 text-slate-300 text-sm leading-relaxed">
+                        <!-- 1. PLATFORM OBJECTIVES -->
+                        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                            <h4 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+                                <span class="badge badge-blue">1</span> What the Platform Does
+                            </h4>
+                            <p>
+                                The <strong>CIL Multi-Agent Document Intelligence Platform</strong> is an enterprise automated reporting and knowledge extraction engine tailored for Coal India Limited (CIL) and its technical arm, Central Mine Planning and Design Institute (CMPDI).
+                                It autonomously ingests heterogeneous mining documentation across subsidiaries (ECL, BCCL, CCL, WCL, SECL, NCL, MCL, CMPDI), extracts structured metrics (Production, Overburden Removal, Stripping Ratios, Safety Incidents, Geological Reserves), detects cross-document numerical conflicts, and synthesizes evidence-backed reports and parliamentary responses.
+                            </p>
+                        </div>
+
+                        <!-- 2. SUPPORTED FORMATS & PROCESSING -->
+                        <div class="grid-2col gap-4">
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                                <h4 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+                                    <span class="badge badge-emerald">2</span> Supported Document Formats
+                                </h4>
+                                <ul class="list-disc list-inside space-y-1 text-xs">
+                                    <li><strong>Digital PDF (.pdf):</strong> Ingested via high-speed PyMuPDF text stream extraction.</li>
+                                    <li><strong>Scanned PDF / Images (.png, .jpg, .tiff):</strong> Routed through Tesseract OCR with adaptive image binarization.</li>
+                                    <li><strong>Word Documents (.docx):</strong> Structured paragraph and tabular extraction via python-docx.</li>
+                                    <li><strong>Excel Spreadsheets (.xlsx, .xls):</strong> Sheet, row, and cell metadata mapping via openpyxl/pandas.</li>
+                                    <li><strong>Tabular CSV (.csv):</strong> Automated schema profiling and numeric parsing via pandas.</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                                <h4 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+                                    <span class="badge badge-purple">3</span> Ingestion & Multi-Agent Processing
+                                </h4>
+                                <p class="text-xs">
+                                    When files are uploaded or seeded, the <strong>Manager Agent</strong> delegates work to specialized agents:
+                                </p>
+                                <ol class="list-decimal list-inside space-y-1 text-xs mt-2">
+                                    <li><strong>Ingestion Agent:</strong> Extracts text, tabular structures, and generates chunked embeddings.</li>
+                                    <li><strong>Extraction Agent:</strong> Mines entities (Mines, Seams, Production MT, OBR M.Cum, Fatalities).</li>
+                                    <li><strong>Validation Agent:</strong> Evaluates cross-document variance (>5% flagged as discrepancies).</li>
+                                    <li><strong>Reporting / Inquiry Agent:</strong> Synthesizes reports with grounded citations.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <!-- 3. SEARCH & AI ASSISTANT -->
+                        <div class="grid-2col gap-4">
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                                <h4 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+                                    <span class="badge badge-blue">4</span> Semantic & Hybrid Search
+                                </h4>
+                                <p class="text-xs">
+                                    The Search Engine combines <strong>BM25 keyword term matching</strong> with <strong>dense cosine vector embeddings</strong>. Use subsidiary filters (e.g. ECL, BCCL) or document type selectors (Geological, Production, Safety) to narrow query scope.
+                                </p>
+                            </div>
+
+                            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                                <h4 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+                                    <span class="badge badge-amber">5</span> AI Assistant & Evidence Grounding
+                                </h4>
+                                <p class="text-xs">
+                                    The Assistant answers queries strictly from ingested source chunks. Every answer provides:
+                                    <br>&bull; Grounding Confidence Score (%)
+                                    <br>&bull; Verbatim Source Citations with exact Page & Chunk references
+                                    <br>&bull; Fallback to <em>"Insufficient information found in the available documents."</em> if query concepts are missing.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 4. SEMANTIC TAGS & CONFIDENCE SEMANTICS -->
+                        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                            <h4 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+                                <span class="badge badge-cyan">6</span> Semantic Classification Tags
+                            </h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                <div class="p-3 bg-slate-950 rounded border border-blue-800/50">
+                                    <span class="badge badge-blue font-bold mb-1">[EXTRACTED FACT]</span>
+                                    <p class="text-slate-300 mt-1">Verbatim empirical extraction backed by exact document, page number, and table cell coordinate.</p>
+                                </div>
+                                <div class="p-3 bg-slate-950 rounded border border-purple-800/50">
+                                    <span class="badge badge-purple font-bold mb-1">[AI INTERPRETATION]</span>
+                                    <p class="text-slate-300 mt-1">Analytical deduction synthesized by the LLM from multiple factual premises.</p>
+                                </div>
+                                <div class="p-3 bg-slate-950 rounded border border-amber-800/50">
+                                    <span class="badge badge-amber font-bold mb-1">[AI RECOMMENDATION]</span>
+                                    <p class="text-slate-300 mt-1">Operational advisory or mitigation suggested by the system requiring executive review.</p>
+                                </div>
+                                <div class="p-3 bg-slate-950 rounded border border-emerald-800/50">
+                                    <span class="badge badge-emerald font-bold mb-1">[HUMAN APPROVED]</span>
+                                    <p class="text-slate-300 mt-1">Formal sign-off recorded by a designated CIL Reviewing Officer / Admin.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 5. PARLIAMENTARY INQUIRIES & MANDATORY HITL -->
+                        <div class="bg-amber-950/20 border border-amber-800/50 p-4 rounded-lg">
+                            <h4 class="text-base font-bold text-amber-300 mb-2 flex items-center gap-2">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+                                7. Parliamentary & Ministry Inquiries -- Mandatory Human-In-The-Loop Protocol
+                            </h4>
+                            <p class="text-xs text-amber-200">
+                                <strong>GOVERNMENT COMPLIANCE MANDATE:</strong> All AI-generated responses for Lok Sabha, Rajya Sabha, or Parliamentary Standing Committee questions are explicitly stamped with:
+                                <br><span class="font-mono font-bold bg-amber-900/60 px-2 py-1 rounded inline-block my-1 text-white">DRAFT -- REQUIRES HUMAN VERIFICATION</span><br>
+                                An AI draft <strong>NEVER</strong> automatically becomes an official government submission. A designated Officer (Role: OFFICER or ADMIN) must review the grounded citations, verify against original borehole/DGMS logs, and click <strong>"Approve & Sign-off Draft"</strong> before external dissemination.
+                            </p>
+                        </div>
+
+                        <!-- 6. RESILIENT 3-TIER AI ENGINE & OFFLINE FALLBACK -->
+                        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800">
+                            <h4 class="text-base font-bold text-white mb-2 flex items-center gap-2">
+                                <span class="badge badge-rose">8</span> 3-Tier AI Resiliency & Degraded Mode Behavior
+                            </h4>
+                            <p class="text-xs">
+                                In critical mining field operations where Internet or Cloud API connectivity is severed, the platform guarantees 100% operational uptime via automatic cascading fallback:
+                            </p>
+                            <div class="mt-2 text-xs font-mono bg-slate-950 p-3 rounded border border-slate-800 space-y-1">
+                                <div><strong class="text-emerald-400">Tier 1: Google Gemini API (Primary Cloud AI)</strong> -- High-throughput synthesis when online.</div>
+                                <div class="text-slate-400">&nbsp;&nbsp;&darr; (On API 429 Quota Exceeded / 503 Network Timeout)</div>
+                                <div><strong class="text-amber-400">Tier 2: Open-Source Local Model (Ollama / vLLM / llama.cpp)</strong> -- Runs on local infrastructure via OpenAI-compatible endpoint.</div>
+                                <div class="text-slate-400">&nbsp;&nbsp;&darr; (On Local Model Server Offline / Unreachable)</div>
+                                <div><strong class="text-rose-400">Tier 3: Deterministic Grounded Engine (100% Offline Rule-Based)</strong> -- Pure Python RAG fallback with zero network/RAM overhead.</div>
+                            </div>
+                        </div>
+
+                        <!-- 7. SYNTHETIC DEMONSTRATION DATA WARNING -->
+                        <div class="p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-400">
+                            <strong>Demonstration Notice:</strong> Sample files preloaded in this sandbox environment are synthetic documents constructed for hackathon verification and benchmark evaluation. Production deployment requires linking to live Coal India Oracle/SAP ERP feeds, CMPDI CBM/Borehole databases, and DGMS incident records via enterprise connectors.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: DOCUMENT UPLOAD -->
+    <div class="modal" id="modal-upload">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload Mining Documents</h3>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-dropzone" id="upload-dropzone">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <p class="font-bold text-white mt-2">Drag & Drop files here, or <span class="text-amber">browse</span></p>
+                    <p class="text-xs text-slate-400 mt-1">Supports PDF, DOCX, CSV, XLSX, PNG, JPG (Scanned & Digital)</p>
+                    <input type="file" id="file-input-hidden" multiple style="display: none;">
+                </div>
+                <div class="selected-files-list mt-4" id="selected-files-list"></div>
+                <div class="upload-progress-bar mt-3" id="upload-progress" style="display: none;">
+                    <div class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div class="modal-footer flex justify-end gap-2">
+                <button class="btn btn-secondary" data-close-modal>Cancel</button>
+                <button class="btn btn-primary" id="btn-start-upload">Start Processing Workflow</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DOCUMENT DETAILS & EXTRACTED FACTS -->
+    <div class="modal" id="modal-doc-detail">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3 class="modal-title" id="doc-detail-title">Document Inspection</h3>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body" id="doc-detail-body">
+                <div class="loading-spinner">Loading document details...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REPORT VIEWER -->
+    <div class="modal" id="modal-report-viewer">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card modal-large">
+            <div class="modal-header flex justify-between items-center">
+                <h3 class="modal-title" id="report-modal-title">CIL Official Report</h3>
+                <div class="flex gap-2">
+                    <a id="rep-modal-pdf-btn" class="btn btn-xs btn-outline" target="_blank" download>Download PDF</a>
+                    <a id="rep-modal-docx-btn" class="btn btn-xs btn-outline" target="_blank" download>Download DOCX</a>
+                    <button class="modal-close" data-close-modal>&times;</button>
+                </div>
+            </div>
+            <div class="modal-body" id="report-modal-body"></div>
+            <div class="modal-footer flex justify-between items-center" id="report-modal-footer"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: WORKFLOW DAG VIEWER -->
+    <div class="modal" id="modal-workflow-detail">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3 class="modal-title" id="wf-modal-title">Multi-Agent Execution DAG</h3>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body" id="wf-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- MAIN APP JAVASCRIPT BUNDLES -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/documents.js"></script>
+    <script src="/static/js/search.js"></script>
+    <script src="/static/js/ai_assistant.js"></script>
+    <script src="/static/js/reports.js"></script>
+    <script src="/static/js/inquiries.js"></script>
+    <script src="/static/js/validation.js"></script>
+    <script src="/static/js/topics.js"></script>
+    <script src="/static/js/analytics.js"></script>
+    <script src="/static/js/agent_monitor.js"></script>
+    <script src="/static/js/audit.js"></script>
+</body>
+</html>
