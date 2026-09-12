@@ -55,16 +55,46 @@ class SQLiteAdapter(BaseDatabaseAdapter):
         return conn
 
     def initialize_schema(self) -> None:
-        """Execute SQLite DDL schema creation script."""
+        """Execute SQLite DDL schema creation script and run column migrations."""
         conn = self.get_connection()
         try:
             conn.executescript(SCHEMA_SQL_SQLITE)
+            self._run_column_migrations(conn)
             conn.commit()
             logger.info(f"SQLite database initialized successfully at {self.db_path}")
         except Exception as e:
             conn.rollback()
             logger.error(f"Failed to initialize SQLite schema: {e}")
             raise
+
+    def _run_column_migrations(self, conn: sqlite3.Connection) -> None:
+        """Add any missing columns to existing SQLite tables for backwards-compatibility."""
+        migrations = [
+            ("documents", "checksum", "TEXT"),
+            ("agent_tasks", "dependencies_json", "TEXT"),
+            ("agent_tasks", "timeout_seconds", "REAL DEFAULT 30.0"),
+            ("agent_tasks", "retry_count", "INTEGER DEFAULT 0"),
+            ("agent_tasks", "error_message", "TEXT"),
+            ("agent_tasks", "completed_at", "TIMESTAMP"),
+            ("agent_results", "agent_id", "TEXT"),
+            ("agent_workflows", "quality_decision", "TEXT"),
+            ("agent_workflows", "paused_reason", "TEXT"),
+            ("agent_workflows", "resume_state_json", "TEXT"),
+            ("agent_workflows", "quality_report_json", "TEXT"),
+            ("agent_workflows", "provenance_dag_json", "TEXT"),
+            ("validation_issues", "resolved_by", "TEXT"),
+            ("validation_issues", "resolved_note", "TEXT"),
+        ]
+
+        for table, column, col_type in migrations:
+            try:
+                cur = conn.execute(f"PRAGMA table_info({table})")
+                existing_cols = [row["name"] for row in cur.fetchall()]
+                if existing_cols and column not in existing_cols:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
+                    logger.info(f"Migrated SQLite schema: Added {column} to {table}")
+            except Exception as e:
+                logger.debug(f"SQLite migration check skipped for {table}.{column}: {e}")
 
     def check_connection(self) -> bool:
         """Probe SQLite connectivity."""

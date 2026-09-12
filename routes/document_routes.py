@@ -141,6 +141,9 @@ def upload_documents():
     uploaded_files = request.files.getlist("files") or [request.files["file"]]
     processed_results = []
     current_role = get_current_user_role()
+    force_upload = request.args.get("force", "").lower() in ("true", "1", "yes") or request.form.get("force", "").lower() in ("true", "1", "yes")
+
+    from services.document_processor import compute_file_sha256
 
     for file_obj in uploaded_files:
         if file_obj.filename == "":
@@ -161,7 +164,37 @@ def upload_documents():
         
         try:
             file_obj.save(str(save_path))
-            log_audit("DOCUMENT_UPLOADED", user_role=current_role, resource_type="document", details={"filename": orig_filename, "size": save_path.stat().st_size})
+            file_checksum = compute_file_sha256(save_path)
+
+            # Check byte-level SHA-256 deduplication unless force=true
+            if not force_upload and file_checksum:
+                with get_db() as conn:
+                    existing_doc = conn.execute(
+                        "SELECT id, original_name, checksum FROM documents WHERE checksum = ? LIMIT 1",
+                        (file_checksum,)
+                    ).fetchone()
+                    if existing_doc:
+                        try:
+                            save_path.unlink()  # Remove duplicate temporary file
+                        except Exception:
+                            pass
+                        log_audit("DOCUMENT_DUPLICATE_REJECTED", user_role=current_role, resource_type="document", details={
+                            "filename": orig_filename,
+                            "original_doc_id": existing_doc["id"],
+                            "checksum": file_checksum
+                        })
+                        processed_results.append({
+                            "filename": orig_filename,
+                            "status": "DUPLICATE",
+                            "is_duplicate": True,
+                            "original_document_id": existing_doc["id"],
+                            "original_filename": existing_doc["original_name"],
+                            "checksum": file_checksum,
+                            "message": f"Document with identical SHA-256 checksum ({file_checksum[:16]}...) already exists as '{existing_doc['original_name']}' (ID: {existing_doc['id']}). Pass force=true to bypass."
+                        })
+                        continue
+
+            log_audit("DOCUMENT_UPLOADED", user_role=current_role, resource_type="document", details={"filename": orig_filename, "size": save_path.stat().st_size, "checksum": file_checksum})
 
             # Run Document Processing via Manager Agent
             wf_result = manager_agent.run_document_processing_workflow(
@@ -171,6 +204,7 @@ def upload_documents():
             processed_results.append({
                 "filename": orig_filename,
                 "status": wf_result.get("result", {}).get("status", "SUCCESS"),
+                "checksum": file_checksum,
                 "result": wf_result.get("result", {}).get("result_data", {})
             })
         except Exception as e:

@@ -703,8 +703,15 @@
             <!-- TAB 10: MULTI-AGENT MONITOR -->
             <section id="tab-agents" class="tab-pane">
                 <div class="panel mb-6">
-                    <div class="panel-header">
-                        <h3 class="panel-title">Multi-Agent Registry & Operational Status</h3>
+                    <div class="panel-header flex justify-between items-center">
+                        <div>
+                            <h3 class="panel-title">Multi-Agent Registry & Operational Status (8-Agent Architecture)</h3>
+                            <span class="text-xs text-slate-400">Real-time telemetry, thread-pool concurrency, bounded retries, and Quality Gate release control.</span>
+                        </div>
+                        <button class="btn btn-sm btn-primary" id="btn-run-rajmahal-demo">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <span>Run 8-Agent Rajmahal Discrepancy Demo</span>
+                        </button>
                     </div>
                     <div class="agent-cards-grid" id="agent-registry-grid">
                         <div class="empty-state-sm">Loading registered agents...</div>

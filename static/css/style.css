@@ -1048,6 +1048,13 @@ body {
 
 .grid-2col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .grid-3col { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.grid-4col { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+
+@media (max-width: 1300px) {
+    .grid-4col {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 
 @media (max-width: 1200px) {
     .grid-3col {
@@ -1056,7 +1063,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .grid-3col, .grid-2col {
+    .grid-4col, .grid-3col, .grid-2col {
         grid-template-columns: minmax(0, 1fr);
     }
 }

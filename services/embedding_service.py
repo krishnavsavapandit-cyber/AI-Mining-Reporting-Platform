@@ -115,8 +115,8 @@ class HybridEmbeddingService:
         self.save_index()
         logger.info(f"Rebuilt index with {len(self.doc_vectors)} chunks, vocab size: {dim}")
 
-    def query(self, query_text: str, top_k: int = 10, filter_subsidiary: Optional[str] = None) -> List[Tuple[Dict[str, Any], float]]:
-        """Compute cosine similarity between query and all indexed chunks."""
+    def query(self, query_text: str, top_k: int = 10, filter_subsidiary: Optional[str] = None, filter_period: Optional[str] = None) -> List[Tuple[Dict[str, Any], float]]:
+        """Compute cosine similarity between query and all indexed chunks with subsidiary and period filtering."""
         if not self.doc_vectors or not self.vocabulary:
             return []
 
@@ -151,6 +151,8 @@ class HybridEmbeddingService:
             if score > 0.05:  # Relevance threshold
                 meta = self.chunk_metadata[idx]
                 if filter_subsidiary and meta.get("subsidiary") and meta.get("subsidiary") != filter_subsidiary:
+                    continue
+                if filter_period and meta.get("reporting_period") and meta.get("reporting_period") != filter_period:
                     continue
                 results.append((meta, float(score)))
 

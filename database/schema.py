@@ -1,6 +1,8 @@
 """
 Database Schema Definitions for SIH26023 Mining Platform.
 Defines dual-dialect DDL schemas for both SQLite (Fallback/Dev) and PostgreSQL (Primary/Enterprise).
+Upgraded for 8-Agent Multi-Agent Orchestration Architecture with DAG tasks, SHA-256 deduplication checksums,
+quality governance records, and HITL workflow checkpoints.
 """
 
 SCHEMA_SQL_SQLITE = """
@@ -12,6 +14,7 @@ CREATE TABLE IF NOT EXISTS documents (
     file_type TEXT NOT NULL,
     file_size INTEGER NOT NULL,
     file_path TEXT NOT NULL,
+    checksum TEXT,
     page_count INTEGER DEFAULT 1,
     subsidiary TEXT,
     mine TEXT,
@@ -136,12 +139,14 @@ CREATE TABLE IF NOT EXISTS validation_issues (
     severity TEXT DEFAULT 'MEDIUM',
     status TEXT DEFAULT 'UNRESOLVED',
     resolved_at TIMESTAMP,
+    resolved_by TEXT,
+    resolved_note TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(doc_a_id) REFERENCES documents(id) ON DELETE SET NULL,
     FOREIGN KEY(doc_b_id) REFERENCES documents(id) ON DELETE SET NULL
 );
 
--- 9. Agent Workflows Table
+-- 9. Agent Workflows Table (8-Agent Orchestration)
 CREATE TABLE IF NOT EXISTS agent_workflows (
     id TEXT PRIMARY KEY,
     workflow_type TEXT NOT NULL,
@@ -151,10 +156,15 @@ CREATE TABLE IF NOT EXISTS agent_workflows (
     end_time TIMESTAMP,
     created_by TEXT DEFAULT 'System',
     error_message TEXT,
-    provenance_summary TEXT
+    provenance_summary TEXT,
+    quality_decision TEXT,
+    paused_reason TEXT,
+    resume_state_json TEXT,
+    quality_report_json TEXT,
+    provenance_dag_json TEXT
 );
 
--- 10. Agent Tasks Table
+-- 10. Agent Tasks Table (DAG and Dependency Tracking)
 CREATE TABLE IF NOT EXISTS agent_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     workflow_id TEXT NOT NULL,
@@ -164,18 +174,24 @@ CREATE TABLE IF NOT EXISTS agent_tasks (
     task_type TEXT NOT NULL,
     input_data_json TEXT,
     evidence_req_json TEXT,
+    dependencies_json TEXT,
     priority INTEGER DEFAULT 1,
     status TEXT DEFAULT 'PENDING',
+    timeout_seconds REAL DEFAULT 30.0,
+    retry_count INTEGER DEFAULT 0,
+    error_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP,
     FOREIGN KEY(workflow_id) REFERENCES agent_workflows(id) ON DELETE CASCADE
 );
 
--- 11. Agent Results Table
+-- 11. Agent Results Table (Structured AgentResult Persistence)
 CREATE TABLE IF NOT EXISTS agent_results (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     workflow_id TEXT NOT NULL,
     task_id TEXT NOT NULL,
     agent_name TEXT NOT NULL,
+    agent_id TEXT,
     status TEXT NOT NULL,
     result_data_json TEXT,
     evidence_json TEXT,
@@ -189,7 +205,23 @@ CREATE TABLE IF NOT EXISTS agent_results (
     FOREIGN KEY(workflow_id) REFERENCES agent_workflows(id) ON DELETE CASCADE
 );
 
--- 12. Audit Logs Table
+-- 12. Workflow Checkpoints Table (HITL Pause / Resume)
+CREATE TABLE IF NOT EXISTS workflow_checkpoints (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workflow_id TEXT NOT NULL,
+    paused_task_id TEXT,
+    paused_reason TEXT,
+    state_json TEXT NOT NULL,
+    reviewer TEXT,
+    reviewer_role TEXT,
+    reviewer_note TEXT,
+    status TEXT DEFAULT 'PAUSED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resumed_at TIMESTAMP,
+    FOREIGN KEY(workflow_id) REFERENCES agent_workflows(id) ON DELETE CASCADE
+);
+
+-- 13. Audit Logs Table
 CREATE TABLE IF NOT EXISTS audit_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     action_type TEXT NOT NULL,
@@ -207,6 +239,7 @@ CREATE INDEX IF NOT EXISTS idx_extracted_field ON extracted_data(field_name, sub
 CREATE INDEX IF NOT EXISTS idx_extracted_doc ON extracted_data(document_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_workflow ON agent_tasks(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_results_workflow ON agent_results(workflow_id);
+CREATE INDEX IF NOT EXISTS idx_checkpoints_workflow ON workflow_checkpoints(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action_type, timestamp);
 CREATE INDEX IF NOT EXISTS idx_validation_status ON validation_issues(status);
 """
@@ -220,6 +253,7 @@ CREATE TABLE IF NOT EXISTS documents (
     file_type VARCHAR(64) NOT NULL,
     file_size BIGINT NOT NULL,
     file_path VARCHAR(1024) NOT NULL,
+    checksum VARCHAR(128),
     page_count INTEGER DEFAULT 1,
     subsidiary VARCHAR(64),
     mine VARCHAR(128),
@@ -342,10 +376,12 @@ CREATE TABLE IF NOT EXISTS validation_issues (
     severity VARCHAR(32) DEFAULT 'MEDIUM',
     status VARCHAR(32) DEFAULT 'UNRESOLVED',
     resolved_at TIMESTAMP,
+    resolved_by VARCHAR(128),
+    resolved_note TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 9. Agent Workflows Table
+-- 9. Agent Workflows Table (8-Agent Orchestration)
 CREATE TABLE IF NOT EXISTS agent_workflows (
     id VARCHAR(128) PRIMARY KEY,
     workflow_type VARCHAR(128) NOT NULL,
@@ -355,10 +391,15 @@ CREATE TABLE IF NOT EXISTS agent_workflows (
     end_time TIMESTAMP,
     created_by VARCHAR(128) DEFAULT 'System',
     error_message TEXT,
-    provenance_summary TEXT
+    provenance_summary TEXT,
+    quality_decision VARCHAR(64),
+    paused_reason TEXT,
+    resume_state_json TEXT,
+    quality_report_json TEXT,
+    provenance_dag_json TEXT
 );
 
--- 10. Agent Tasks Table
+-- 10. Agent Tasks Table (DAG and Dependency Tracking)
 CREATE TABLE IF NOT EXISTS agent_tasks (
     id SERIAL PRIMARY KEY,
     workflow_id VARCHAR(128) NOT NULL REFERENCES agent_workflows(id) ON DELETE CASCADE,
@@ -368,17 +409,23 @@ CREATE TABLE IF NOT EXISTS agent_tasks (
     task_type VARCHAR(128) NOT NULL,
     input_data_json TEXT,
     evidence_req_json TEXT,
+    dependencies_json TEXT,
     priority INTEGER DEFAULT 1,
     status VARCHAR(64) DEFAULT 'PENDING',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    timeout_seconds REAL DEFAULT 30.0,
+    retry_count INTEGER DEFAULT 0,
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
 );
 
--- 11. Agent Results Table
+-- 11. Agent Results Table (Structured AgentResult Persistence)
 CREATE TABLE IF NOT EXISTS agent_results (
     id SERIAL PRIMARY KEY,
     workflow_id VARCHAR(128) NOT NULL REFERENCES agent_workflows(id) ON DELETE CASCADE,
     task_id VARCHAR(128) NOT NULL,
     agent_name VARCHAR(128) NOT NULL,
+    agent_id VARCHAR(128),
     status VARCHAR(64) NOT NULL,
     result_data_json TEXT,
     evidence_json TEXT,
@@ -391,7 +438,22 @@ CREATE TABLE IF NOT EXISTS agent_results (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 12. Audit Logs Table
+-- 12. Workflow Checkpoints Table (HITL Pause / Resume)
+CREATE TABLE IF NOT EXISTS workflow_checkpoints (
+    id SERIAL PRIMARY KEY,
+    workflow_id VARCHAR(128) NOT NULL REFERENCES agent_workflows(id) ON DELETE CASCADE,
+    paused_task_id VARCHAR(128),
+    paused_reason TEXT,
+    state_json TEXT NOT NULL,
+    reviewer VARCHAR(128),
+    reviewer_role VARCHAR(64),
+    reviewer_note TEXT,
+    status VARCHAR(64) DEFAULT 'PAUSED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resumed_at TIMESTAMP
+);
+
+-- 13. Audit Logs Table
 CREATE TABLE IF NOT EXISTS audit_logs (
     id SERIAL PRIMARY KEY,
     action_type VARCHAR(128) NOT NULL,
@@ -409,6 +471,7 @@ CREATE INDEX IF NOT EXISTS idx_extracted_field ON extracted_data(field_name, sub
 CREATE INDEX IF NOT EXISTS idx_extracted_doc ON extracted_data(document_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_workflow ON agent_tasks(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_results_workflow ON agent_results(workflow_id);
+CREATE INDEX IF NOT EXISTS idx_checkpoints_workflow ON workflow_checkpoints(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action_type, timestamp);
 CREATE INDEX IF NOT EXISTS idx_validation_status ON validation_issues(status);
 """

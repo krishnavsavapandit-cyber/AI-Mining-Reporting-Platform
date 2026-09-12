@@ -1,7 +1,8 @@
 """
 Cross-Document Data Validation & Discrepancy Detection Engine for SIH26023.
 Compares extracted metrics across different documents for the same subsidiary, mine,
-and reporting period, flagging numerical conflicts and calculating variance.
+and reporting period, flagging numerical conflicts, computing direction of difference,
+calculating percentage variance safely, and managing the discrepancy lifecycle.
 """
 
 import logging
@@ -9,6 +10,12 @@ from typing import List, Dict, Any, Optional
 from database.db import get_db, log_audit
 
 logger = logging.getLogger(__name__)
+
+class DiscrepancyLifecycleStatus:
+    UNRESOLVED = "UNRESOLVED"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    RESOLVED = "RESOLVED"
+    DISMISSED = "DISMISSED"
 
 class ValidationService:
     """Automated consistency and variance checker for mining records."""
@@ -23,7 +30,6 @@ class ValidationService:
 
         try:
             with get_db() as conn:
-                # Query potential metric matches across different documents
                 query = """
                     SELECT 
                         a.id as id_a, a.document_id as doc_a_id, da.original_name as doc_a_name, a.page_number as doc_a_page,
@@ -54,8 +60,16 @@ class ValidationService:
                     diff = abs(num_a - num_b)
                     var_pct = round((diff / max_val) * 100.0, 2)
 
-                    # Determine severity
-                    if var_pct > 10.0:
+                    # Direction of difference
+                    if num_a > num_b:
+                        direction = f"Source A is higher than Source B by {round(diff, 4)}"
+                    else:
+                        direction = f"Source A is lower than Source B by {round(diff, 4)}"
+
+                    # Determine severity: CRITICAL, HIGH, MEDIUM, LOW
+                    if var_pct > 20.0:
+                        severity = "CRITICAL"
+                    elif var_pct >= 10.0:
                         severity = "HIGH"
                     elif var_pct >= 2.0:
                         severity = "MEDIUM"
@@ -76,14 +90,16 @@ class ValidationService:
                         "doc_b_page": r["doc_b_page"],
                         "doc_b_value": r["doc_b_value"],
                         "variance_percentage": var_pct,
+                        "difference_amount": round(diff, 4),
+                        "direction": direction,
                         "severity": severity,
-                        "status": "UNRESOLVED"
+                        "status": DiscrepancyLifecycleStatus.UNRESOLVED
                     }
 
                     # Check if this exact issue is already logged
                     existing = conn.execute(
                         """
-                        SELECT id FROM validation_issues 
+                        SELECT id, status FROM validation_issues 
                         WHERE doc_a_id = ? AND doc_b_id = ? AND field_name = ?
                         """,
                         (r["doc_a_id"], r["doc_b_id"], r["field_name"])
@@ -105,6 +121,8 @@ class ValidationService:
                             )
                         )
                         log_audit("VALIDATION_ISSUE_DETECTED", resource_type="validation", details=issue_data)
+                    else:
+                        issue_data["status"] = existing["status"]
 
                     detected_issues.append(issue_data)
 
@@ -122,25 +140,48 @@ class ValidationService:
                 if status_filter:
                     sql += " WHERE status = ?"
                     params.append(status_filter)
-                sql += " ORDER BY severity DESC, created_at DESC"
+                sql += " ORDER BY CASE severity WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 ELSE 4 END, created_at DESC"
                 return conn.execute(sql, params).fetchall()
         except Exception as e:
             logger.error(f"Failed to fetch validation issues: {e}")
             return []
 
-    def resolve_issue(self, issue_id: int, resolved_by: str = "Analyst") -> bool:
-        """Mark a validation issue as acknowledged/resolved."""
+    def update_issue_lifecycle(self, issue_id: int, new_status: str, reviewer: str = "Analyst", reviewer_role: str = "Analyst", reviewer_note: Optional[str] = None) -> bool:
+        """
+        Transition discrepancy along lifecycle: UNRESOLVED -> UNDER_REVIEW -> RESOLVED / DISMISSED.
+        Records reviewer identity, reviewer role, note, and timestamp.
+        """
+        allowed = {
+            DiscrepancyLifecycleStatus.UNRESOLVED,
+            DiscrepancyLifecycleStatus.UNDER_REVIEW,
+            DiscrepancyLifecycleStatus.RESOLVED,
+            DiscrepancyLifecycleStatus.DISMISSED
+        }
+        if new_status not in allowed:
+            logger.warning(f"Invalid discrepancy status: {new_status}")
+            return False
+
         try:
             with get_db() as conn:
                 conn.execute(
-                    "UPDATE validation_issues SET status = 'RESOLVED', resolved_at = CURRENT_TIMESTAMP WHERE id = ?",
-                    (issue_id,)
+                    """
+                    UPDATE validation_issues 
+                    SET status = ?, resolved_by = ?, resolved_note = ?, resolved_at = CURRENT_TIMESTAMP 
+                    WHERE id = ?
+                    """,
+                    (new_status, reviewer, reviewer_note, issue_id)
                 )
-                log_audit("VALIDATION_ISSUE_RESOLVED", resource_type="validation", resource_id=issue_id, details={"resolved_by": resolved_by})
+                log_audit(f"VALIDATION_ISSUE_{new_status}", user_role=reviewer_role, resource_type="validation", resource_id=issue_id, details={
+                    "status": new_status, "reviewer": reviewer, "note": reviewer_note
+                })
                 return True
         except Exception as e:
-            logger.error(f"Failed to resolve validation issue {issue_id}: {e}")
+            logger.error(f"Failed to update validation issue {issue_id}: {e}")
             return False
+
+    def resolve_issue(self, issue_id: int, resolved_by: str = "Analyst") -> bool:
+        """Backwards-compatible convenience alias to mark issue RESOLVED."""
+        return self.update_issue_lifecycle(issue_id, DiscrepancyLifecycleStatus.RESOLVED, reviewer=resolved_by)
 
 # Global validation service
 validation_service = ValidationService()

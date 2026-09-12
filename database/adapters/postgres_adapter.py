@@ -215,15 +215,40 @@ class PostgresAdapter(BaseDatabaseAdapter):
         return conn_wrapper
 
     def initialize_schema(self) -> None:
-        """Execute PostgreSQL DDL schema creation script."""
+        """Execute PostgreSQL DDL schema creation script and apply column migrations."""
         conn = self.get_connection()
         try:
             conn.executescript(SCHEMA_SQL_POSTGRES)
+            self._run_column_migrations(conn)
             logger.info(f"PostgreSQL schema initialized successfully on {self.config.display_url}")
         except Exception as e:
             conn.rollback()
             logger.error(f"Failed to initialize PostgreSQL schema on {self.config.display_url}: {e}")
             raise
+
+    def _run_column_migrations(self, conn: PostgresConnectionWrapper) -> None:
+        """Add any missing columns to existing PostgreSQL tables for backwards compatibility."""
+        migrations = [
+            ("documents", "checksum", "VARCHAR(128)"),
+            ("agent_tasks", "dependencies_json", "TEXT"),
+            ("agent_tasks", "timeout_seconds", "REAL DEFAULT 30.0"),
+            ("agent_tasks", "retry_count", "INTEGER DEFAULT 0"),
+            ("agent_tasks", "error_message", "TEXT"),
+            ("agent_tasks", "completed_at", "TIMESTAMP"),
+            ("agent_results", "agent_id", "VARCHAR(128)"),
+            ("agent_workflows", "quality_decision", "VARCHAR(64)"),
+            ("agent_workflows", "paused_reason", "TEXT"),
+            ("agent_workflows", "resume_state_json", "TEXT"),
+            ("agent_workflows", "quality_report_json", "TEXT"),
+            ("agent_workflows", "provenance_dag_json", "TEXT"),
+            ("validation_issues", "resolved_by", "VARCHAR(128)"),
+            ("validation_issues", "resolved_note", "TEXT"),
+        ]
+        for table, column, col_type in migrations:
+            try:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {col_type};")
+            except Exception as e:
+                logger.debug(f"Postgres migration check skipped for {table}.{column}: {e}")
 
     def check_connection(self) -> bool:
         """Probe PostgreSQL connectivity."""

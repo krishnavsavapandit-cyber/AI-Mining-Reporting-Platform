@@ -45,7 +45,8 @@ class RetrievalService:
         query: str,
         top_k: int = 8,
         filter_subsidiary: Optional[str] = None,
-        filter_doc_id: Optional[int] = None
+        filter_doc_id: Optional[int] = None,
+        filter_period: Optional[str] = None
     ) -> List[EvidenceItem]:
         """
         Execute combined vector semantic search and keyword match,
@@ -54,10 +55,10 @@ class RetrievalService:
         expanded_q = self.expand_query(query)
         
         # 1. Semantic Vector Search
-        vector_results = embedding_service.query(expanded_q, top_k=top_k * 2, filter_subsidiary=filter_subsidiary)
+        vector_results = embedding_service.query(expanded_q, top_k=top_k * 2, filter_subsidiary=filter_subsidiary, filter_period=filter_period)
         
         # 2. SQLite Keyword / Full-Text Search
-        keyword_results = self._sql_keyword_search(query, top_k=top_k * 2, filter_subsidiary=filter_subsidiary, filter_doc_id=filter_doc_id)
+        keyword_results = self._sql_keyword_search(query, top_k=top_k * 2, filter_subsidiary=filter_subsidiary, filter_doc_id=filter_doc_id, filter_period=filter_period)
 
         # 3. Reciprocal Rank Fusion (RRF)
         rrf_scores = {}
@@ -107,7 +108,8 @@ class RetrievalService:
         query: str,
         top_k: int = 15,
         filter_subsidiary: Optional[str] = None,
-        filter_doc_id: Optional[int] = None
+        filter_doc_id: Optional[int] = None,
+        filter_period: Optional[str] = None
     ) -> List[Tuple[Dict[str, Any], float]]:
         """Exact substring and LIKE keyword matching in SQLite chunks table."""
         keywords = [w for w in re.findall(r'\b\w{3,}\b', query.lower()) if w not in {'the', 'and', 'for', 'was', 'with', 'from'}]
@@ -134,6 +136,9 @@ class RetrievalService:
                 if filter_doc_id:
                     sql += " AND d.id = ?"
                     params.append(filter_doc_id)
+                if filter_period:
+                    sql += " AND d.reporting_period = ?"
+                    params.append(filter_period)
 
                 sql += f" LIMIT {top_k}"
                 cursor = conn.execute(sql, params)

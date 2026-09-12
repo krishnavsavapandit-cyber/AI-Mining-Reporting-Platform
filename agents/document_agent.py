@@ -102,6 +102,7 @@ class DocumentIntelligenceAgent(BaseAgent):
         doc_metadata_json = json.dumps(doc_meta) if doc_meta else None
 
         # 3. Persist / Update Database
+        checksum = proc_res.get("checksum")
         if not doc_id:
             doc_id = self._insert_document_record(
                 file_path=file_path,
@@ -111,10 +112,11 @@ class DocumentIntelligenceAgent(BaseAgent):
                 mine=mine,
                 period=period,
                 doc_type=doc_type,
-                doc_metadata_json=doc_metadata_json
+                doc_metadata_json=doc_metadata_json,
+                checksum=checksum
             )
         else:
-            self._update_document_metadata(doc_id, page_count, subsidiary, mine, period, doc_type, doc_metadata_json=doc_metadata_json)
+            self._update_document_metadata(doc_id, page_count, subsidiary, mine, period, doc_type, doc_metadata_json=doc_metadata_json, checksum=checksum)
 
         # 4. Save Chunks and Extracted Records to Database
         self._save_chunks_and_records(doc_id, chunks, extracted_records, orig_name, subsidiary, period)
@@ -170,43 +172,48 @@ class DocumentIntelligenceAgent(BaseAgent):
             next_action="INDEXING_COMPLETE"
         )
 
-    def _insert_document_record(self, file_path: Path, original_name: str, page_count: int, subsidiary: str, mine: Optional[str], period: Optional[str], doc_type: str, doc_metadata_json: Optional[str] = None) -> int:
+    def _insert_document_record(self, file_path: Path, original_name: str, page_count: int, subsidiary: str, mine: Optional[str], period: Optional[str], doc_type: str, doc_metadata_json: Optional[str] = None, checksum: Optional[str] = None) -> int:
         filename = file_path.name
         file_size = file_path.stat().st_size if file_path.exists() else 0
         file_ext = file_path.suffix.lower().lstrip(".")
         with get_db() as conn:
-            existing = conn.execute("SELECT id FROM documents WHERE filename = ?", (filename,)).fetchone()
+            existing = None
+            if checksum:
+                existing = conn.execute("SELECT id FROM documents WHERE checksum = ?", (checksum,)).fetchone()
+            if not existing:
+                existing = conn.execute("SELECT id FROM documents WHERE filename = ?", (filename,)).fetchone()
+
             if existing:
                 doc_id = existing["id"]
                 conn.execute(
                     """
                     UPDATE documents 
-                    SET original_name = ?, file_type = ?, file_size = ?, file_path = ?, page_count = ?, subsidiary = ?, mine = ?, reporting_period = ?, doc_metadata_json = ?, status = 'PROCESSED', error_message = NULL, updated_at = CURRENT_TIMESTAMP
+                    SET original_name = ?, file_type = ?, file_size = ?, file_path = ?, checksum = COALESCE(?, checksum), page_count = ?, subsidiary = ?, mine = ?, reporting_period = ?, doc_metadata_json = ?, status = 'PROCESSED', error_message = NULL, updated_at = CURRENT_TIMESTAMP
                     WHERE id = ?
                     """,
-                    (original_name, file_ext, file_size, str(file_path), page_count, subsidiary, mine, period, doc_metadata_json, doc_id)
+                    (original_name, file_ext, file_size, str(file_path), checksum, page_count, subsidiary, mine, period, doc_metadata_json, doc_id)
                 )
                 return doc_id
 
             cursor = conn.execute(
                 """
                 INSERT INTO documents 
-                (filename, original_name, file_type, file_size, file_path, page_count, subsidiary, mine, reporting_period, doc_metadata_json, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PROCESSED')
+                (filename, original_name, file_type, file_size, file_path, checksum, page_count, subsidiary, mine, reporting_period, doc_metadata_json, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PROCESSED')
                 """,
-                (filename, original_name, file_ext, file_size, str(file_path), page_count, subsidiary, mine, period, doc_metadata_json)
+                (filename, original_name, file_ext, file_size, str(file_path), checksum, page_count, subsidiary, mine, period, doc_metadata_json)
             )
             return cursor.lastrowid
 
-    def _update_document_metadata(self, doc_id: int, page_count: int, subsidiary: str, mine: Optional[str], period: Optional[str], doc_type: str, doc_metadata_json: Optional[str] = None):
+    def _update_document_metadata(self, doc_id: int, page_count: int, subsidiary: str, mine: Optional[str], period: Optional[str], doc_type: str, doc_metadata_json: Optional[str] = None, checksum: Optional[str] = None):
         with get_db() as conn:
             conn.execute(
                 """
                 UPDATE documents 
-                SET page_count = ?, subsidiary = ?, mine = ?, reporting_period = ?, doc_metadata_json = COALESCE(?, doc_metadata_json), status = 'PROCESSED', error_message = NULL, updated_at = CURRENT_TIMESTAMP
+                SET page_count = ?, subsidiary = ?, mine = ?, reporting_period = ?, checksum = COALESCE(?, checksum), doc_metadata_json = COALESCE(?, doc_metadata_json), status = 'PROCESSED', error_message = NULL, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
                 """,
-                (page_count, subsidiary, mine, period, doc_metadata_json, doc_id)
+                (page_count, subsidiary, mine, period, checksum, doc_metadata_json, doc_id)
             )
 
 

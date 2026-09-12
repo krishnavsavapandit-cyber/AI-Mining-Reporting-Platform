@@ -1,11 +1,13 @@
 """
 Deterministic Document Ingestion & Extraction Engine for SIH26023.
 Supports PDF (digital & scanned), DOCX, CSV, XLSX, and Images.
-Extracts structured text, tables, and creates page-grounded searchable chunks.
+Extracts structured text, tables, computes SHA-256 fingerprint checksums,
+and creates page-grounded searchable chunks.
 """
 
 import os
 import re
+import hashlib
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
@@ -17,13 +19,23 @@ from services.ocr import ocr_service, extract_text_from_image, extract_text_from
 
 logger = logging.getLogger(__name__)
 
+def compute_file_sha256(file_path: Path) -> str:
+    """Calculate SHA-256 fingerprint for document deduplication."""
+    if not file_path.exists():
+        return ""
+    hasher = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
 class DocumentProcessor:
     """Deterministic parser and chunker for multi-format mining documents."""
 
     def process_document(self, file_path: Path, original_filename: str) -> Dict[str, Any]:
         """
         Process uploaded file based on its extension.
-        Returns dictionary with pages, full_text, tables, chunks, and metadata.
+        Returns dictionary with pages, full_text, tables, chunks, metadata, and SHA-256 checksum.
         """
         if not file_path.exists():
             return {
@@ -32,24 +44,26 @@ class DocumentProcessor:
                 "pages": [],
                 "full_text": "",
                 "chunks": [],
-                "page_count": 0
+                "page_count": 0,
+                "checksum": ""
             }
 
+        checksum = compute_file_sha256(file_path)
         ext = file_path.suffix.lower().lstrip(".")
         
         try:
             if ext == "pdf":
-                return self._process_pdf(file_path, original_filename)
+                res = self._process_pdf(file_path, original_filename)
             elif ext in ["docx", "doc"]:
-                return self._process_docx(file_path, original_filename)
+                res = self._process_docx(file_path, original_filename)
             elif ext == "csv":
-                return self._process_csv(file_path, original_filename)
+                res = self._process_csv(file_path, original_filename)
             elif ext in ["xlsx", "xls"]:
-                return self._process_excel(file_path, original_filename)
+                res = self._process_excel(file_path, original_filename)
             elif ext in ["png", "jpg", "jpeg"]:
-                return self._process_image(file_path, original_filename)
+                res = self._process_image(file_path, original_filename)
             elif ext == "txt":
-                return self._process_text(file_path, original_filename)
+                res = self._process_text(file_path, original_filename)
             else:
                 return {
                     "status": "FAILED",
@@ -57,8 +71,12 @@ class DocumentProcessor:
                     "pages": [],
                     "full_text": "",
                     "chunks": [],
-                    "page_count": 0
+                    "page_count": 0,
+                    "checksum": checksum
                 }
+
+            res["checksum"] = checksum
+            return res
         except Exception as e:
             logger.error(f"Failed to process document {original_filename}: {e}", exc_info=True)
             return {
@@ -67,12 +85,56 @@ class DocumentProcessor:
                 "pages": [],
                 "full_text": "",
                 "chunks": [],
-                "page_count": 0
+                "page_count": 0,
+                "checksum": checksum
             }
 
     def _process_pdf(self, file_path: Path, filename: str) -> Dict[str, Any]:
         """Extract text and tables from PDF using PyMuPDF and modular OCR fallback."""
-        doc = pymupdf.open(str(file_path))
+        if file_path.stat().st_size == 0:
+            return {
+                "status": "FAILED",
+                "error": "PDF file is empty (0 bytes).",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
+        try:
+            doc = pymupdf.open(str(file_path))
+        except Exception as e:
+            return {
+                "status": "FAILED",
+                "error": f"Malformed or corrupted PDF file: {str(e)}",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
+        if getattr(doc, "is_encrypted", False):
+            doc.close()
+            return {
+                "status": "FAILED",
+                "error": "Encrypted or password-protected PDF cannot be processed without authorization.",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
+        if len(doc) == 0:
+            doc.close()
+            return {
+                "status": "FAILED",
+                "error": "PDF document contains 0 pages.",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
         pages_data = []
         full_text_parts = []
         tables_data = []
@@ -85,12 +147,15 @@ class DocumentProcessor:
             
             # OCR fallback for scanned pages with minimal or no digital text
             if len(text) < 40:
-                pix = page.get_pixmap(dpi=150)
-                page_ocr_res = ocr_service.process_page(pix, page_number=page_num + 1, filename=filename)
-                if page_ocr_res.text:
-                    text = page_ocr_res.text
-                ocr_meta = page_ocr_res.to_dict()
-                ocr_performed = True
+                try:
+                    pix = page.get_pixmap(dpi=150)
+                    page_ocr_res = ocr_service.process_page(pix, page_number=page_num + 1, filename=filename)
+                    if page_ocr_res.text:
+                        text = page_ocr_res.text
+                    ocr_meta = page_ocr_res.to_dict()
+                    ocr_performed = True
+                except Exception as ocr_err:
+                    logger.warning(f"OCR processing fallback failed on page {page_num + 1}: {ocr_err}")
 
             # Try extracting tables
             try:
@@ -130,10 +195,30 @@ class DocumentProcessor:
             "ocr_performed": ocr_performed
         }
 
-
     def _process_docx(self, file_path: Path, filename: str) -> Dict[str, Any]:
         """Extract text and tables from DOCX using python-docx."""
-        doc = docx.Document(str(file_path))
+        if file_path.stat().st_size == 0:
+            return {
+                "status": "FAILED",
+                "error": "DOCX file is empty (0 bytes).",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
+        try:
+            doc = docx.Document(str(file_path))
+        except Exception as e:
+            return {
+                "status": "FAILED",
+                "error": f"Malformed or corrupted DOCX file: {str(e)}",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
         paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
         
         tables_text = []
@@ -169,12 +254,62 @@ class DocumentProcessor:
         }
 
     def _process_csv(self, file_path: Path, filename: str) -> Dict[str, Any]:
-        """Extract and structure CSV tabular data."""
-        df = pd.read_csv(str(file_path))
-        text_repr = df.to_string(index=False)
-        summary_repr = f"CSV Dataset: {filename}\nColumns: {', '.join(df.columns)}\nTotal Rows: {len(df)}\n\n"
+        """Extract and structure CSV tabular data supporting multiple delimiters and encodings."""
+        if file_path.stat().st_size == 0:
+            return {
+                "status": "FAILED",
+                "error": "CSV file is empty (0 bytes).",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
+        df = None
+        encodings = ['utf-8', 'utf-8-sig', 'latin1', 'cp1252']
+        delimiters = [None, ',', ';', '\t', '|']
+
+        for enc in encodings:
+            for sep in delimiters:
+                try:
+                    if sep is None:
+                        df = pd.read_csv(str(file_path), encoding=enc, sep=sep, engine='python', on_bad_lines='skip')
+                    else:
+                        df = pd.read_csv(str(file_path), encoding=enc, sep=sep, on_bad_lines='skip')
+                    if df is not None and not df.empty:
+                        break
+                except Exception:
+                    continue
+            if df is not None and not df.empty:
+                break
+
+        if df is None or df.empty:
+            # Try plain text read if dataframe parsing returned empty
+            try:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                    raw_lines = [line.strip() for line in f if line.strip()]
+                if not raw_lines:
+                    return {
+                        "status": "FAILED",
+                        "error": "CSV file contains no readable data rows.",
+                        "pages": [],
+                        "full_text": "",
+                        "chunks": [],
+                        "page_count": 0
+                    }
+                df = pd.DataFrame({"Content": raw_lines})
+            except Exception as e:
+                return {
+                    "status": "FAILED",
+                    "error": f"Unable to parse CSV file: {str(e)}",
+                    "pages": [],
+                    "full_text": "",
+                    "chunks": [],
+                    "page_count": 0
+                }
+
+        summary_repr = f"CSV Dataset: {filename}\nColumns: {', '.join([str(c) for c in df.columns])}\nTotal Rows: {len(df)}\n\n"
         
-        # Row summaries
         row_summaries = []
         for idx, row in df.head(100).iterrows():
             row_items = [f"{col}: {val}" for col, val in row.items() if pd.notna(val)]
@@ -189,19 +324,55 @@ class DocumentProcessor:
             "page_count": 1,
             "pages": pages_data,
             "full_text": full_text,
-            "tables": [df.to_dict(orient="records")],
+            "tables": [df.head(50).to_dict(orient="records")],
             "chunks": chunks
         }
 
     def _process_excel(self, file_path: Path, filename: str) -> Dict[str, Any]:
-        """Extract and structure Excel sheets."""
-        excel_file = pd.ExcelFile(str(file_path))
+        """Extract and structure Excel sheets with multi-sheet and empty-sheet safeguards."""
+        if file_path.stat().st_size == 0:
+            return {
+                "status": "FAILED",
+                "error": "Excel file is empty (0 bytes).",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
+        try:
+            excel_file = pd.ExcelFile(str(file_path))
+        except Exception as e:
+            return {
+                "status": "FAILED",
+                "error": f"Malformed or corrupted Excel workbook: {str(e)}",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
         pages_data = []
         full_text_parts = []
         tables = []
 
+        if not excel_file.sheet_names:
+            return {
+                "status": "FAILED",
+                "error": "Excel workbook contains no sheets.",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
         for idx, sheet_name in enumerate(excel_file.sheet_names):
-            df = excel_file.parse(sheet_name)
+            try:
+                df = excel_file.parse(sheet_name)
+            except Exception as parse_err:
+                logger.warning(f"Failed to parse sheet '{sheet_name}' in {filename}: {parse_err}")
+                continue
+
             sheet_text = f"Sheet: {sheet_name}\nColumns: {', '.join([str(c) for c in df.columns])}\nRows: {len(df)}\n\n"
             
             row_summaries = []
@@ -217,6 +388,9 @@ class DocumentProcessor:
             })
             full_text_parts.append(content)
             tables.append({"sheet": sheet_name, "records": df.head(50).to_dict(orient="records")})
+
+        if not pages_data:
+            pages_data = [{"page_number": 1, "text": f"Excel file {filename} parsed with no readable content."}]
 
         full_text = "\n\n".join(full_text_parts)
         chunks = self._create_chunks(pages_data, filename)
@@ -285,10 +459,7 @@ class DocumentProcessor:
             if not text.strip():
                 continue
 
-            # Detect possible section headers
             current_section = p_data.get("section", "General Content")
-
-            # Break page into paragraphs or overlapping windows
             paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
             
             for para in paragraphs:
@@ -314,7 +485,6 @@ class DocumentProcessor:
                     chunks.append(chunk_item)
                     chunk_idx += 1
                 else:
-                    # Sliding window for long paragraphs
                     step = 450
                     for i in range(0, len(para), step):
                         window = para[i:i + 550]
@@ -337,7 +507,6 @@ class DocumentProcessor:
                         chunk_idx += 1
 
         return chunks
-
 
 # Global DocumentProcessor instance
 document_processor = DocumentProcessor()

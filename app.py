@@ -45,10 +45,32 @@ def create_app() -> Flask:
     app.register_blueprint(agent_bp)
     app.register_blueprint(settings_bp)
 
+    frontend_dist = BASE_DIR / "frontend" / "dist"
+
     @app.route("/")
     def index():
-        """Render single-page application interface."""
+        """Serve modern React SPA if built, otherwise legacy Jinja template."""
+        if (frontend_dist / "index.html").exists():
+            return send_from_directory(str(frontend_dist), "index.html")
         return render_template("index.html")
+
+    @app.route("/assets/<path:filename>")
+    def frontend_assets(filename):
+        """Serve built React assets."""
+        assets_dir = frontend_dist / "assets"
+        if assets_dir.exists():
+            return send_from_directory(str(assets_dir), filename)
+        return jsonify({"status": "error", "message": "Asset not found"}), 404
+
+    @app.route("/legacy")
+    def legacy_index():
+        """Render legacy Jinja interface."""
+        return render_template("index.html")
+
+    @app.route("/favicon.ico")
+    def favicon():
+        """Handle favicon requests gracefully."""
+        return ('', 204)
 
     @app.errorhandler(404)
     def not_found(e):
