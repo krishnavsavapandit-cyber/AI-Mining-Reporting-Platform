@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileCheck, CheckCircle2 } from 'lucide-react';
+import { FileCheck, CheckCircle2, Download, FileText } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -22,6 +22,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   onReportApproved,
 }) => {
   const [report, setReport] = useState<ReportRecord | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [docxUrl, setDocxUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const { isOfficerOrAbove, roleInfo } = useAuth();
@@ -32,6 +34,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       loadReport(reportId);
     } else {
       setReport(null);
+      setPdfUrl(null);
+      setDocxUrl(null);
     }
   }, [isOpen, reportId]);
 
@@ -40,6 +44,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     try {
       const res = await reportService.getReport(id);
       setReport(res.report);
+      setPdfUrl(res.pdf_url || null);
+      setDocxUrl(res.docx_url || null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to fetch report';
       toast.error('Report Error', msg);
@@ -87,7 +93,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         </div>
       }
       footer={
-        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <div>
             {report && (
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -96,7 +102,32 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Real PDF / DOCX Downloads */}
+            {pdfUrl && (
+              <a
+                href={pdfUrl}
+                download
+                className="btn btn-secondary btn-sm"
+                style={{ textDecoration: 'none' }}
+              >
+                <Download size={12} style={{ color: 'var(--accent-primary)' }} />
+                <span>Download PDF</span>
+              </a>
+            )}
+
+            {docxUrl && (
+              <a
+                href={docxUrl}
+                download
+                className="btn btn-secondary btn-sm"
+                style={{ textDecoration: 'none' }}
+              >
+                <FileText size={12} style={{ color: 'var(--accent-teal)' }} />
+                <span>Download DOCX</span>
+              </a>
+            )}
+
             {report && !report.human_approved && isOfficerOrAbove && (
               <Button
                 variant="primary"
@@ -105,11 +136,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                 loading={isApproving}
                 icon={<CheckCircle2 size={12} />}
               >
-                Approve & Sign-Off Report
+                Approve & Sign-Off
               </Button>
             )}
+
             <Button variant="secondary" size="sm" onClick={onClose}>
-              Close Viewer
+              Close
             </Button>
           </div>
         </div>

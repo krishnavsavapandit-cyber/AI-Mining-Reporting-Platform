@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar, NavigationTab } from './Sidebar';
 import { TopBar } from './TopBar';
+import { GeoNexusLanding } from '@/components/landing/GeoNexusLanding';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { DocumentsPage } from '@/pages/DocumentsPage';
 import { SemanticSearchPage } from '@/pages/SemanticSearchPage';
@@ -114,7 +115,17 @@ export const AppShell: React.FC = () => {
         />
 
         {/* Workspace Pages */}
-        <main className="app-workspace" id="main-content">
+        <main className={`app-workspace ${activeTab === 'overview' ? 'landing-mode' : ''}`} id="main-content">
+          {activeTab === 'overview' && (
+            <GeoNexusLanding
+              onEnterWorkspace={(target = 'dashboard') => setActiveTab(target)}
+              docCount={docCount}
+              conflictsCount={conflictsCount}
+              aiProviderName={aiProviderName}
+              aiProviderOnline={aiProviderOnline}
+            />
+          )}
+
           {activeTab === 'dashboard' && (
             <DashboardPage
               onNavigate={setActiveTab}
@@ -193,3 +204,5 @@ export const AppShell: React.FC = () => {
     </div>
   );
 };
+
+export default AppShell;

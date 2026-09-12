@@ -19,12 +19,14 @@ import {
   Cpu,
   Eye,
   Briefcase,
+  Compass,
 } from 'lucide-react';
 import { MiningLogo } from '@/components/ui/MiningLogo';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/types';
 
 export type NavigationTab =
+  | 'overview'
   | 'dashboard'
   | 'documents'
   | 'search'
@@ -81,6 +83,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'OFFICER':
         return [
           {
+            label: 'Platform Views',
+            items: [
+              { id: 'overview', label: 'GeoNexus Overview', icon: Compass },
+            ],
+          },
+          {
             label: 'Statutory Governance',
             items: [
               { id: 'dashboard', label: 'Governance Command & Queue', icon: LayoutDashboard },
@@ -108,6 +116,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'ADMIN':
         return [
           {
+            label: 'Platform Views',
+            items: [
+              { id: 'overview', label: 'GeoNexus Overview', icon: Compass },
+            ],
+          },
+          {
             label: 'System Administration',
             items: [
               { id: 'dashboard', label: 'Infrastructure Health HUD', icon: LayoutDashboard },
@@ -121,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             items: [
               { id: 'documents', label: 'Repository Administration', icon: FileText, counter: docCount },
               { id: 'validation', label: 'Conflict Registry', icon: ShieldAlert, alertBadge: conflictsCount },
-              { id: 'analytics', label: 'ISO/IEC 25010 Quality Benchmarks', icon: BarChart3 },
+              { id: 'analytics', label: 'ISO/IEC 25010 Benchmarks', icon: BarChart3 },
             ],
           },
           {
@@ -134,6 +148,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       case 'VIEWER':
         return [
+          {
+            label: 'Platform Views',
+            items: [
+              { id: 'overview', label: 'GeoNexus Overview', icon: Compass },
+            ],
+          },
           {
             label: 'Auditor Perspective',
             items: [
@@ -150,6 +170,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'ANALYST':
       default:
         return [
+          {
+            label: 'Platform Views',
+            items: [
+              { id: 'overview', label: 'GeoNexus Overview', icon: Compass },
+            ],
+          },
           {
             label: 'Operations & Ingestion',
             items: [
@@ -183,9 +209,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Role metadata
   const roleMeta: Record<UserRole, { label: string; sub: string; icon: React.ComponentType<{ size?: number }>; color: string; bg: string }> = {
-    OFFICER: { label: 'REVIEWING OFFICER', sub: 'Statutory Sign-Off Authority', icon: ShieldCheck, color: 'var(--accent-primary)', bg: 'rgba(31, 138, 92, 0.12)' },
-    ANALYST: { label: 'MINING ANALYST', sub: 'Intelligence & Discovery', icon: Briefcase, color: 'var(--accent-teal)', bg: 'rgba(45, 156, 168, 0.12)' },
-    ADMIN: { label: 'SYSTEM ADMIN', sub: 'Infrastructure & Telemetry', icon: Cpu, color: 'var(--status-warning)', bg: 'rgba(217, 164, 65, 0.12)' },
+    OFFICER: { label: 'REVIEWING OFFICER', sub: 'Statutory Sign-Off Authority', icon: ShieldCheck, color: 'var(--accent-primary)', bg: 'rgba(16, 185, 129, 0.12)' },
+    ANALYST: { label: 'MINING ANALYST', sub: 'Intelligence & Discovery', icon: Briefcase, color: 'var(--accent-teal)', bg: 'rgba(20, 184, 166, 0.12)' },
+    ADMIN: { label: 'SYSTEM ADMIN', sub: 'Infrastructure & Telemetry', icon: Cpu, color: 'var(--status-warning)', bg: 'rgba(245, 158, 11, 0.12)' },
     VIEWER: { label: 'AUDITOR / VIEWER', sub: 'Read-Only Transparency', icon: Eye, color: 'var(--text-secondary)', bg: 'var(--bg-surface-2)' },
   };
 
@@ -199,14 +225,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       aria-label="Sidebar Navigation"
     >
       {/* Brand Header */}
-      <div className="sidebar-brand">
+      <div
+        className="sidebar-brand"
+        onClick={() => onSelectTab('overview')}
+        title="Go to GeoNexus Overview"
+      >
         <div className="brand-icon">
-          <MiningLogo size={20} />
+          <MiningLogo size={22} />
         </div>
         {!collapsed && (
           <div className="brand-info">
-            <span className="brand-title">COAL INDIA</span>
-            <span className="brand-subtitle">CMPDI Intelligence Suite</span>
+            <span className="brand-title">GeoNexus</span>
+            <span className="brand-subtitle">
+              <span>COAL INDIA</span> • <span>CMPDI Intelligence Suite</span>
+            </span>
           </div>
         )}
       </div>
@@ -290,7 +322,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               const newRole = e.target.value.toUpperCase() as UserRole;
               setRole(newRole);
               const allowedTabs = getNavSectionsForRole(newRole).flatMap((s) => s.items.map((i) => i.id));
-              if (!allowedTabs.includes(activeTab)) {
+              if (activeTab !== 'overview' && !allowedTabs.includes(activeTab)) {
                 onSelectTab('dashboard');
               }
             }}

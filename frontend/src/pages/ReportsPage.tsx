@@ -6,6 +6,7 @@ import {
   Eye,
   CheckCircle2,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -316,7 +317,20 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
                       {rep.created_at?.split(' ')[0]}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: 6 }}>
+                      <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                        {rep.file_path && (
+                          <a
+                            href={`/api/reports/download/${encodeURIComponent(rep.file_path.split('/').pop() || rep.file_path)}`}
+                            download
+                            onClick={(e) => e.stopPropagation()}
+                            className="btn btn-secondary btn-sm"
+                            title="Download Report File"
+                            style={{ padding: '3px 8px', textDecoration: 'none' }}
+                          >
+                            <Download size={12} style={{ color: 'var(--accent-primary)' }} />
+                          </a>
+                        )}
+
                         <Button
                           variant="outline"
                           size="sm"

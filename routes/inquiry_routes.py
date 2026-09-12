@@ -86,6 +86,10 @@ def approve_inquiry(inquiry_id: int):
 
     try:
         with get_db() as conn:
+            existing = conn.execute("SELECT id FROM inquiries WHERE id = ?", (inquiry_id,)).fetchone()
+            if not existing:
+                return jsonify({"status": "error", "message": "Inquiry not found"}), 404
+
             conn.execute(
                 "UPDATE inquiries SET human_approved = 1, approved_by = ?, status = 'OFFICIALLY_VERIFIED' WHERE id = ?",
                 (approved_by, inquiry_id)

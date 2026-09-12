@@ -21,7 +21,8 @@ interface TopBarProps {
 }
 
 const TAB_TITLES: Record<NavigationTab, { title: string; subtitle: string }> = {
-  dashboard: { title: 'Executive Command Center', subtitle: 'Platform overview & telemetry' },
+  overview: { title: 'Platform Overview & Architecture', subtitle: 'Mining Intelligence, Grounded in Evidence' },
+  dashboard: { title: 'Executive Command Center', subtitle: 'Platform overview & operational telemetry' },
   documents: { title: 'Document Intelligence Ingestion', subtitle: 'Indexed statutory CIL files & OCR' },
   search: { title: 'Hybrid Semantic & Vector Search', subtitle: 'Sublinear TF-IDF + Cosine RRF' },
   assistant: { title: 'Mining Intelligence Assistant', subtitle: 'Grounded RAG with strict zero-hallucination' },
@@ -44,14 +45,16 @@ export const TopBar: React.FC<TopBarProps> = ({
   dbConnected = true,
 }) => {
   const { isOfficer, isAnalyst, isAdmin, isViewer } = useAuth();
-  const currentTab = TAB_TITLES[activeTab] || { title: 'Mining Platform', subtitle: 'CMPDI Suite' };
+  const currentTab = TAB_TITLES[activeTab] || { title: 'GeoNexus Mining Intelligence', subtitle: 'Enterprise Operating Environment' };
 
   return (
     <header className="app-topbar">
       {/* Left: Breadcrumbs & Current Page Title */}
       <div className="topbar-left">
         <div className="breadcrumb-section">
-          <span className="breadcrumb-root">CIL / CMPDI</span>
+          <span className="breadcrumb-root" style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
+            GeoNexus
+          </span>
           <span className="breadcrumb-sep">/</span>
           <span className="breadcrumb-current">{currentTab.title}</span>
         </div>

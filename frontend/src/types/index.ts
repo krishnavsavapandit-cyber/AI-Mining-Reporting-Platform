@@ -330,7 +330,8 @@ export interface InquiryRecord {
   ministry_body: string;
   question_text: string;
   parsed_intent: string;
-  generated_response: string;
+  draft_response?: string;
+  generated_response?: string;
   citations_json?: string;
   confidence_score: number;
   status: string;

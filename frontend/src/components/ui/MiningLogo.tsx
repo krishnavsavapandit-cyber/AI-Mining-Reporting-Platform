@@ -7,66 +7,79 @@ interface MiningLogoProps {
 }
 
 /**
- * Custom Geological Strata & Drill-Core SVG Mark for CIL / CMPDI
- * Minimal, geometric, recognizable at 16px, usable in monochrome.
+ * GeoNexus Emerald Geological Mark
+ * Stylized faceted diamond/hexagonal nexus polygon with internal geological core vectors.
  */
 export const MiningLogo: React.FC<MiningLogoProps> = ({
-  size = 24,
+  size = 28,
   className = '',
   variant = 'icon',
 }) => {
-  const primaryColor = variant === 'monochrome' ? 'currentColor' : '#1F8A5C';
-  const tealColor = variant === 'monochrome' ? 'currentColor' : '#2D9CA8';
-  const mutedColor = variant === 'monochrome' ? 'currentColor' : '#2E5B45';
+  const primaryColor = variant === 'monochrome' ? 'currentColor' : '#10B981';
+  const secondaryColor = variant === 'monochrome' ? 'currentColor' : '#059669';
+  const coreColor = variant === 'monochrome' ? 'currentColor' : '#34D399';
 
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      aria-label="CIL Geological Strata Logo"
+      aria-label="GeoNexus Logo"
     >
-      {/* Top Strata Layer (Surface / Overburden) */}
+      <defs>
+        <linearGradient id="geoNexusGrad" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#34D399" />
+          <stop offset="50%" stopColor="#10B981" />
+          <stop offset="100%" stopColor="#047857" />
+        </linearGradient>
+        <linearGradient id="facetGrad" x1="16" y1="6" x2="16" y2="26" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,0.2)" />
+        </linearGradient>
+      </defs>
+
+      {/* Hexagonal Outer Nexus Frame */}
       <path
-        d="M3 5.5C3 5.5 8 4 12 4C16 4 21 5.5 21 5.5"
+        d="M16 3L27 9.5V22.5L16 29L5 22.5V9.5L16 3Z"
+        fill="url(#geoNexusGrad)"
         stroke={primaryColor}
-        strokeWidth="2.2"
-        strokeLinecap="round"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
       />
 
-      {/* Middle Strata Layer (Coal Seam & Exploration Plane) */}
+      {/* Internal Facet Overlay */}
       <path
-        d="M3 11C3 11 8 9.5 12 9.5C16 9.5 21 11 21 11"
-        stroke={tealColor}
-        strokeWidth="2.2"
-        strokeLinecap="round"
+        d="M16 3L27 9.5L16 16L5 9.5L16 3Z"
+        fill="url(#facetGrad)"
+        opacity="0.6"
       />
 
-      {/* Basal Strata Layer (Bedrock Horizon) */}
+      {/* Geological Strata Core & Borehole lines */}
       <path
-        d="M3 16.5C3 16.5 8 15 12 15C16 15 21 16.5 21 16.5"
-        stroke={mutedColor}
-        strokeWidth="2.2"
+        d="M5 9.5L16 16L27 9.5"
+        stroke="rgba(255, 255, 255, 0.4)"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M16 16V29"
+        stroke={secondaryColor}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 22.5L16 16L27 22.5"
+        stroke="rgba(0, 0, 0, 0.3)"
+        strokeWidth="1.2"
         strokeLinecap="round"
       />
 
-      {/* Vertical Core Borehole Indicator */}
-      <line
-        x1="12"
-        y1="3"
-        x2="12"
-        y2="21"
-        stroke={primaryColor}
-        strokeWidth="1.8"
-        strokeDasharray="2 2"
-      />
-
-      {/* Core Sample Intersection Node */}
-      <circle cx="12" cy="11" r="2.2" fill={primaryColor} />
-      <circle cx="12" cy="16.5" r="1.5" fill={tealColor} />
+      {/* Center Nexus Geode Node */}
+      <circle cx="16" cy="16" r="3" fill="#FFFFFF" opacity="0.9" />
+      <circle cx="16" cy="16" r="1.5" fill={coreColor} />
     </svg>
   );
 };

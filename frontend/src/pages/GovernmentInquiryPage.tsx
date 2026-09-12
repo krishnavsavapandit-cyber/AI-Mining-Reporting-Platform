@@ -300,7 +300,7 @@ export const GovernmentInquiryPage: React.FC = () => {
                   overflowY: 'auto',
                 }}
               >
-                {selectedInquiry.generated_response}
+                {selectedInquiry.draft_response || selectedInquiry.generated_response || 'No response drafted.'}
               </div>
 
               {/* Sign-off Actions */}
