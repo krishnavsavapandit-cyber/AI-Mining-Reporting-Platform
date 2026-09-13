@@ -115,8 +115,30 @@ class HybridEmbeddingService:
         self.save_index()
         logger.info(f"Rebuilt index with {len(self.doc_vectors)} chunks, vocab size: {dim}")
 
+    def _attempt_database_reindex(self):
+        """Attempt to restore in-memory vector index from the database if local disk cache is absent."""
+        try:
+            from database.db import get_db
+            with get_db() as conn:
+                rows = conn.execute(
+                    """
+                    SELECT c.id as chunk_id, c.document_id, c.chunk_index, c.page_number, c.section_title, c.content,
+                           d.original_name as document_name, d.subsidiary, d.reporting_period
+                    FROM document_chunks c
+                    JOIN documents d ON c.document_id = d.id
+                    """
+                ).fetchall()
+                if rows:
+                    logger.info(f"Auto-restoring vector index from database with {len(rows)} chunks.")
+                    self.rebuild_index([dict(r) for r in rows])
+        except Exception as e:
+            logger.debug(f"Could not auto-restore vector index from database: {e}")
+
     def query(self, query_text: str, top_k: int = 10, filter_subsidiary: Optional[str] = None, filter_period: Optional[str] = None) -> List[Tuple[Dict[str, Any], float]]:
         """Compute cosine similarity between query and all indexed chunks with subsidiary and period filtering."""
+        if not self.doc_vectors or not self.vocabulary:
+            self._attempt_database_reindex()
+
         if not self.doc_vectors or not self.vocabulary:
             return []
 

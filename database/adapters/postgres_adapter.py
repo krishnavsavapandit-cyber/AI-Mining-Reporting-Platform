@@ -4,6 +4,7 @@ Uses modern psycopg (v3) with fallback to psycopg2.
 Translates SQL parameter markers and provides standard dictionary row access and lastrowid emulation.
 """
 
+import os
 import re
 import threading
 import logging
@@ -173,9 +174,9 @@ class PostgresConnectionWrapper:
 class PostgresAdapter(BaseDatabaseAdapter):
     """PostgreSQL engine adapter with thread-local pooling and automatic dialect adaptation."""
 
-    def __init__(self, config: DatabaseConfig, timeout: int = 3):
+    def __init__(self, config: DatabaseConfig, timeout: Optional[int] = None):
         self.config = config
-        self.timeout = timeout
+        self.timeout = timeout if timeout is not None else int(os.getenv("DB_CONNECT_TIMEOUT", "10"))
         self._local = threading.local()
 
         if not _PSYCOPG_AVAILABLE:
@@ -190,7 +191,12 @@ class PostgresAdapter(BaseDatabaseAdapter):
     def get_connection(self) -> PostgresConnectionWrapper:
         """Return a thread-local PostgreSQL connection with dictionary row formatting."""
         conn_wrapper = getattr(self._local, "conn_wrapper", None)
-        if conn_wrapper is None or conn_wrapper.closed:
+        if conn_wrapper is not None:
+            if conn_wrapper.closed or getattr(conn_wrapper._raw_conn, "closed", False):
+                conn_wrapper = None
+                self._local.conn_wrapper = None
+
+        if conn_wrapper is None:
             try:
                 if _PSYCOPG_VERSION == 3:
                     raw_conn = psycopg.connect(
@@ -259,6 +265,7 @@ class PostgresAdapter(BaseDatabaseAdapter):
             return res is not None and (res.get("probe") == 1 if isinstance(res, dict) else res[0] == 1)
         except Exception as e:
             logger.error(f"PostgreSQL connectivity check failed on {self.config.display_url}: {e}")
+            self.close()
             return False
 
     def close(self) -> None:
@@ -270,3 +277,4 @@ class PostgresAdapter(BaseDatabaseAdapter):
             except Exception:
                 pass
             self._local.conn_wrapper = None
+
