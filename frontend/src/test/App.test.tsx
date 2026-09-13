@@ -171,12 +171,12 @@ describe('CIL Mining Intelligence Platform — Shell & Navigation', () => {
     localStorage.clear();
   });
 
-  it('renders application shell and navigation items with CIL branding', async () => {
+  it('renders application shell and navigation items with CIL branding and defaults to Overview', async () => {
     render(<App />);
 
     expect(screen.getByText('COAL INDIA')).toBeInTheDocument();
     expect(screen.getByText('CMPDI Intelligence Suite')).toBeInTheDocument();
-    expect(screen.getByText(/Command Center/i)).toBeInTheDocument();
+    expect(screen.getByText(/Platform Overview & Architecture/i)).toBeInTheDocument();
   });
 
   it('allows navigating to Document Center and displays document filters', async () => {
@@ -198,11 +198,15 @@ describe('CIL Mining Intelligence Platform — Shell & Navigation', () => {
     expect(localStorage.getItem('cil_user_role')).toBe('OFFICER');
   });
 
-  it('safely renders summary metrics and active pipeline cards', async () => {
+  it('allows navigating to Mining Operations and safely renders summary metrics', async () => {
     render(<App />);
+
+    const opsTab = screen.getByRole('button', { name: /Mining Intelligence Operations/i });
+    fireEvent.click(opsTab);
 
     expect(await screen.findByText(/Mining Intelligence Command & Operations/i, {}, { timeout: 4000 })).toBeInTheDocument();
     expect(screen.getByText(/Total Coal Production/i)).toBeInTheDocument();
   });
 });
+
 

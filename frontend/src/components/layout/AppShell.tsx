@@ -25,7 +25,7 @@ import { analyticsService, settingsService } from '@/services/api';
 import { useToast } from '@/components/ui/ToastContext';
 
 export const AppShell: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<NavigationTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [docCount, setDocCount] = useState(0);
