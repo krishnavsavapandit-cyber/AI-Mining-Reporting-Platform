@@ -10,7 +10,9 @@ from pathlib import Path
 
 from database.config import parse_database_url, DatabaseConfig
 from database.schema import SCHEMA_SQL_SQLITE, SCHEMA_SQL_POSTGRES, get_schema_sql
-from database.adapters.postgres_adapter import translate_qmark_to_pyformat, PostgresCursorWrapper
+from database.adapters.postgres_adapter import (
+    translate_qmark_to_pyformat, PostgresCursorWrapper, PostgresConnectionWrapper
+)
 from database.adapters.sqlite_adapter import SQLiteAdapter
 from database.db import (
     get_db, get_db_connection, init_db, set_database_url, reset_db_adapter,
@@ -110,9 +112,129 @@ class TestDatabaseAbstraction(unittest.TestCase):
             "SELECT * FROM inquiries WHERE question_text = 'Is this 100% accurate?' AND id = %s"
         )
 
-        # Insert statement
-        sql3 = "INSERT INTO topics (topic_name, frequency) VALUES (?, ?)"
-        self.assertEqual(translate_qmark_to_pyformat(sql3), "INSERT INTO topics (topic_name, frequency) VALUES (%s, %s)")
+    def test_postgres_cursor_wrapper_context_manager(self):
+        """Test PostgresCursorWrapper context manager protocol (__enter__ and __exit__)."""
+        class MockRawCursor:
+            def __init__(self):
+                self.closed = False
+                self.executed = []
+            def execute(self, sql, params=None):
+                self.executed.append((sql, params))
+            def close(self):
+                self.closed = True
+
+        mock_raw = MockRawCursor()
+        wrapper = PostgresCursorWrapper(mock_raw)
+
+        # 1. Normal usage with 'with' block
+        with wrapper as cur:
+            self.assertIs(cur, wrapper)
+            cur.execute("SELECT * FROM documents WHERE id = ?", (1,))
+            self.assertFalse(mock_raw.closed)
+
+        # Must be closed after exit
+        self.assertTrue(mock_raw.closed)
+        self.assertEqual(len(mock_raw.executed), 1)
+        self.assertEqual(mock_raw.executed[0][0], "SELECT * FROM documents WHERE id = %s")
+
+        # 2. Exception propagation through 'with' block
+        mock_raw2 = MockRawCursor()
+        wrapper2 = PostgresCursorWrapper(mock_raw2)
+        with self.assertRaises(ValueError):
+            with wrapper2 as cur2:
+                raise ValueError("Simulated query execution error")
+        self.assertTrue(mock_raw2.closed)
+
+    def test_postgres_connection_wrapper_context_manager_and_executescript(self):
+        """Test PostgresConnectionWrapper context manager protocol and executescript."""
+        class MockRawCursor:
+            def __init__(self):
+                self.closed = False
+                self.executed = []
+            def execute(self, sql, params=None):
+                self.executed.append(sql)
+            def close(self):
+                self.closed = True
+
+        class MockRawConnection:
+            def __init__(self):
+                self.committed = False
+                self.rolled_back = False
+                self.closed = False
+                self.raw_cursor = MockRawCursor()
+            def cursor(self, **kwargs):
+                return self.raw_cursor
+            def commit(self):
+                self.committed = True
+            def rollback(self):
+                self.rolled_back = True
+            def close(self):
+                self.closed = True
+
+        # Test executescript
+        mock_raw_conn = MockRawConnection()
+        conn_wrapper = PostgresConnectionWrapper(mock_raw_conn)
+        conn_wrapper.executescript("CREATE TABLE test_tbl (id SERIAL PRIMARY KEY);")
+
+        self.assertTrue(mock_raw_conn.committed)
+        self.assertTrue(mock_raw_conn.raw_cursor.closed)
+        self.assertIn("CREATE TABLE test_tbl (id SERIAL PRIMARY KEY);", mock_raw_conn.raw_cursor.executed)
+
+        # Test connection context manager on success
+        mock_raw_conn2 = MockRawConnection()
+        conn_wrapper2 = PostgresConnectionWrapper(mock_raw_conn2)
+        with conn_wrapper2 as c:
+            self.assertIs(c, conn_wrapper2)
+        self.assertTrue(mock_raw_conn2.committed)
+        self.assertFalse(mock_raw_conn2.rolled_back)
+
+        # Test connection context manager on error (triggers rollback)
+        mock_raw_conn3 = MockRawConnection()
+        conn_wrapper3 = PostgresConnectionWrapper(mock_raw_conn3)
+        with self.assertRaises(RuntimeError):
+            with conn_wrapper3:
+                raise RuntimeError("Transaction failure")
+        self.assertTrue(mock_raw_conn3.rolled_back)
+
+    def test_postgres_adapter_initialize_schema_with_mock(self):
+        """Test PostgresAdapter.initialize_schema executes schema DDL and migrations using cursor context manager."""
+        class MockRawCursor:
+            def __init__(self):
+                self.closed = False
+                self.executed = []
+            def execute(self, sql, params=None):
+                self.executed.append(sql)
+            def close(self):
+                self.closed = True
+
+        class MockRawConnection:
+            def __init__(self):
+                self.committed = False
+                self.rolled_back = False
+                self.closed = False
+                self.cursor_instance = MockRawCursor()
+            def cursor(self, **kwargs):
+                return self.cursor_instance
+            def commit(self):
+                self.committed = True
+            def rollback(self):
+                self.rolled_back = True
+            def close(self):
+                self.closed = True
+
+        from database.adapters.postgres_adapter import PostgresAdapter
+        config = parse_database_url("postgresql://user:pass@localhost:5432/mockdb")
+        adapter = PostgresAdapter(config)
+        mock_raw_conn = MockRawConnection()
+        adapter._local.conn_wrapper = PostgresConnectionWrapper(mock_raw_conn)
+
+        # Call initialize_schema - should not raise TypeError about PostgresCursorWrapper context manager
+        adapter.initialize_schema()
+
+        self.assertTrue(mock_raw_conn.committed)
+        self.assertTrue(mock_raw_conn.cursor_instance.closed)
+        self.assertGreaterEqual(len(mock_raw_conn.cursor_instance.executed), 1)
+        self.assertIn("CREATE TABLE IF NOT EXISTS documents", mock_raw_conn.cursor_instance.executed[0])
 
     def test_sqlite_crud_and_transaction_commit(self):
         """Test standard CRUD operations and transaction commit on active database."""

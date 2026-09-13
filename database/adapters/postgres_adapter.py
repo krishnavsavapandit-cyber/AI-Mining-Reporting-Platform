@@ -66,11 +66,18 @@ def translate_qmark_to_pyformat(sql: str) -> str:
     return "".join(out)
 
 class PostgresCursorWrapper:
-    """Wrapper around psycopg cursor to ensure uniform DB-API behavior and lastrowid emulation."""
+    """Wrapper around psycopg cursor to ensure uniform DB-API behavior, lastrowid emulation, and context manager support."""
 
     def __init__(self, raw_cursor):
         self._raw_cursor = raw_cursor
         self.lastrowid = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
 
     def execute(self, sql: str, params: Optional[Union[Tuple, List, Dict]] = None):
         translated_sql = translate_qmark_to_pyformat(sql)
@@ -102,7 +109,8 @@ class PostgresCursorWrapper:
 
     def executemany(self, sql: str, params_list: List[Any]):
         translated_sql = translate_qmark_to_pyformat(sql)
-        return self._raw_cursor.executemany(translated_sql, params_list)
+        self._raw_cursor.executemany(translated_sql, params_list)
+        return self
 
     def fetchone(self):
         return self._raw_cursor.fetchone()
@@ -122,17 +130,33 @@ class PostgresCursorWrapper:
         return self._raw_cursor.rowcount
 
     def close(self):
-        return self._raw_cursor.close()
+        try:
+            return self._raw_cursor.close()
+        except Exception:
+            pass
 
     def __iter__(self):
         return iter(self._raw_cursor)
 
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._raw_cursor, name)
+
 
 class PostgresConnectionWrapper:
-    """Connection wrapper ensuring thread-local compatibility with SQLite DB-API methods."""
+    """Connection wrapper ensuring thread-local compatibility with SQLite DB-API methods and context manager support."""
 
     def __init__(self, raw_conn):
         self._raw_conn = raw_conn
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            self.rollback()
+        else:
+            self.commit()
+        return False
 
     def cursor(self):
         if _PSYCOPG_VERSION == 3:
@@ -164,11 +188,17 @@ class PostgresConnectionWrapper:
         return self._raw_conn.rollback()
 
     def close(self):
-        return self._raw_conn.close()
+        try:
+            return self._raw_conn.close()
+        except Exception:
+            pass
 
     @property
     def closed(self):
         return getattr(self._raw_conn, "closed", False)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._raw_conn, name)
 
 
 class PostgresAdapter(BaseDatabaseAdapter):
