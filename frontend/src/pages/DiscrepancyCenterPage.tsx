@@ -165,9 +165,9 @@ export const DiscrepancyCenterPage: React.FC = () => {
           description="All extracted numerical facts across indexed documents satisfy schema and mathematical invariants."
         />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(360px, 1fr)', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(0, 1fr)', gap: 24, minWidth: 0, width: '100%' }}>
           {/* Left: Discrepancy Table */}
-          <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column', minWidth: 0, maxWidth: '100%' }}>
             <div className="card-header-clean">
               <div>
                 <h3 className="card-title">Flagged Numerical Discrepancies</h3>
@@ -204,7 +204,7 @@ export const DiscrepancyCenterPage: React.FC = () => {
                         <td className="text-mono" style={{ fontWeight: 700, color: 'var(--accent-teal)' }}>
                           #{iss.id}
                         </td>
-                        <td>
+                        <td style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                           <strong style={{ color: 'var(--text-primary)' }}>{iss.field_name || iss.metric_name}</strong>
                         </td>
                         <td>
@@ -250,17 +250,19 @@ export const DiscrepancyCenterPage: React.FC = () => {
 
           {/* Right: Side-by-Side Evidence Comparison Inspector */}
           {selectedIssue && (
-            <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="card-header-clean">
-                <div>
-                  <h3 className="card-title">Side-by-Side Evidence Comparison</h3>
-                  <span className="card-subtitle">Discrepancy #{selectedIssue.id} • {selectedIssue.field_name}</span>
+            <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0, maxWidth: '100%' }}>
+              <div className="card-header-clean" style={{ minWidth: 0, gap: 10 }}>
+                <div style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+                  <h3 className="card-title" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>Side-by-Side Evidence Comparison</h3>
+                  <span className="card-subtitle" style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                    Discrepancy #{selectedIssue.id} • {selectedIssue.field_name || selectedIssue.metric_name || 'Variance'}
+                  </span>
                 </div>
                 <Badge variant="warning">{selectedIssue.status || 'UNRESOLVED'}</Badge>
               </div>
 
               {/* Source A vs Source B Comparison Boxes */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0, width: '100%' }}>
                 {/* Doc A */}
                 <div
                   style={{
@@ -268,33 +270,51 @@ export const DiscrepancyCenterPage: React.FC = () => {
                     backgroundColor: 'var(--bg-surface-2)',
                     border: '1px solid var(--border-hairline)',
                     borderRadius: 'var(--radius-sm)',
+                    minWidth: 0,
+                    maxWidth: '100%',
+                    overflow: 'hidden',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                       SOURCE A (PRIMARY INGESTION)
                     </span>
-                    <span className="text-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    <span className="text-mono" style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
                       Page {selectedIssue.doc_a_page || 1}
                     </span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      marginBottom: 8,
+                      overflowWrap: 'anywhere',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.4,
+                    }}
+                  >
                     {selectedIssue.doc_a_name}
                   </div>
                   <div
                     className="text-mono"
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 700,
                       color: 'var(--accent-primary)',
-                      padding: '4px 8px',
+                      padding: '6px 10px',
                       backgroundColor: 'var(--bg-surface)',
                       borderRadius: 4,
-                      display: 'inline-block',
+                      display: 'block',
                       border: '1px solid var(--border-hairline)',
+                      overflowWrap: 'anywhere',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.4,
+                      maxWidth: '100%',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    {selectedIssue.doc_a_value}
+                    {selectedIssue.doc_a_value ?? 'N/A'}
                   </div>
                 </div>
 
@@ -305,33 +325,51 @@ export const DiscrepancyCenterPage: React.FC = () => {
                     backgroundColor: 'var(--bg-surface-2)',
                     border: '1px solid rgba(217, 164, 65, 0.3)',
                     borderRadius: 'var(--radius-sm)',
+                    minWidth: 0,
+                    maxWidth: '100%',
+                    overflow: 'hidden',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--status-warning)', textTransform: 'uppercase' }}>
                       SOURCE B (CROSS-CHECK RECORD)
                     </span>
-                    <span className="text-mono" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    <span className="text-mono" style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
                       Page {selectedIssue.doc_b_page || 1}
                     </span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      marginBottom: 8,
+                      overflowWrap: 'anywhere',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.4,
+                    }}
+                  >
                     {selectedIssue.doc_b_name}
                   </div>
                   <div
                     className="text-mono"
                     style={{
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: 700,
                       color: 'var(--status-warning)',
-                      padding: '4px 8px',
+                      padding: '6px 10px',
                       backgroundColor: 'var(--bg-surface)',
                       borderRadius: 4,
-                      display: 'inline-block',
+                      display: 'block',
                       border: '1px solid rgba(217, 164, 65, 0.3)',
+                      overflowWrap: 'anywhere',
+                      wordBreak: 'break-word',
+                      lineHeight: 1.4,
+                      maxWidth: '100%',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    {selectedIssue.doc_b_value}
+                    {selectedIssue.doc_b_value ?? 'N/A'}
                   </div>
                 </div>
               </div>
@@ -347,6 +385,11 @@ export const DiscrepancyCenterPage: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   fontSize: 12,
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  flexWrap: 'wrap',
+                  gap: 8,
                 }}
               >
                 <span style={{ color: 'var(--text-secondary)' }}>Calculated Variance:</span>

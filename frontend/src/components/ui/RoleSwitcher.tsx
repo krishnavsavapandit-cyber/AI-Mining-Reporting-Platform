@@ -54,15 +54,17 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
   compact = false,
   onRoleChange,
 }) => {
-  const { role, setRole, isPublicViewerAccount } = useAuth();
+  const { role, setRole, user } = useAuth();
   const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const authorizedRole = user ? user.authorizedRole : 'VIEWER';
   const currentRole = ROLES.find((r) => r.role === role) || ROLES[3];
   const CurrentIcon = currentRole.icon;
 
   const isSidebar = variant === 'sidebar';
+  const isPublicViewerAccount = !user || user.accountType === 'PUBLIC_VIEWER' || user.authorizedRole === 'VIEWER';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -88,11 +90,16 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
   const handleRestrictedClick = (roleTitle: string) => {
     toast.error(
       'Access Restricted',
-      `Authority credentials required. '${roleTitle}' perspective is only accessible to authorized CIL/CMPDI personnel.`
+      `Clearance restricted. '${roleTitle}' perspective requires dedicated credentials. Current session is authorized as ${authorizedRole}.`
     );
   };
 
   const handleSelectRole = (newRole: UserRole) => {
+    if (newRole !== authorizedRole) {
+      const target = ROLES.find((r) => r.role === newRole);
+      handleRestrictedClick(target?.title || newRole);
+      return;
+    }
     const success = setRole(newRole);
     if (!success) {
       const target = ROLES.find((r) => r.role === newRole);
@@ -288,11 +295,11 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
 
           {/* Role List */}
           {ROLES.map((item) => {
-            const isSelected = item.role === role;
-            const isRestricted = isPublicViewerAccount && item.role !== 'VIEWER';
+            const isSelected = item.role === authorizedRole;
+            const isRestricted = item.role !== authorizedRole;
             const ItemIcon = item.icon;
 
-            // RESTRICTED TREATMENT (For Public Viewer accounts accessing internal roles)
+            // RESTRICTED TREATMENT (For any role not matching the authenticated authorizedRole)
             if (isRestricted) {
               return (
                 <div
@@ -315,7 +322,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
                     backgroundColor: 'transparent',
                     border: '1px solid transparent',
                     cursor: 'not-allowed',
-                    opacity: 0.5,
+                    opacity: 0.45,
                     userSelect: 'none',
                     transition: 'none',
                   }}
@@ -353,7 +360,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
                           color: 'var(--text-muted)',
                         }}
                       >
-                        Authority clearance required
+                        {item.description} • Required
                       </span>
                     </div>
                   </div>
@@ -365,9 +372,9 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
                       letterSpacing: '0.04em',
                       padding: '2px 5px',
                       borderRadius: 'var(--radius-sm)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid var(--border-hairline)',
-                      color: 'var(--text-muted)',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      color: 'var(--status-error)',
                       textTransform: 'uppercase',
                       flexShrink: 0,
                     }}

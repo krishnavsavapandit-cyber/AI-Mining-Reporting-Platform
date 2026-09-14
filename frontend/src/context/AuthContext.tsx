@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Determine whether current session is a public viewer account (or unauthenticated visitor)
   const isPublicViewerAccount = !user || user.accountType === 'PUBLIC_VIEWER' || user.authorizedRole === 'VIEWER';
 
-  // 2. Active Role (Strictly Guarded by Account Type)
+  // 2. Active Role (Strictly Guarded by Authenticated User Clearance)
   const [role, setRoleState] = useState<UserRole>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -78,32 +78,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
             return 'VIEWER';
           }
-          // Authority account with saved perspective
-          const savedRole = localStorage.getItem(STORAGE_KEY_ROLE) as UserRole;
-          if (savedRole && ROLE_DEFINITIONS[savedRole.toUpperCase() as UserRole]) {
-            return savedRole.toUpperCase() as UserRole;
-          }
-          return parsedUser.authorizedRole || 'ANALYST';
+          const authRole = parsedUser.authorizedRole || 'VIEWER';
+          localStorage.setItem(STORAGE_KEY_ROLE, authRole);
+          return authRole;
         }
       } catch {
         // Fallback
       }
     }
-    // Default fallback: If no authenticated authority user, default to VIEWER
+    // Default fallback: If no authenticated user, default to VIEWER
     return 'VIEWER';
   });
 
-  // Guard: Continuously enforce VIEWER role whenever isPublicViewerAccount is true
+  // Guard: Continuously enforce authorized role
   useEffect(() => {
-    if (isPublicViewerAccount) {
-      if (role !== 'VIEWER') {
-        setRoleState('VIEWER');
-      }
+    const expectedRole = user ? user.authorizedRole : 'VIEWER';
+    if (role !== expectedRole) {
+      setRoleState(expectedRole);
       if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
+        localStorage.setItem(STORAGE_KEY_ROLE, expectedRole);
       }
     }
-  }, [isPublicViewerAccount, role]);
+  }, [user, role]);
 
   // Sync session with backend on mount
   useEffect(() => {
@@ -140,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = useCallback((newUser: AuthUser, token?: string) => {
     setUserState(newUser);
     const assignedRole =
-      newUser.accountType === 'PUBLIC_VIEWER' ? 'VIEWER' : newUser.authorizedRole || 'ANALYST';
+      newUser.accountType === 'PUBLIC_VIEWER' ? 'VIEWER' : newUser.authorizedRole || 'VIEWER';
     setRoleState(assignedRole);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(newUser));
@@ -166,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /**
    * Set Role with Strict Access Control Enforcement
-   * Returns `false` if privilege escalation is rejected.
+   * Returns `false` if privilege escalation or switching to an unauthorized role is attempted.
    */
   const setRole = useCallback(
     (newRole: UserRole): boolean => {
@@ -175,36 +171,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // CRITICAL SECURITY ENFORCEMENT:
-      // If user has a Public Viewer account, they are strictly locked to VIEWER
-      if (isPublicViewerAccount) {
-        if (normalized !== 'VIEWER') {
-          console.warn(
-            `[RBAC SECURITY VIOLATION] Public account attempted unauthorized escalation to '${normalized}'. Escalation rejected.`
-          );
-          setRoleState('VIEWER');
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
-          }
-          return false;
-        }
-        setRoleState('VIEWER');
-        return true;
+      const activeAuthorized = user ? user.authorizedRole : 'VIEWER';
+      if (normalized !== activeAuthorized) {
+        console.warn(
+          `[RBAC SECURITY VIOLATION] Session authorized as '${activeAuthorized}' attempted unauthorized switch to '${normalized}'. Action rejected.`
+        );
+        return false;
       }
 
-      // For Authority / Demo mode: Allow UI perspective switching for demo views.
-      // Server-side endpoints strictly enforce genuine session clearance.
       setRoleState(normalized);
       if (typeof window !== 'undefined') {
         localStorage.setItem(STORAGE_KEY_ROLE, normalized);
       }
       return true;
     },
-    [isPublicViewerAccount]
+    [user]
   );
 
   const value = useMemo(() => {
-    const effectiveRole = isPublicViewerAccount ? 'VIEWER' : role;
+    const effectiveRole = user ? user.authorizedRole : 'VIEWER';
     const roleInfo = ROLE_DEFINITIONS[effectiveRole] || ROLE_DEFINITIONS.VIEWER;
     const level = roleInfo.level;
 
