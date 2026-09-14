@@ -9,8 +9,12 @@ import time
 import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
-from PIL import Image
-import pymupdf
+try:
+    import pymupdf
+    PYMUPDF_AVAILABLE = True
+except (ImportError, Exception) as _e:
+    pymupdf = None
+    PYMUPDF_AVAILABLE = False
 
 from config.settings import (
     OCR_ENGINE as CONFIG_OCR_ENGINE,
@@ -89,7 +93,7 @@ class OCRService:
 
         # 1. Convert input to PIL Image safely
         try:
-            if isinstance(image_or_pixmap, pymupdf.Pixmap):
+            if pymupdf is not None and isinstance(image_or_pixmap, pymupdf.Pixmap):
                 img_bytes = image_or_pixmap.tobytes("png")
                 img = Image.open(io.BytesIO(img_bytes))
             elif isinstance(image_or_pixmap, bytes):

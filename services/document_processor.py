@@ -10,8 +10,12 @@ import re
 import hashlib
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Tuple, Optional
-import pymupdf  # PyMuPDF
+try:
+    import pymupdf  # PyMuPDF
+    PYMUPDF_AVAILABLE = True
+except (ImportError, Exception) as _e:
+    pymupdf = None
+    PYMUPDF_AVAILABLE = False
 import docx
 import pandas as pd
 from PIL import Image
@@ -95,6 +99,16 @@ class DocumentProcessor:
             return {
                 "status": "FAILED",
                 "error": "PDF file is empty (0 bytes).",
+                "pages": [],
+                "full_text": "",
+                "chunks": [],
+                "page_count": 0
+            }
+
+        if not PYMUPDF_AVAILABLE or pymupdf is None:
+            return {
+                "status": "FAILED",
+                "error": "PyMuPDF engine is not available in current environment.",
                 "pages": [],
                 "full_text": "",
                 "chunks": [],

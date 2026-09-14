@@ -19,8 +19,9 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { MiningLogo } from '@/components/ui/MiningLogo';
+import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { NavigationTab } from '@/components/layout/Sidebar';
-import { useAuth } from '@/context/AuthContext';
+import { MiningCartTrack } from '@/components/landing/MiningCartTrack';
 
 interface GeoNexusLandingProps {
   onEnterWorkspace: (targetTab?: NavigationTab) => void;
@@ -37,8 +38,6 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
   aiProviderName = 'Gemini Grounded Engine',
   aiProviderOnline = true,
 }) => {
-  const { role, setRole } = useAuth();
-
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -58,9 +57,9 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          backgroundImage: 'linear-gradient(to bottom, rgba(11, 14, 20, 0.75) 0%, rgba(11, 14, 20, 0.6) 40%, rgba(11, 14, 20, 0.98) 100%), url("/assets/hero_mine.jpg")',
+          backgroundImage: 'linear-gradient(to bottom, rgba(7, 10, 15, 0.82) 0%, rgba(11, 16, 26, 0.62) 42%, rgba(7, 10, 15, 0.98) 100%), url("/images/open_surface_mine.jpg")',
           backgroundSize: 'cover',
-          backgroundPosition: 'center 40%',
+          backgroundPosition: 'center 42%',
           borderBottom: '1px solid var(--border-hairline)',
         }}
       >
@@ -164,31 +163,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           {/* Right Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             {/* Quick Role Switcher */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Role:
-              </span>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as any)}
-                style={{
-                  padding: '5px 8px',
-                  backgroundColor: 'rgba(23, 31, 44, 0.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--text-primary)',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="ANALYST">Mining Analyst</option>
-                <option value="OFFICER">Reviewing Officer</option>
-                <option value="ADMIN">System Admin</option>
-                <option value="VIEWER">Public Auditor</option>
-              </select>
-            </div>
+            <RoleSwitcher compact />
 
             <button
               className="btn btn-primary"
@@ -357,63 +332,20 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
       </section>
 
       {/* =========================================================================
-          2. MINE-CART VISUAL & GEOLOGICAL STRATA TRANSITION (Exact Reference Section)
+          2. MINE-CART VISUAL & SUBTERRANEAN INTELLIGENCE PIPELINE
           ========================================================================= */}
       <section
         id="mine-cart-section"
         style={{
           position: 'relative',
-          padding: '70px 24px 80px',
-          backgroundColor: '#F3F4F6',
-          color: '#111827',
-          borderBottom: '1px solid #E5E7EB',
+          padding: '60px 24px 70px',
+          backgroundColor: '#0A0E17',
+          borderBottom: '1px solid var(--border-hairline)',
           overflow: 'hidden',
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ marginBottom: 28 }}>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                color: '#059669',
-                display: 'block',
-                marginBottom: 6,
-              }}
-            >
-              MINE-CART VISUAL
-            </span>
-            <p style={{ fontSize: 14, color: '#4B5563', maxWidth: '640px', margin: '0 auto' }}>
-              Subtle underground mining strata to accent visual transitions across geological layers and analytical depths.
-            </p>
-          </div>
-
-          {/* Mine Cart Image on Geological Strata */}
-          <div
-            style={{
-              position: 'relative',
-              borderRadius: 'var(--radius-md)',
-              overflow: 'hidden',
-              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12)',
-              border: '1px solid #E5E7EB',
-              backgroundColor: '#FFFFFF',
-              maxHeight: '440px',
-            }}
-          >
-            <img
-              src="/assets/mine_cart.jpg"
-              alt="Industrial Coal Cart on Geological Strata Rails"
-              style={{
-                width: '100%',
-                height: '100%',
-                maxHeight: '440px',
-                objectFit: 'cover',
-                display: 'block',
-              }}
-            />
-          </div>
+        <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+          <MiningCartTrack />
         </div>
       </section>
 

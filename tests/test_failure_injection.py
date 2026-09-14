@@ -253,6 +253,7 @@ class TestFailureInjection(unittest.TestCase):
         import io
         from app import app
         client = app.test_client()
+        client.post("/api/auth/authority/login", json={"email": "admin@cil.gov.in", "password": "authority2026"})
         content = b"Coal India Production Report Sample Bytes 123456789"
 
         # First upload
@@ -282,6 +283,7 @@ class TestFailureInjection(unittest.TestCase):
         import io
         from app import app
         client = app.test_client()
+        client.post("/api/auth/authority/login", json={"email": "admin@cil.gov.in", "password": "authority2026"})
         content = b"Coal India Force Upload Bypass Test Bytes 987654321"
 
         client.post(
@@ -305,9 +307,11 @@ class TestFailureInjection(unittest.TestCase):
         """Failure Injection 15: Read-only VIEWER role cannot cancel workflows (HTTP 403)."""
         from app import app
         client = app.test_client()
+        login_res = client.post("/api/auth/public/login", json={"email": "viewer@public.cil.gov.in"})
+        token = login_res.get_json()["token"]
         res = client.post(
             "/api/agents/workflows/wf_dummy_123/cancel",
-            headers={"X-User-Role": "VIEWER"}
+            headers={"Authorization": f"Bearer {token}"}
         )
         self.assertEqual(res.status_code, 403)
         self.assertEqual(res.get_json()["error_code"], "FORBIDDEN")
@@ -316,10 +320,12 @@ class TestFailureInjection(unittest.TestCase):
         """Failure Injection 16: Read-only VIEWER role cannot pause workflows (HTTP 403)."""
         from app import app
         client = app.test_client()
+        login_res = client.post("/api/auth/public/login", json={"email": "viewer@public.cil.gov.in"})
+        token = login_res.get_json()["token"]
         res = client.post(
             "/api/agents/workflows/wf_dummy_123/pause",
             json={"reason": "Unauthorized attempt"},
-            headers={"X-User-Role": "VIEWER"}
+            headers={"Authorization": f"Bearer {token}"}
         )
         self.assertEqual(res.status_code, 403)
         self.assertEqual(res.get_json()["error_code"], "FORBIDDEN")

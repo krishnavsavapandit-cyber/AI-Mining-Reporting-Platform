@@ -51,15 +51,49 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
     }
   }
 
-  // Active Role Resolution
-  const activeRole: UserRole =
-    userRole ||
-    (typeof window !== 'undefined'
-      ? (localStorage.getItem('cil_user_role') as UserRole) || 'ANALYST'
-      : 'ANALYST');
+  // Active Role and Account Resolution
+  let activeRole: UserRole = 'VIEWER';
+  let accountType = 'PUBLIC_VIEWER';
+
+  if (typeof window !== 'undefined') {
+    try {
+      const userStr = localStorage.getItem('cil_auth_user');
+      if (userStr) {
+        const parsed = JSON.parse(userStr);
+        accountType = parsed.accountType || 'PUBLIC_VIEWER';
+        if (accountType === 'PUBLIC_VIEWER' || parsed.authorizedRole === 'VIEWER') {
+          activeRole = 'VIEWER';
+        } else {
+          activeRole = userRole || (localStorage.getItem('cil_user_role') as UserRole) || parsed.authorizedRole || 'ANALYST';
+        }
+      } else {
+        // Unauthenticated session -> least privilege VIEWER
+        activeRole = 'VIEWER';
+        accountType = 'PUBLIC_VIEWER';
+      }
+    } catch {
+      activeRole = 'VIEWER';
+      accountType = 'PUBLIC_VIEWER';
+    }
+  }
+
+  // Cryptographic Bearer Token (Server-Verified Session)
+  let authToken: string | null = null;
+  if (typeof window !== 'undefined') {
+    try {
+      authToken = localStorage.getItem('cil_auth_token');
+    } catch {
+      // Ignored
+    }
+  }
 
   const headers = new Headers(customHeaders);
+  if (authToken) {
+    headers.set('Authorization', `Bearer ${authToken}`);
+    headers.set('X-Auth-Token', authToken);
+  }
   headers.set('X-User-Role', activeRole);
+  headers.set('X-Account-Type', accountType);
 
   if (!headers.has('Accept')) {
     headers.set('Accept', 'application/json');
@@ -75,6 +109,7 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
 
   try {
     const response = await fetch(url, {
+      credentials: 'include',
       ...fetchOptions,
       headers,
       signal: controller.signal,

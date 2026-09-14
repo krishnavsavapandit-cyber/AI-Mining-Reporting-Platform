@@ -34,32 +34,46 @@ class TestAdvancedOCR(unittest.TestCase):
 
     def _create_synthetic_test_images(self):
         """Generate test images for normal, low-contrast, noisy, and rotated conditions."""
+        # Helper to safely save
+        def _safe_save(img, path):
+            try:
+                img.save(path)
+            except PermissionError:
+                pass
+
         # 1. Clear Normal Image
-        img_normal = Image.new("RGB", (800, 300), color=(255, 255, 255))
-        d_normal = ImageDraw.Draw(img_normal)
-        d_normal.text((40, 80), "ECL RAJMAHAL COAL PRODUCTION: 3.42 MT", fill=(0, 0, 0))
         self.normal_path = self.test_img_dir / "test_normal.png"
-        img_normal.save(self.normal_path)
+        if not self.normal_path.exists():
+            img_normal = Image.new("RGB", (800, 300), color=(255, 255, 255))
+            d_normal = ImageDraw.Draw(img_normal)
+            d_normal.text((40, 80), "ECL RAJMAHAL COAL PRODUCTION: 3.42 MT", fill=(0, 0, 0))
+            _safe_save(img_normal, self.normal_path)
 
         # 2. Low Contrast Faded Image
-        img_faded = Image.new("RGB", (800, 300), color=(220, 220, 220))
-        d_faded = ImageDraw.Draw(img_faded)
-        d_faded.text((40, 80), "ECL OVERBURDEN REMOVAL: 8.15 M.Cu.M", fill=(190, 190, 190))
         self.faded_path = self.test_img_dir / "test_faded.png"
-        img_faded.save(self.faded_path)
+        if not self.faded_path.exists():
+            img_faded = Image.new("RGB", (800, 300), color=(220, 220, 220))
+            d_faded = ImageDraw.Draw(img_faded)
+            d_faded.text((40, 80), "ECL OVERBURDEN REMOVAL: 8.15 M.Cu.M", fill=(190, 190, 190))
+            _safe_save(img_faded, self.faded_path)
 
         # 3. Noisy Scan Image
-        arr = np.random.randint(180, 255, (300, 800), dtype=np.uint8)
-        img_noisy = Image.fromarray(arr).convert("RGB")
-        d_noisy = ImageDraw.Draw(img_noisy)
-        d_noisy.text((40, 80), "SECL GEVRA OCP PRODUCTION: 12.50 MT", fill=(0, 0, 0))
         self.noisy_path = self.test_img_dir / "test_noisy.png"
-        img_noisy.save(self.noisy_path)
+        if not self.noisy_path.exists():
+            arr = np.random.randint(180, 255, (300, 800), dtype=np.uint8)
+            img_noisy = Image.fromarray(arr).convert("RGB")
+            d_noisy = ImageDraw.Draw(img_noisy)
+            d_noisy.text((40, 80), "SECL GEVRA OCP PRODUCTION: 12.50 MT", fill=(0, 0, 0))
+            _safe_save(img_noisy, self.noisy_path)
 
         # 4. Rotated Image (90 degrees)
-        img_rot = img_normal.rotate(90, expand=True)
         self.rotated_path = self.test_img_dir / "test_rotated.png"
-        img_rot.save(self.rotated_path)
+        if not self.rotated_path.exists():
+            img_normal = Image.new("RGB", (800, 300), color=(255, 255, 255))
+            d_normal = ImageDraw.Draw(img_normal)
+            d_normal.text((40, 80), "ECL RAJMAHAL COAL PRODUCTION: 3.42 MT", fill=(0, 0, 0))
+            img_rot = img_normal.rotate(90, expand=True)
+            _safe_save(img_rot, self.rotated_path)
 
     def test_image_preprocessor_grayscale_and_contrast(self):
         """Verify ImagePreprocessor applies grayscale conversion and contrast enhancement without errors."""

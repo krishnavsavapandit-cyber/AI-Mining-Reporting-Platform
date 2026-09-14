@@ -35,8 +35,22 @@ def get_database_backend() -> str:
 
 DATABASE_BACKEND = get_database_backend()
 
-# Flask Settings
-SECRET_KEY = os.getenv("SECRET_KEY", "sih26023-cil-cmpdi-secure-key-2026")
+# Flask & Environment Settings
+ENV = os.getenv("FLASK_ENV", os.getenv("ENVIRONMENT", "development")).lower()
+IS_PRODUCTION = ENV in ("production", "prod")
+
+_ENV_SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("FLASK_SECRET_KEY")
+if IS_PRODUCTION:
+    if not _ENV_SECRET_KEY or _ENV_SECRET_KEY in ("sih26023-cil-cmpdi-secure-key-2026", "dev", "default"):
+        raise RuntimeError(
+            "CRITICAL SECURITY CONFIGURATION ERROR: A cryptographically strong, non-default SECRET_KEY "
+            "environment variable MUST be set in production environments."
+        )
+    SECRET_KEY = _ENV_SECRET_KEY
+else:
+    # Development fallback for local development only
+    SECRET_KEY = _ENV_SECRET_KEY or "sih26023-cil-cmpdi-secure-key-2026"
+
 MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 50 * 1024 * 1024)) # 50 MB
 ALLOWED_EXTENSIONS = {"pdf", "docx", "csv", "xlsx", "xls", "png", "jpg", "jpeg", "txt"}
 

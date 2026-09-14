@@ -1,4 +1,5 @@
 # Routes Package
+from .auth_routes import auth_bp
 from .document_routes import document_bp
 from .search_routes import search_bp
 from .query_routes import query_bp

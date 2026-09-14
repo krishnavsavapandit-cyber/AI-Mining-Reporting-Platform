@@ -19,7 +19,7 @@ from flask import Flask, render_template, send_from_directory, jsonify
 from config.settings import SECRET_KEY, MAX_CONTENT_LENGTH, DATABASE_PATH
 from database.db import init_db
 from routes import (
-    document_bp, search_bp, query_bp, report_bp, topic_bp,
+    auth_bp, document_bp, search_bp, query_bp, report_bp, topic_bp,
     analytics_bp, inquiry_bp, validation_bp, audit_bp, agent_bp, settings_bp
 )
 
@@ -33,6 +33,7 @@ def create_app() -> Flask:
     init_db()
 
     # Register API Blueprints
+    app.register_blueprint(auth_bp)
     app.register_blueprint(document_bp)
     app.register_blueprint(search_bp)
     app.register_blueprint(query_bp)
@@ -46,6 +47,8 @@ def create_app() -> Flask:
     app.register_blueprint(settings_bp)
 
     frontend_dist = BASE_DIR / "frontend" / "dist"
+    frontend_public = BASE_DIR / "frontend" / "public"
+    static_dir = BASE_DIR / "static"
 
     @app.route("/")
     def index():
@@ -54,13 +57,37 @@ def create_app() -> Flask:
             return send_from_directory(str(frontend_dist), "index.html")
         return render_template("index.html")
 
+    @app.route("/images/<path:filename>")
+    def serve_images(filename):
+        """Serve image assets with cascading fallback."""
+        candidates = [
+            frontend_dist / "images",
+            frontend_public / "images",
+            static_dir / "images",
+            frontend_dist / "assets",
+            frontend_public / "assets",
+            static_dir / "assets",
+        ]
+        for candidate in candidates:
+            if (candidate / filename).exists():
+                return send_from_directory(str(candidate), filename)
+        return jsonify({"status": "error", "message": f"Image '{filename}' not found"}), 404
+
     @app.route("/assets/<path:filename>")
     def frontend_assets(filename):
-        """Serve built React assets."""
-        assets_dir = frontend_dist / "assets"
-        if assets_dir.exists():
-            return send_from_directory(str(assets_dir), filename)
-        return jsonify({"status": "error", "message": "Asset not found"}), 404
+        """Serve built React assets and media with cascading fallback."""
+        candidates = [
+            frontend_dist / "assets",
+            frontend_public / "assets",
+            static_dir / "assets",
+            frontend_dist / "images",
+            frontend_public / "images",
+            static_dir / "images",
+        ]
+        for candidate in candidates:
+            if (candidate / filename).exists():
+                return send_from_directory(str(candidate), filename)
+        return jsonify({"status": "error", "message": f"Asset '{filename}' not found"}), 404
 
     @app.route("/legacy")
     def legacy_index():
@@ -70,10 +97,30 @@ def create_app() -> Flask:
     @app.route("/favicon.ico")
     def favicon():
         """Handle favicon requests gracefully."""
+        candidates = [
+            frontend_dist / "favicon.ico",
+            frontend_public / "favicon.ico",
+            static_dir / "favicon.ico",
+        ]
+        for candidate in candidates:
+            if candidate.exists():
+                return send_from_directory(str(candidate.parent), candidate.name)
         return ('', 204)
+
+    # SPA Client Route Catch-all fallback
+    @app.route("/<path:path>")
+    def catch_all(path):
+        """Fallback to React SPA index.html for client-side navigation routes."""
+        if path.startswith("api/"):
+            return jsonify({"status": "error", "message": "API endpoint not found"}), 404
+        if (frontend_dist / "index.html").exists():
+            return send_from_directory(str(frontend_dist), "index.html")
+        return render_template("index.html")
 
     @app.errorhandler(404)
     def not_found(e):
+        if (frontend_dist / "index.html").exists():
+            return send_from_directory(str(frontend_dist), "index.html")
         return jsonify({"status": "error", "message": "Endpoint not found"}), 404
 
     @app.errorhandler(500)

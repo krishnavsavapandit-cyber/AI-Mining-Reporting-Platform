@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShieldCheck, Briefcase, Cpu, Eye, Check, ChevronDown } from 'lucide-react';
+import { ShieldCheck, Briefcase, Cpu, Eye, Check, ChevronDown, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/components/ui/ToastContext';
 import { UserRole } from '@/types';
 
-interface RoleOption {
+export interface RoleOption {
   role: UserRole;
   title: string;
   description: string;
@@ -11,7 +12,7 @@ interface RoleOption {
   accentColor: string;
 }
 
-const ROLES: RoleOption[] = [
+export const ROLES: RoleOption[] = [
   {
     role: 'ANALYST',
     title: 'Mining Analyst',
@@ -35,25 +36,33 @@ const ROLES: RoleOption[] = [
   },
   {
     role: 'VIEWER',
-    title: 'Auditor / Viewer',
+    title: 'Public Auditor',
     description: 'Read-only audit transparency',
     icon: Eye,
     accentColor: 'var(--text-secondary)',
   },
 ];
 
-interface RoleSwitcherProps {
+export interface RoleSwitcherProps {
+  variant?: 'topbar' | 'sidebar';
   compact?: boolean;
   onRoleChange?: (newRole: UserRole) => void;
 }
 
-export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onRoleChange }) => {
-  const { role, setRole } = useAuth();
+export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({
+  variant = 'topbar',
+  compact = false,
+  onRoleChange,
+}) => {
+  const { role, setRole, isPublicViewerAccount } = useAuth();
+  const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const currentRole = ROLES.find((r) => r.role === role) || ROLES[1];
+  const currentRole = ROLES.find((r) => r.role === role) || ROLES[3];
   const CurrentIcon = currentRole.icon;
+
+  const isSidebar = variant === 'sidebar';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -76,8 +85,20 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
     };
   }, []);
 
+  const handleRestrictedClick = (roleTitle: string) => {
+    toast.error(
+      'Access Restricted',
+      `Authority credentials required. '${roleTitle}' perspective is only accessible to authorized CIL/CMPDI personnel.`
+    );
+  };
+
   const handleSelectRole = (newRole: UserRole) => {
-    setRole(newRole);
+    const success = setRole(newRole);
+    if (!success) {
+      const target = ROLES.find((r) => r.role === newRole);
+      handleRestrictedClick(target?.title || newRole);
+      return;
+    }
     if (onRoleChange) {
       onRoleChange(newRole);
     }
@@ -89,33 +110,71 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
       ref={containerRef}
       style={{
         position: 'relative',
-        display: 'inline-block',
+        display: isSidebar ? 'block' : 'inline-block',
+        width: isSidebar ? '100%' : 'auto',
         zIndex: 50,
       }}
     >
+      {/* Sidebar Mode: Section Label */}
+      {isSidebar && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 2px 4px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: 9,
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            ROLE PERSPECTIVE
+          </span>
+          {isPublicViewerAccount && (
+            <span
+              style={{
+                fontSize: 8,
+                fontWeight: 700,
+                color: 'var(--status-warning)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Auditor Only
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Trigger Button */}
       <button
         type="button"
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        aria-label="Active Role Perspective Switcher"
+        aria-label="Switch Role Perspective"
         onClick={() => setIsOpen(!isOpen)}
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: compact ? 6 : 8,
-          padding: compact ? '4px 8px' : '5px 12px',
+          padding: isSidebar ? '6px 8px' : compact ? '4px 8px' : '5px 12px',
           backgroundColor: isOpen ? 'var(--graphite)' : 'var(--bg-surface-2)',
           border: `1px solid ${isOpen ? currentRole.accentColor : 'var(--border-hairline-alt)'}`,
           borderRadius: 'var(--radius-sm)',
           color: 'var(--text-primary)',
-          fontSize: compact ? 11 : 12,
+          fontSize: compact || isSidebar ? 11 : 12,
           fontWeight: 600,
           cursor: 'pointer',
           outline: 'none',
           transition: 'all 0.15s ease',
-          width: compact ? '100%' : 'auto',
+          width: isSidebar || compact ? '100%' : 'auto',
           justifyContent: 'space-between',
         }}
         onMouseEnter={(e) => {
@@ -129,11 +188,32 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
           }
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <CurrentIcon size={compact ? 13 : 15} style={{ color: currentRole.accentColor }} />
-          <span style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-            {compact ? currentRole.title.split('/')[0].trim() : currentRole.title}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+          <CurrentIcon size={compact || isSidebar ? 13 : 15} style={{ color: currentRole.accentColor, flexShrink: 0 }} />
+          <span
+            style={{
+              color: 'var(--text-primary)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {currentRole.title}
           </span>
+          {isPublicViewerAccount && !isSidebar && (
+            <span
+              style={{
+                fontSize: 9,
+                padding: '1px 5px',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: 'var(--text-muted)',
+                flexShrink: 0,
+              }}
+            >
+              Public
+            </span>
+          )}
         </div>
         <ChevronDown
           size={13}
@@ -141,21 +221,23 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
             color: 'var(--text-muted)',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.15s ease',
+            flexShrink: 0,
           }}
         />
       </button>
 
-      {/* Dark Graphite Dropdown Menu */}
+      {/* Dark Graphite Accessible Dropdown Menu */}
       {isOpen && (
         <div
           role="listbox"
-          aria-label="Select User Role"
+          aria-label="Role Perspective Options"
           style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
-            right: compact ? 'auto' : 0,
-            left: compact ? 0 : 'auto',
-            width: 250,
+            right: isSidebar ? 'auto' : 0,
+            left: isSidebar ? 0 : 'auto',
+            width: isSidebar ? '100%' : 290,
+            minWidth: 260,
             backgroundColor: 'var(--bg-surface)',
             border: '1px solid var(--border-hairline-alt)',
             borderRadius: 'var(--radius-md)',
@@ -164,14 +246,15 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
             padding: '6px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '2px',
+            gap: '3px',
             animation: 'fadeIn 0.15s ease-out',
             zIndex: 1000,
           }}
         >
+          {/* Header Row */}
           <div
             style={{
-              padding: '6px 8px 4px',
+              padding: '6px 8px 5px',
               fontSize: 10,
               fontWeight: 700,
               color: 'var(--text-muted)',
@@ -179,21 +262,130 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
               textTransform: 'uppercase',
               borderBottom: '1px solid var(--border-hairline)',
               marginBottom: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            Switch Role Perspective
+            <span>ROLE PERSPECTIVE</span>
+            {isPublicViewerAccount ? (
+              <span
+                style={{
+                  fontSize: 9,
+                  color: 'var(--status-warning)',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                PUBLIC AUDITOR
+              </span>
+            ) : (
+              <span style={{ fontSize: 9, color: 'var(--accent-primary)', fontWeight: 600 }}>
+                AUTHORITY ACCESS
+              </span>
+            )}
           </div>
 
+          {/* Role List */}
           {ROLES.map((item) => {
             const isSelected = item.role === role;
+            const isRestricted = isPublicViewerAccount && item.role !== 'VIEWER';
             const ItemIcon = item.icon;
 
+            // RESTRICTED TREATMENT (For Public Viewer accounts accessing internal roles)
+            if (isRestricted) {
+              return (
+                <div
+                  key={item.role}
+                  role="option"
+                  aria-selected={false}
+                  aria-disabled="true"
+                  data-testid={`role-option-${item.role.toLowerCase()}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleRestrictedClick(item.title);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '7px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'transparent',
+                    border: '1px solid transparent',
+                    cursor: 'not-allowed',
+                    opacity: 0.5,
+                    userSelect: 'none',
+                    transition: 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                    <div
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid var(--border-hairline)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-muted)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Lock size={12} style={{ color: 'var(--text-muted)' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 500,
+                          color: 'var(--text-muted)',
+                        }}
+                      >
+                        {item.title}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          color: 'var(--text-muted)',
+                        }}
+                      >
+                        Authority clearance required
+                      </span>
+                    </div>
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      padding: '2px 5px',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid var(--border-hairline)',
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      flexShrink: 0,
+                    }}
+                  >
+                    RESTRICTED
+                  </span>
+                </div>
+              );
+            }
+
+            // ACTIVE / SELECTABLE ROLE TREATMENT
             return (
               <button
                 key={item.role}
                 type="button"
                 role="option"
                 aria-selected={isSelected}
+                data-testid={`role-option-${item.role.toLowerCase()}`}
                 onClick={() => handleSelectRole(item.role)}
                 style={{
                   display: 'flex',
@@ -201,15 +393,13 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
                   justifyContent: 'space-between',
                   padding: '7px 8px',
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: isSelected
-                    ? 'var(--bg-surface-2)'
-                    : 'transparent',
-                  border: isSelected
-                    ? '1px solid var(--border-hairline)'
-                    : '1px solid transparent',
+                  backgroundColor: isSelected ? 'var(--bg-surface-2)' : 'transparent',
+                  border: isSelected ? `1px solid ${item.accentColor}44` : '1px solid transparent',
                   cursor: 'pointer',
+                  opacity: 1,
                   textAlign: 'left',
                   transition: 'background-color 0.15s ease',
+                  outline: 'none',
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
@@ -222,11 +412,11 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
                   }
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                   <div
                     style={{
-                      width: 26,
-                      height: 26,
+                      width: 24,
+                      height: 24,
                       borderRadius: 'var(--radius-sm)',
                       backgroundColor: 'var(--bg-surface-2)',
                       border: `1px solid ${isSelected ? item.accentColor : 'var(--border-hairline)'}`,
@@ -237,7 +427,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
                       flexShrink: 0,
                     }}
                   >
-                    <ItemIcon size={14} />
+                    <ItemIcon size={13} />
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -252,7 +442,7 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ compact = false, onR
                     </span>
                     <span
                       style={{
-                        fontSize: 10,
+                        fontSize: 9,
                         color: 'var(--text-muted)',
                       }}
                     >

@@ -22,6 +22,7 @@ import {
   Compass,
 } from 'lucide-react';
 import { MiningLogo } from '@/components/ui/MiningLogo';
+import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/types';
 
@@ -75,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   aiProviderName = 'Gemini Grounded Engine',
   aiProviderOnline = true,
 }) => {
-  const { role, setRole } = useAuth();
+  const { role, isPublicViewerAccount } = useAuth();
 
   // Role-specific navigation definitions
   const getNavSectionsForRole = (currentRole: UserRole): NavSection[] => {
@@ -212,7 +213,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     OFFICER: { label: 'REVIEWING OFFICER', sub: 'Statutory Sign-Off Authority', icon: ShieldCheck, color: 'var(--accent-primary)', bg: 'rgba(16, 185, 129, 0.12)' },
     ANALYST: { label: 'MINING ANALYST', sub: 'Intelligence & Discovery', icon: Briefcase, color: 'var(--accent-teal)', bg: 'rgba(20, 184, 166, 0.12)' },
     ADMIN: { label: 'SYSTEM ADMIN', sub: 'Infrastructure & Telemetry', icon: Cpu, color: 'var(--status-warning)', bg: 'rgba(245, 158, 11, 0.12)' },
-    VIEWER: { label: 'AUDITOR / VIEWER', sub: 'Read-Only Transparency', icon: Eye, color: 'var(--text-secondary)', bg: 'var(--bg-surface-2)' },
+    VIEWER: {
+      label: isPublicViewerAccount ? 'PUBLIC AUDITOR / VIEWER' : 'AUDITOR / VIEWER',
+      sub: isPublicViewerAccount ? 'Read-Only Demo Mode' : 'Read-Only Transparency',
+      icon: Eye,
+      color: 'var(--text-secondary)',
+      bg: 'var(--bg-surface-2)',
+    },
   };
 
   const currentRoleMeta = roleMeta[role] || roleMeta.ANALYST;
@@ -301,49 +308,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Role Switcher in Sidebar */}
       {!collapsed && (
-        <div
-          style={{
-            margin: '2px 12px 8px',
-            padding: '4px 6px',
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-hairline)',
-            borderRadius: 'var(--radius-sm)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', paddingLeft: 4, letterSpacing: '0.04em' }}>
-            ROLE PERSPECTIVE
-          </span>
-          <select
-            value={role}
-            onChange={(e) => {
-              const newRole = e.target.value.toUpperCase() as UserRole;
-              setRole(newRole);
+        <div style={{ margin: '2px 12px 8px' }}>
+          <RoleSwitcher
+            variant="sidebar"
+            onRoleChange={(newRole) => {
               const allowedTabs = getNavSectionsForRole(newRole).flatMap((s) => s.items.map((i) => i.id));
               if (activeTab !== 'overview' && !allowedTabs.includes(activeTab)) {
                 onSelectTab('dashboard');
               }
             }}
-            aria-label="Switch Role Perspective"
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              padding: '2px 6px',
-              backgroundColor: 'var(--bg-surface-2)',
-              border: '1px solid var(--border-hairline)',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-          >
-            <option value="ANALYST">Analyst (Mining)</option>
-            <option value="OFFICER">Officer (Sign-Off)</option>
-            <option value="ADMIN">Admin (System)</option>
-            <option value="VIEWER">Viewer (Auditor)</option>
-          </select>
+          />
         </div>
       )}
 

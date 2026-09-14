@@ -23,8 +23,10 @@ import { ReportModal } from '@/components/modals/ReportModal';
 
 import { analyticsService, settingsService } from '@/services/api';
 import { useToast } from '@/components/ui/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 
 export const AppShell: React.FC = () => {
+  const { isViewer } = useAuth();
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -89,12 +91,48 @@ export const AppShell: React.FC = () => {
     }
   };
 
+  // Route security guard: Redirect VIEWER away from restricted internal tabs
+  const VIEWER_ALLOWED_TABS: NavigationTab[] = [
+    'overview',
+    'dashboard',
+    'reports',
+    'documents',
+    'analytics',
+    'audit',
+    'help',
+  ];
+
+  useEffect(() => {
+    if (isViewer && !VIEWER_ALLOWED_TABS.includes(activeTab)) {
+      setActiveTab('dashboard');
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/dashboard');
+      }
+    }
+  }, [activeTab, isViewer]);
+
+  const handleSelectTab = (tab: NavigationTab) => {
+    if (isViewer && !VIEWER_ALLOWED_TABS.includes(tab)) {
+      toast.error('Access Restricted', `Tab '${tab}' requires internal operational clearance.`);
+      setActiveTab('dashboard');
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', '/dashboard');
+      }
+      return;
+    }
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const path = tab === 'overview' || tab === 'dashboard' ? '/dashboard' : `/${tab}`;
+      window.history.pushState(null, '', path);
+    }
+  };
+
   return (
     <div className="app-container">
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
         docCount={docCount}
         conflictsCount={conflictsCount}
         collapsed={sidebarCollapsed}

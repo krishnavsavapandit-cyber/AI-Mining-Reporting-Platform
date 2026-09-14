@@ -1,14 +1,33 @@
 /**
  * Role-Based Access Control (RBAC) Context for SIH26023
  * Manages active user role, permissions, and role-differentiated behaviors.
+ * Enforces strict boundaries: Public Registered Users and unauthenticated visitors
+ * have an immutable effective role of VIEWER and CANNOT escalate to operational roles.
  */
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { UserRole, RoleInfo, ROLE_DEFINITIONS } from '@/types';
+import { authService } from '@/services/api';
+
+export type AccountType = 'PUBLIC_VIEWER' | 'AUTHORITY';
+
+export interface AuthUser {
+  email: string;
+  name?: string;
+  organization?: string;
+  accountType: AccountType;
+  authorizedRole: UserRole;
+  token?: string;
+}
 
 interface AuthContextType {
   role: UserRole;
-  setRole: (role: UserRole) => void;
+  setRole: (role: UserRole) => boolean;
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  login: (user: AuthUser, token?: string) => void;
+  logout: () => void;
+  isPublicViewerAccount: boolean;
   roleInfo: RoleInfo;
   isAdmin: boolean;
   isOfficer: boolean;
@@ -25,47 +44,183 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'cil_user_role';
+const STORAGE_KEY_ROLE = 'cil_user_role';
+const STORAGE_KEY_USER = 'cil_auth_user';
+const STORAGE_KEY_TOKEN = 'cil_auth_token';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [role, setRoleState] = useState<UserRole>(() => {
+  // 1. Authenticated User Session
+  const [user, setUserState] = useState<AuthUser | null>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY) as UserRole;
-      if (saved && ROLE_DEFINITIONS[saved.toUpperCase() as UserRole]) {
-        return saved.toUpperCase() as UserRole;
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY_USER);
+        if (saved) {
+          return JSON.parse(saved) as AuthUser;
+        }
+      } catch {
+        // Fallback on parse failure
       }
     }
-    return 'ANALYST';
+    return null;
   });
 
-  const setRole = (newRole: UserRole) => {
-    const normalized = newRole.toUpperCase() as UserRole;
-    if (ROLE_DEFINITIONS[normalized]) {
-      setRoleState(normalized);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, normalized);
+  // Determine whether current session is a public viewer account (or unauthenticated visitor)
+  const isPublicViewerAccount = !user || user.accountType === 'PUBLIC_VIEWER' || user.authorizedRole === 'VIEWER';
+
+  // 2. Active Role (Strictly Guarded by Account Type)
+  const [role, setRoleState] = useState<UserRole>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedUserStr = localStorage.getItem(STORAGE_KEY_USER);
+        if (savedUserStr) {
+          const parsedUser = JSON.parse(savedUserStr) as AuthUser;
+          if (parsedUser.accountType === 'PUBLIC_VIEWER' || parsedUser.authorizedRole === 'VIEWER') {
+            localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
+            return 'VIEWER';
+          }
+          // Authority account with saved perspective
+          const savedRole = localStorage.getItem(STORAGE_KEY_ROLE) as UserRole;
+          if (savedRole && ROLE_DEFINITIONS[savedRole.toUpperCase() as UserRole]) {
+            return savedRole.toUpperCase() as UserRole;
+          }
+          return parsedUser.authorizedRole || 'ANALYST';
+        }
+      } catch {
+        // Fallback
       }
     }
-  };
+    // Default fallback: If no authenticated authority user, default to VIEWER
+    return 'VIEWER';
+  });
 
+  // Guard: Continuously enforce VIEWER role whenever isPublicViewerAccount is true
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, role);
+    if (isPublicViewerAccount) {
+      if (role !== 'VIEWER') {
+        setRoleState('VIEWER');
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
+      }
     }
-  }, [role]);
+  }, [isPublicViewerAccount, role]);
+
+  // Sync session with backend on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem(STORAGE_KEY_TOKEN);
+    if (token) {
+      authService
+        .getMe()
+        .then((res) => {
+          if (res.authenticated && res.user) {
+            const serverUser: AuthUser = {
+              email: res.user.email,
+              name: res.user.name,
+              accountType: res.user.accountType,
+              authorizedRole: res.user.authorizedRole as UserRole,
+            };
+            setUserState(serverUser);
+            localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(serverUser));
+          } else {
+            // Session invalidated on server
+            setUserState(null);
+            setRoleState('VIEWER');
+            localStorage.removeItem(STORAGE_KEY_USER);
+            localStorage.removeItem(STORAGE_KEY_TOKEN);
+            localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
+          }
+        })
+        .catch(() => {
+          // In offline / mock dev mode, retain local state
+        });
+    }
+  }, []);
+
+  const login = useCallback((newUser: AuthUser, token?: string) => {
+    setUserState(newUser);
+    const assignedRole =
+      newUser.accountType === 'PUBLIC_VIEWER' ? 'VIEWER' : newUser.authorizedRole || 'ANALYST';
+    setRoleState(assignedRole);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(newUser));
+      localStorage.setItem(STORAGE_KEY_ROLE, assignedRole);
+      if (token) {
+        localStorage.setItem(STORAGE_KEY_TOKEN, token);
+      } else if (newUser.token) {
+        localStorage.setItem(STORAGE_KEY_TOKEN, newUser.token);
+      }
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    authService.logout().catch(() => {});
+    setUserState(null);
+    setRoleState('VIEWER');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY_USER);
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
+    }
+  }, []);
+
+  /**
+   * Set Role with Strict Access Control Enforcement
+   * Returns `false` if privilege escalation is rejected.
+   */
+  const setRole = useCallback(
+    (newRole: UserRole): boolean => {
+      const normalized = newRole.toUpperCase() as UserRole;
+      if (!ROLE_DEFINITIONS[normalized]) {
+        return false;
+      }
+
+      // CRITICAL SECURITY ENFORCEMENT:
+      // If user has a Public Viewer account, they are strictly locked to VIEWER
+      if (isPublicViewerAccount) {
+        if (normalized !== 'VIEWER') {
+          console.warn(
+            `[RBAC SECURITY VIOLATION] Public account attempted unauthorized escalation to '${normalized}'. Escalation rejected.`
+          );
+          setRoleState('VIEWER');
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY_ROLE, 'VIEWER');
+          }
+          return false;
+        }
+        setRoleState('VIEWER');
+        return true;
+      }
+
+      // For Authority / Demo mode: Allow UI perspective switching for demo views.
+      // Server-side endpoints strictly enforce genuine session clearance.
+      setRoleState(normalized);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY_ROLE, normalized);
+      }
+      return true;
+    },
+    [isPublicViewerAccount]
+  );
 
   const value = useMemo(() => {
-    const roleInfo = ROLE_DEFINITIONS[role] || ROLE_DEFINITIONS.ANALYST;
+    const effectiveRole = isPublicViewerAccount ? 'VIEWER' : role;
+    const roleInfo = ROLE_DEFINITIONS[effectiveRole] || ROLE_DEFINITIONS.VIEWER;
     const level = roleInfo.level;
 
     return {
-      role,
+      role: effectiveRole,
       setRole,
+      user,
+      isAuthenticated: !!user,
+      login,
+      logout,
+      isPublicViewerAccount,
       roleInfo,
-      isAdmin: role === 'ADMIN',
-      isOfficer: role === 'OFFICER',
-      isAnalyst: role === 'ANALYST',
-      isViewer: role === 'VIEWER',
+      isAdmin: effectiveRole === 'ADMIN',
+      isOfficer: effectiveRole === 'OFFICER',
+      isAnalyst: effectiveRole === 'ANALYST',
+      isViewer: effectiveRole === 'VIEWER',
       isOfficerOrAbove: level >= 3,
       isAnalystOrAbove: level >= 2,
       canUpload: level >= 2,
@@ -74,7 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       canModifySettings: level >= 4,
       canExecuteWorkflows: level >= 2,
     };
-  }, [role]);
+  }, [role, setRole, user, login, logout, isPublicViewerAccount]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
@@ -86,3 +241,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+export default AuthContext;

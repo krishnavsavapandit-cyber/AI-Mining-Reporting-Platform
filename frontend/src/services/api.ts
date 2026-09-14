@@ -364,3 +364,42 @@ export const settingsService = {
   getHealth: () =>
     apiClient.get<SystemHealth>('/api/health'),
 };
+
+// ==========================================
+// 12. AUTHENTICATION & SESSION SERVICE
+// ==========================================
+export interface AuthResponse {
+  status: string;
+  message: string;
+  token: string;
+  user: {
+    email: string;
+    name: string;
+    title?: string;
+    level?: number;
+    accountType: 'PUBLIC_VIEWER' | 'AUTHORITY';
+    authorizedRole: 'VIEWER' | 'ANALYST' | 'OFFICER' | 'ADMIN';
+  };
+}
+
+export const authService = {
+  loginAuthority: (data: { email: string; password: string }) =>
+    apiClient.post<AuthResponse>('/api/auth/authority/login', data),
+
+  loginPublic: (data?: { email?: string; password?: string }) =>
+    apiClient.post<AuthResponse>('/api/auth/public/login', data || {}),
+
+  registerPublic: (data: { email: string; fullName?: string; organization?: string; password?: string }) =>
+    apiClient.post<AuthResponse>('/api/auth/public/register', data),
+
+  logout: () =>
+    apiClient.post<{ status: string; message: string }>('/api/auth/logout', {}),
+
+  getMe: () =>
+    apiClient.get<{
+      status: string;
+      authenticated: boolean;
+      user: AuthResponse['user'] | null;
+    }>('/api/auth/me'),
+};
+
