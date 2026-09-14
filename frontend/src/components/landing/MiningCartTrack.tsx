@@ -1087,7 +1087,7 @@ export const MiningCartTrack: React.FC = () => {
                 style={{
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover',
+                  objectFit: 'contain',
                   display: 'block',
                   transition: 'transform 0.4s ease',
                 }}

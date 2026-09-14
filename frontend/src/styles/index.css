@@ -124,20 +124,59 @@ html, body {
    ========================================================================== */
 .app-container {
   display: flex;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background-color: var(--bg-base);
   overflow: hidden;
 }
 
-/* High-density 90% desktop scaling for ultra-sleek enterprise UI */
+/* High-density ~90% desktop visual density token scaling */
 @media (min-width: 1024px) {
-  body {
-    zoom: 0.9;
+  :root {
+    --sidebar-width: 236px;
+    --sidebar-width-collapsed: 58px;
+    --topbar-height: 52px;
   }
-  .app-container {
-    width: 100vw;
-    height: 100vh;
+
+  html, body {
+    font-size: 12.5px;
+  }
+
+  .app-workspace {
+    padding: 16px 22px 32px;
+  }
+
+  .card-level-1 {
+    padding: 14px 18px;
+  }
+
+  .card-level-2 {
+    padding: 18px 20px;
+  }
+
+  .btn {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  .btn-sm {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .app-table th {
+    padding: 8px 12px;
+    font-size: 10.5px;
+  }
+
+  .app-table td {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .input-text, .input-select, .input-textarea {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
 
