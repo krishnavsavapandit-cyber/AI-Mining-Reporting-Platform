@@ -132,10 +132,12 @@ html, body {
 
 /* High-density 90% desktop scaling for ultra-sleek enterprise UI */
 @media (min-width: 1024px) {
-  .app-container {
+  body {
     zoom: 0.9;
-    width: 111.1111vw;
-    height: 111.1111vh;
+  }
+  .app-container {
+    width: 100vw;
+    height: 100vh;
   }
 }
 
