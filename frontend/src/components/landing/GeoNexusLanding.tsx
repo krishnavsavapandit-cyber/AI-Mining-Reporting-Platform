@@ -81,14 +81,13 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
       <section
         style={{
           position: 'relative',
-          minHeight: '88vh',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
-          backgroundImage: 'linear-gradient(to bottom, rgba(7, 10, 15, 0.88) 0%, rgba(11, 16, 26, 0.78) 42%, rgba(7, 10, 15, 0.98) 100%), url("/images/open_surface_mine.jpg")',
+          backgroundImage: 'linear-gradient(to bottom, rgba(7, 10, 15, 0.88) 0%, rgba(11, 16, 26, 0.78) 50%, rgba(7, 10, 15, 0.95) 100%), url("/images/open_surface_mine.jpg")',
           backgroundSize: 'cover',
           backgroundPosition: 'center 18%',
           borderBottom: '1px solid var(--border-hairline)',
+          paddingBottom: '20px',
         }}
       >
         {/* Navigation Bar */}
@@ -208,7 +207,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           style={{
             maxWidth: '1100px',
             margin: '0 auto',
-            padding: '70px 24px 50px',
+            padding: '36px 24px 20px',
             textAlign: 'center',
             display: 'flex',
             flexDirection: 'column',
@@ -361,7 +360,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           {/* Live Dynamic Telemetry Strip connected to real backend */}
           <div
             style={{
-              marginTop: 36,
+              marginTop: 22,
               display: 'flex',
               alignItems: 'center',
               gap: 20,
@@ -383,7 +382,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Database size={13} style={{ color: 'var(--accent-teal)' }} />
               <span style={{ color: 'var(--text-secondary)' }}>
-                DB: {dbBackend.toUpperCase()} ({docCount} Docs)
+                 DB: {dbBackend.toUpperCase()} ({docCount} Docs)
               </span>
             </div>
             <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255, 255, 255, 0.15)' }} />
@@ -417,7 +416,8 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           style={{
             display: 'flex',
             justifyContent: 'center',
-            paddingBottom: 16,
+            paddingTop: 8,
+            paddingBottom: 8,
             cursor: 'pointer',
             opacity: 0.7,
           }}
@@ -434,7 +434,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
         id="mine-cart-section"
         style={{
           position: 'relative',
-          padding: '60px 24px 70px',
+          padding: '36px 24px 44px',
           backgroundColor: '#0A0E17',
           borderBottom: '1px solid var(--border-hairline)',
           overflow: 'hidden',
