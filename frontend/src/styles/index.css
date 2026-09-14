@@ -130,6 +130,15 @@ html, body {
   overflow: hidden;
 }
 
+/* High-density 90% desktop scaling for ultra-sleek enterprise UI */
+@media (min-width: 1024px) {
+  .app-container {
+    zoom: 0.9;
+    width: 111.1111vw;
+    height: 111.1111vh;
+  }
+}
+
 /* Sidebar */
 .app-sidebar {
   width: var(--sidebar-width);
