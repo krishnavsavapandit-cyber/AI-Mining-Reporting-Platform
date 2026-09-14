@@ -4,6 +4,11 @@ import {
   Plus,
   RefreshCw,
   CheckCircle2,
+  FileText,
+  ShieldCheck,
+  Zap,
+  ArrowRight,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -36,9 +41,14 @@ export const GovernmentInquiryPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await inquiryService.getInquiries();
-      setInquiries(res.inquiries || []);
-      if (res.inquiries && res.inquiries.length > 0 && !selectedInquiry) {
-        setSelectedInquiry(res.inquiries[0]);
+      const fetched = res.inquiries || [];
+      setInquiries(fetched);
+      if (fetched.length > 0) {
+        if (!selectedInquiry || !fetched.some((i) => i.id === selectedInquiry.id)) {
+          setSelectedInquiry(fetched[0]);
+        }
+      } else {
+        setSelectedInquiry(null);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error loading inquiries';
@@ -86,12 +96,26 @@ export const GovernmentInquiryPage: React.FC = () => {
     }
   };
 
+  // Helper to parse citations safely
+  const parseCitations = (inq: InquiryRecord): Array<{ document_name?: string; page_number?: number }> => {
+    if (!inq.citations_json) return [];
+    try {
+      const parsed = JSON.parse(inq.citations_json);
+      if (Array.isArray(parsed)) return parsed;
+      return [];
+    } catch {
+      return [];
+    }
+  };
+
+  const citationsList = selectedInquiry ? parseCitations(selectedInquiry) : [];
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Header */}
       <div
         style={{
-          padding: '16px 20px',
+          padding: '18px 24px',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-hairline)',
           borderRadius: 'var(--radius-md)',
@@ -99,16 +123,16 @@ export const GovernmentInquiryPage: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 12,
+          gap: 16,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'rgba(217, 164, 65, 0.1)',
+              backgroundColor: 'rgba(217, 164, 65, 0.12)',
               border: '1px solid var(--status-warning)',
               display: 'flex',
               alignItems: 'center',
@@ -116,14 +140,14 @@ export const GovernmentInquiryPage: React.FC = () => {
               color: 'var(--status-warning)',
             }}
           >
-            <Landmark size={18} />
+            <Landmark size={22} />
           </div>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               Parliamentary Question & Government Inquiry Formulation
             </h2>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              Draft formal parliamentary responses to Lok Sabha / Rajya Sabha questions with mandatory source grounding.
+              Draft formal parliamentary responses to Lok Sabha / Rajya Sabha questions with mandatory source document citations.
             </span>
           </div>
         </div>
@@ -149,6 +173,67 @@ export const GovernmentInquiryPage: React.FC = () => {
           >
             Refresh
           </Button>
+        </div>
+      </div>
+
+      {/* 1. Parliamentary Inquiry Workflow Banner (Summary) */}
+      <div
+        style={{
+          padding: '18px 20px',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Zap size={16} style={{ color: 'var(--status-warning)' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+              PARLIAMENTARY QUESTION GROUNDING & AUTHORIZATION WORKFLOW
+            </span>
+          </div>
+          <Badge variant="teal">STRICT GROUNDING GATED</Badge>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {[
+            { step: '01', title: 'Inquiry Ingestion', desc: 'Starred PQ Reference' },
+            { step: '02', title: 'Classification', desc: 'Subject & Ministry Body' },
+            { step: '03', title: 'Evidence Retrieval', desc: 'Hybrid RRF Multi-Pass' },
+            { step: '04', title: 'Response Grounding', desc: 'Strict Fact Synthesis' },
+            { step: '05', title: 'Officer Sign-Off', desc: 'Official Ministry Seal' },
+          ].map((st, idx) => (
+            <div
+              key={st.step}
+              style={{
+                padding: '10px 12px',
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="text-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--status-warning)' }}>
+                  STAGE {st.step}
+                </span>
+                {idx < 4 && <ArrowRight size={10} style={{ color: 'var(--text-muted)' }} />}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{st.title}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{st.desc}</div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -189,7 +274,7 @@ export const GovernmentInquiryPage: React.FC = () => {
 
             <div>
               <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
-                PARLIAMENTARY QUESTION TEXT
+                OFFICIAL PARLIAMENTARY QUESTION TEXT
               </label>
               <textarea
                 rows={3}
@@ -213,6 +298,7 @@ export const GovernmentInquiryPage: React.FC = () => {
         </div>
       )}
 
+      {/* 2. Parliamentary Inquiries Queue & Workspace (Analysis & Detail) */}
       {inquiries.length === 0 && !loading ? (
         <EmptyState
           type="search"
@@ -220,18 +306,18 @@ export const GovernmentInquiryPage: React.FC = () => {
           description="Formulate grounded answers to starred and unstarred parliamentary questions from verified CIL data."
         />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.3fr) minmax(380px, 1fr)', gap: 24 }}>
-          {/* Left: Inquiries List */}
-          <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div className="card-header-clean">
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(380px, 1fr)', gap: 24 }}>
+          {/* Left: Inquiries List (Analysis) */}
+          <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column', padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-hairline)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 className="card-title">Parliamentary Inquiries Registry</h3>
-                <span className="card-subtitle">Select inquiry to inspect drafted answer and citations</span>
+                <h3 className="card-title">Inquiries Registry</h3>
+                <span className="card-subtitle">Select inquiry to inspect drafted response and evidence</span>
               </div>
-              <Badge variant="warning">{inquiries.length} INQUIRIES</Badge>
+              <Badge variant="warning">{inquiries.length} LOGGED</Badge>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               {inquiries.map((inq) => {
                 const isSelected = selectedInquiry?.id === inq.id;
                 return (
@@ -254,17 +340,23 @@ export const GovernmentInquiryPage: React.FC = () => {
                       <span className="text-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-teal)' }}>
                         {inq.inquiry_ref}
                       </span>
-                      <Badge variant={inq.human_approved ? 'primary' : 'warning'}>
-                        {inq.human_approved ? 'AUTHORIZED' : 'DRAFT'}
-                      </Badge>
+                      {inq.human_approved ? (
+                        <Badge variant="primary" icon={<ShieldCheck size={11} />}>
+                          AUTHORIZED
+                        </Badge>
+                      ) : (
+                        <Badge variant="warning" icon={<Clock size={11} />}>
+                          AWAITING SIGN-OFF
+                        </Badge>
+                      )}
                     </div>
 
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>
                       {inq.question_text}
                     </div>
 
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      {inq.ministry_body} • {inq.created_at?.split(' ')[0]}
+                      {inq.ministry_body} • {inq.created_at?.split(' ')[0] || 'Recent'}
                     </div>
                   </div>
                 );
@@ -272,50 +364,165 @@ export const GovernmentInquiryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Selected Inquiry Detail & Response */}
-          {selectedInquiry && (
+          {/* Right: Active Inquiry Formulation & Detail Workspace (Detail & Action) */}
+          {selectedInquiry ? (
             <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="card-header-clean">
-                <div>
-                  <h3 className="card-title">Drafted Parliamentary Response</h3>
-                  <span className="card-subtitle">{selectedInquiry.inquiry_ref} • {selectedInquiry.ministry_body}</span>
-                </div>
-                <Badge variant={selectedInquiry.human_approved ? 'primary' : 'warning'}>
-                  {selectedInquiry.human_approved ? 'OFFICIAL SEALED' : 'REQUIRES VERIFICATION'}
-                </Badge>
-              </div>
-
-              {/* Watermarked Response Box */}
+              {/* Structured Header with Clean Badges & Hierarchy */}
               <div
                 style={{
-                  padding: '16px',
-                  backgroundColor: 'var(--bg-surface-2)',
-                  border: '1px solid var(--border-hairline)',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: 13,
-                  lineHeight: 1.6,
-                  color: 'var(--text-primary)',
-                  whiteSpace: 'pre-wrap',
-                  maxHeight: '380px',
-                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                  borderBottom: '1px solid var(--border-hairline)',
+                  paddingBottom: 14,
                 }}
               >
-                {selectedInquiry.draft_response || selectedInquiry.generated_response || 'No response drafted.'}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span
+                      className="text-mono"
+                      style={{
+                        fontWeight: 800,
+                        color: 'var(--accent-primary)',
+                        fontSize: 13,
+                        padding: '4px 10px',
+                        backgroundColor: 'rgba(31, 138, 92, 0.12)',
+                        border: '1px solid rgba(31, 138, 92, 0.3)',
+                        borderRadius: 'var(--radius-sm)',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {selectedInquiry.inquiry_ref}
+                    </span>
+                    <Badge variant="slate">{selectedInquiry.ministry_body}</Badge>
+                  </div>
+
+                  <div>
+                    {selectedInquiry.human_approved ? (
+                      <Badge variant="primary" icon={<ShieldCheck size={12} />}>
+                        AUTHORIZED FOR DISPATCH
+                      </Badge>
+                    ) : (
+                      <Badge variant="warning" icon={<Clock size={12} />}>
+                        REVIEW REQUIRED
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Zap size={13} style={{ color: 'var(--accent-teal)' }} />
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    Formulated with evidence-grounded response gating
+                  </span>
+                </div>
               </div>
 
-              {/* Sign-off Actions */}
-              {canApprove && !selectedInquiry.human_approved && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
+              {/* Question Text */}
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  PARLIAMENTARY QUESTION
+                </span>
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    backgroundColor: 'var(--bg-surface-2)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-hairline)',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    marginTop: 4,
+                  }}
+                >
+                  {selectedInquiry.question_text}
+                </div>
+              </div>
+
+              {/* Synthesized Response */}
+              <div>
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-teal)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  GROUNDED MINISTRY RESPONSE DRAFT
+                </span>
+                <div
+                  style={{
+                    padding: '14px 16px',
+                    backgroundColor: 'var(--bg-surface-2)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-hairline)',
+                    fontSize: 13,
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.6,
+                    whiteSpace: 'pre-wrap',
+                    marginTop: 4,
+                  }}
+                >
+                  {selectedInquiry.generated_response || selectedInquiry.draft_response || 'Synthesizing response from verified mining facts...'}
+                </div>
+              </div>
+
+              {/* Evidence Citations */}
+              {citationsList.length > 0 && (
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    GROUNDED SOURCE EVIDENCE ({citationsList.length})
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                    {citationsList.map((ev, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: 'var(--bg-surface-3)',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: 11,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <FileText size={12} style={{ color: 'var(--accent-primary)' }} />
+                          <strong style={{ color: 'var(--text-primary)' }}>{ev.document_name || 'Document Chunk'}</strong>
+                        </div>
+                        {ev.page_number && (
+                          <span className="text-mono" style={{ color: 'var(--accent-teal)' }}>
+                            Page {ev.page_number}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Officer Sign-off Action (Action) */}
+              {!selectedInquiry.human_approved && canApprove && (
+                <div style={{ borderTop: '1px solid var(--border-hairline)', paddingTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
                   <Button
                     variant="primary"
-                    size="sm"
+                    size="md"
                     onClick={() => handleApprove(selectedInquiry.id)}
-                    icon={<CheckCircle2 size={13} />}
+                    icon={<CheckCircle2 size={14} />}
                   >
-                    Authorize Parliamentary Response
+                    Authorize & Seal Answer
                   </Button>
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="card-level-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                Select a parliamentary inquiry from the registry to view drafted answer and citations.
+              </div>
             </div>
           )}
         </div>

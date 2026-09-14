@@ -22,21 +22,27 @@ interface TopBarProps {
   onToggleMobileSidebar?: () => void;
 }
 
-const TAB_TITLES: Record<NavigationTab, { title: string; subtitle: string }> = {
-  overview: { title: 'Platform Overview & Architecture', subtitle: 'Mining Intelligence, Grounded in Evidence' },
-  dashboard: { title: 'Executive Command Center', subtitle: 'Platform overview & operational telemetry' },
-  documents: { title: 'Document Intelligence Ingestion', subtitle: 'Indexed statutory CIL files & OCR' },
-  search: { title: 'Hybrid Semantic & Vector Search', subtitle: 'Sublinear TF-IDF + Cosine RRF' },
-  assistant: { title: 'Mining Intelligence Assistant', subtitle: 'Evidence-grounded RAG with source citations' },
-  reports: { title: 'Executive Report Generator', subtitle: 'Multi-source document compilation & approval' },
-  inquiries: { title: 'Parliamentary Question Formulation', subtitle: 'Ministry of Coal starred inquiry drafts' },
-  validation: { title: 'Discrepancy Resolution Matrix', subtitle: 'Cross-document variance audit' },
-  topics: { title: 'Geological & Mining Topic Discovery', subtitle: 'TF-IDF clusters & strata word cloud' },
-  analytics: { title: 'Mining Analytics & ISO/IEC 25010', subtitle: 'Empirical measurement methodology' },
-  agents: { title: '8-Agent Multi-Agent Orchestration', subtitle: 'Manager-worker DAG concurrency' },
-  audit: { title: 'Immutable Audit Trail & Provenance', subtitle: 'SHA-256 verified action history' },
-  settings: { title: 'System Configuration & Health', subtitle: 'AI provider endpoints & database' },
-  help: { title: 'Mining Intelligence SOPs & Standards', subtitle: 'DGMS & statutory compliance guidelines' },
+interface TabMeta {
+  section: string;
+  title: string;
+  subtitle: string;
+}
+
+const TAB_METADATA: Record<NavigationTab, TabMeta> = {
+  overview: { section: 'COMMAND CENTER', title: 'Architecture', subtitle: 'Distributed multi-agent pipeline & system blueprints' },
+  dashboard: { section: 'COMMAND CENTER', title: 'Dashboard', subtitle: 'Platform overview & real-time operational telemetry' },
+  documents: { section: 'OPERATIONS', title: 'Documents', subtitle: 'Statutory CIL files, OCR & vector embeddings' },
+  search: { section: 'OPERATIONS', title: 'Smart Search', subtitle: 'Hybrid TF-IDF & vector semantic search' },
+  assistant: { section: 'OPERATIONS', title: 'AI Copilot', subtitle: 'Evidence-grounded mining intelligence chat' },
+  reports: { section: 'REPORTING & GOVERNANCE', title: 'Executive Reports', subtitle: 'Multi-source document synthesis & statutory sign-off' },
+  inquiries: { section: 'REPORTING & GOVERNANCE', title: 'Parliament Desk', subtitle: 'Parliamentary questions & Ministry of Coal response drafts' },
+  validation: { section: 'INTELLIGENCE', title: 'Discrepancies', subtitle: 'Cross-document conflict registry & variance detection' },
+  topics: { section: 'INTELLIGENCE', title: 'Topic Cloud', subtitle: 'Keyword strata topic discovery & term distributions' },
+  analytics: { section: 'INTELLIGENCE', title: 'Analytics & KPIs', subtitle: 'Operational metrics & ISO/IEC 25010 benchmarks' },
+  agents: { section: 'INTELLIGENCE', title: 'Agent Swarm', subtitle: '8-Agent manager-worker pipeline concurrency' },
+  audit: { section: 'REPORTING & GOVERNANCE', title: 'Audit Trail', subtitle: 'SHA-256 cryptographically verified audit events' },
+  settings: { section: 'ADMINISTRATION', title: 'Settings & RBAC', subtitle: 'AI providers, model parameters & system health' },
+  help: { section: 'ADMINISTRATION', title: 'Guidelines & SOPs', subtitle: 'DGMS safety compliance & Reviewing Officer protocols' },
 };
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -48,7 +54,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   onToggleMobileSidebar,
 }) => {
   const { isOfficer, isAnalyst, isAdmin, isViewer } = useAuth();
-  const currentTab = TAB_TITLES[activeTab] || { title: 'GeoNexus Mining Intelligence', subtitle: 'Enterprise Operating Environment' };
+  const currentTab = TAB_METADATA[activeTab] || {
+    section: 'COMMAND CENTER',
+    title: 'GeoNexus Mining Intelligence',
+    subtitle: 'Enterprise Operating Environment',
+  };
 
   return (
     <header className="app-topbar">
@@ -73,17 +83,31 @@ export const TopBar: React.FC<TopBarProps> = ({
             <Menu size={16} />
           </button>
         )}
-        <div className="breadcrumb-section">
-          <span className="breadcrumb-root" style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
+        <div className="breadcrumb-section" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className="breadcrumb-root" style={{ color: 'var(--accent-primary)', fontWeight: 800 }}>
             GeoNexus
           </span>
-          <span className="breadcrumb-sep">/</span>
-          <span className="breadcrumb-current">{currentTab.title}</span>
+          <span className="breadcrumb-sep" style={{ color: 'var(--text-muted)' }}>/</span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            {currentTab.section}
+          </span>
+          <span className="breadcrumb-sep" style={{ color: 'var(--text-muted)' }}>/</span>
+          <span className="breadcrumb-current" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+            {currentTab.title}
+          </span>
         </div>
       </div>
 
       {/* Right: Role Switcher & Role-Specific Controls */}
-      <div className="topbar-right">
+      <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {/* Database Status Indicator */}
         <div
           style={{
@@ -127,7 +151,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             onClick={onOpenUpload}
             icon={<Upload size={13} />}
           >
-            Upload Ingestion File
+            Upload File
           </Button>
         )}
 

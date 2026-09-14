@@ -946,6 +946,163 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
       </section>
 
       {/* =========================================================================
+          4.5. 5 OPERATIONAL WORKSPACE PILLARS & INFORMATION ARCHITECTURE
+          ========================================================================= */}
+      <section
+        id="workspace-pillars"
+        style={{
+          padding: '80px 24px',
+          backgroundColor: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-hairline)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'var(--accent-primary)',
+                display: 'block',
+                marginBottom: 8,
+              }}
+            >
+              5 OPERATIONAL WORKSPACE PILLARS
+            </span>
+            <h2
+              style={{
+                fontSize: 'clamp(28px, 3.5vw, 42px)',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                color: '#FFFFFF',
+                marginBottom: 14,
+              }}
+            >
+              Command Center Information Architecture
+            </h2>
+            <p style={{ fontSize: 15, color: 'var(--text-secondary)', maxWidth: '720px', margin: '0 auto' }}>
+              Structured around progressive disclosure (Summary → Analysis → Detail → Action) for mission-critical mining intelligence.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {/* Pillar 1 */}
+            <div
+              className="card-level-1"
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                borderTop: '3px solid var(--accent-primary)',
+                cursor: 'pointer',
+              }}
+              onClick={() => onEnterWorkspace('dashboard')}
+            >
+              <span className="text-mono" style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent-primary)' }}>
+                PILLAR 01
+              </span>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '6px 0' }}>
+                Command Center
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                Executive state HUD, live system telemetry, attention center alerts, and multi-agent DAG swarm monitor.
+              </p>
+            </div>
+
+            {/* Pillar 2 */}
+            <div
+              className="card-level-1"
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                borderTop: '3px solid var(--accent-teal)',
+                cursor: 'pointer',
+              }}
+              onClick={() => onEnterWorkspace('documents')}
+            >
+              <span className="text-mono" style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent-teal)' }}>
+                PILLAR 02
+              </span>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '6px 0' }}>
+                Operations
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                Corpus ingestion hub, hybrid neural vector search, and grounded AI Copilot with multi-document citations.
+              </p>
+            </div>
+
+            {/* Pillar 3 */}
+            <div
+              className="card-level-1"
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                borderTop: '3px solid #60A5FA',
+                cursor: 'pointer',
+              }}
+              onClick={() => onEnterWorkspace('agents')}
+            >
+              <span className="text-mono" style={{ fontSize: 11, fontWeight: 800, color: '#60A5FA' }}>
+                PILLAR 03
+              </span>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '6px 0' }}>
+                Intelligence
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                8-Agent autonomous DAG, discrepancy resolution matrix, strata topic discovery, and ISO 25010 KPIs.
+              </p>
+            </div>
+
+            {/* Pillar 4 */}
+            <div
+              className="card-level-1"
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                borderTop: '3px solid var(--status-warning)',
+                cursor: 'pointer',
+              }}
+              onClick={() => onEnterWorkspace('reports')}
+            >
+              <span className="text-mono" style={{ fontSize: 11, fontWeight: 800, color: 'var(--status-warning)' }}>
+                PILLAR 04
+              </span>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '6px 0' }}>
+                Reporting & Governance
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                Executive briefings compiler, parliamentary inquiry dossier, and cryptographically chained audit ledger.
+              </p>
+            </div>
+
+            {/* Pillar 5 */}
+            <div
+              className="card-level-1"
+              style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                borderTop: '3px solid #A78BFA',
+                cursor: 'pointer',
+              }}
+              onClick={() => onEnterWorkspace('settings')}
+            >
+              <span className="text-mono" style={{ fontSize: 11, fontWeight: 800, color: '#A78BFA' }}>
+                PILLAR 05
+              </span>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '6px 0' }}>
+                Administration
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                AI provider inference governance, database health telemetry, and official DGMS & ISO 25010 SOPs.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
           5. TRUST / GOVERNANCE VISUAL (Exact Reference Linear Pipeline)
           ========================================================================= */}
       <section

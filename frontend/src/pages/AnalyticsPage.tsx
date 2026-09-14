@@ -113,12 +113,12 @@ export const AnalyticsPage: React.FC = () => {
           {
             label: 'Monthly Coal Output (MT)',
             data: dataObj.data || [],
-            borderColor: '#1F8A5C',
-            backgroundColor: 'rgba(31, 138, 92, 0.1)',
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
             fill: true,
             tension: 0.3,
-            pointBackgroundColor: '#1F8A5C',
-            pointBorderColor: '#0B0D10',
+            pointBackgroundColor: '#10B981',
+            pointBorderColor: '#0B0E14',
             pointBorderWidth: 2,
             pointRadius: 5,
             pointHoverRadius: 7,
@@ -133,9 +133,9 @@ export const AnalyticsPage: React.FC = () => {
             display: false,
           },
           tooltip: {
-            backgroundColor: '#181C22',
-            titleColor: '#E8EAED',
-            bodyColor: '#1F8A5C',
+            backgroundColor: '#111620',
+            titleColor: '#F3F4F6',
+            bodyColor: '#10B981',
             borderColor: 'rgba(255, 255, 255, 0.14)',
             borderWidth: 1,
             titleFont: { family: chartFontFamily },
@@ -186,15 +186,15 @@ export const AnalyticsPage: React.FC = () => {
           {
             label: 'Statutory Target (MT)',
             data: targetObj.targets || [],
-            backgroundColor: '#2A2E35',
-            borderColor: '#3A3F47',
+            backgroundColor: '#1E293B',
+            borderColor: '#374151',
             borderWidth: 1,
             borderRadius: 4,
           },
           {
             label: 'Achieved Actual (MT)',
             data: targetObj.actuals || [],
-            backgroundColor: '#1F8A5C',
+            backgroundColor: '#10B981',
             borderRadius: 4,
           },
         ],
@@ -214,8 +214,8 @@ export const AnalyticsPage: React.FC = () => {
             },
           },
           tooltip: {
-            backgroundColor: '#181C22',
-            titleColor: '#E8EAED',
+            backgroundColor: '#111620',
+            titleColor: '#F3F4F6',
             borderColor: 'rgba(255, 255, 255, 0.14)',
             borderWidth: 1,
             titleFont: { family: chartFontFamily },
@@ -238,18 +238,18 @@ export const AnalyticsPage: React.FC = () => {
 
     return () => {
       if (targetChartRef.current) {
-        targetChartRef.current.destroy();
+        trendChartRef.current?.destroy();
         targetChartRef.current = null;
       }
     };
   }, [charts]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Header */}
       <div
         style={{
-          padding: '16px 20px',
+          padding: '18px 24px',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-hairline)',
           borderRadius: 'var(--radius-md)',
@@ -257,16 +257,16 @@ export const AnalyticsPage: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 12,
+          gap: 16,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'rgba(31, 138, 92, 0.1)',
+              backgroundColor: 'rgba(31, 138, 92, 0.12)',
               border: '1px solid var(--accent-primary)',
               display: 'flex',
               alignItems: 'center',
@@ -274,10 +274,10 @@ export const AnalyticsPage: React.FC = () => {
               color: 'var(--accent-primary)',
             }}
           >
-            <BarChart3 size={18} />
+            <BarChart3 size={22} />
           </div>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
               Mining Analytics & ISO/IEC 25010 Quality Benchmark Matrix
             </h2>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
@@ -297,16 +297,16 @@ export const AnalyticsPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Production Analytics Charts Grid */}
+      {/* 1. Executive Signals: Production Trend & Subsidiary Breakdown (Analysis) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))', gap: 24 }}>
-        {/* 1. Monthly Production Trend Line */}
+        {/* Monthly Production Trend Line */}
         <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="card-header-clean">
             <div>
               <h3 className="card-title">Coal Production Trend by Reporting Period</h3>
-              <span className="card-subtitle">Aggregated historical MT output</span>
+              <span className="card-subtitle">Aggregated historical MT output across CIL</span>
             </div>
-            <Badge variant="primary">REAL DATABASE RECORDS</Badge>
+            <Badge variant="primary">LIVE DATABASE EXTRACTIONS</Badge>
           </div>
 
           <div style={{ height: 260, position: 'relative' }}>
@@ -320,7 +320,7 @@ export const AnalyticsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Target vs Actual Production Bar */}
+        {/* Target vs Actual Production Bar */}
         <div className="card-level-1" style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="card-header-clean">
             <div>
@@ -342,7 +342,7 @@ export const AnalyticsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ISO/IEC 25010 Quality Benchmark Table */}
+      {/* 2. ISO/IEC 25010 Quality Benchmark Table (Data & Invariants) */}
       <div className="card-level-1">
         <div className="card-header-clean">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

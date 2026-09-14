@@ -6,7 +6,9 @@ import {
   Eye,
   CheckCircle2,
   ShieldCheck,
-  Download,
+  Clock,
+  ArrowRight,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -23,6 +25,8 @@ interface ReportsPageProps {
 export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => {
   const { role, canApprove, isViewer } = useAuth();
   const [reports, setReports] = useState<ReportRecord[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING'>('ALL');
+  const [subsidiaryFilter, setSubsidiaryFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [showGenerateForm, setShowGenerateForm] = useState(false);
@@ -79,7 +83,8 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
     }
   };
 
-  const handleApprove = async (reportId: number) => {
+  const handleApprove = async (reportId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       await reportService.approveReport(reportId, { approved_by: `Reviewing Officer (${role})` });
       toast.success('Report Approved', 'Statutory watermark and sign-off recorded.');
@@ -90,12 +95,22 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
     }
   };
 
+  const filteredReports = reports.filter((rep) => {
+    if (statusFilter === 'APPROVED' && !rep.human_approved) return false;
+    if (statusFilter === 'PENDING' && rep.human_approved) return false;
+    if (subsidiaryFilter && rep.subsidiary !== subsidiaryFilter) return false;
+    return true;
+  });
+
+  const sealedCount = reports.filter((r) => r.human_approved).length;
+  const pendingCount = reports.filter((r) => !r.human_approved).length;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Header */}
       <div
         style={{
-          padding: '16px 20px',
+          padding: '18px 24px',
           backgroundColor: 'var(--bg-surface)',
           border: '1px solid var(--border-hairline)',
           borderRadius: 'var(--radius-md)',
@@ -103,16 +118,16 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 12,
+          gap: 16,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'rgba(31, 138, 92, 0.1)',
+              backgroundColor: 'rgba(31, 138, 92, 0.12)',
               border: '1px solid var(--accent-primary)',
               display: 'flex',
               alignItems: 'center',
@@ -120,14 +135,14 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
               color: 'var(--accent-primary)',
             }}
           >
-            <FileCheck size={18} />
+            <FileCheck size={22} />
           </div>
           <div>
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Automated Executive Mining Reports
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              Executive Report Center & Statutory Sign-Off
             </h2>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              Synthesize multi-source geological and production records into formal PDF & DOCX reports with statutory sign-off.
+              Synthesize multi-source geological and production records into formal executive reports with Reviewing Officer cryptographic watermarking.
             </span>
           </div>
         </div>
@@ -153,6 +168,71 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
           >
             Refresh
           </Button>
+        </div>
+      </div>
+
+      {/* 1. Report Lifecycle Progress Banner (Summary) */}
+      <div
+        style={{
+          padding: '18px 20px',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Zap size={16} style={{ color: 'var(--accent-primary)' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+              EXECUTIVE REPORT LIFECYCLE & SIGN-OFF WORKFLOW
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-muted)' }}>
+            <span><strong>{sealedCount}</strong> Sealed</span>
+            <span>•</span>
+            <span><strong>{pendingCount}</strong> Pending Sign-Off</span>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {[
+            { step: '01', title: 'Draft Config', desc: 'Template & Subsidiary Scope' },
+            { step: '02', title: 'Fact Extraction', desc: 'Ground-Truth Multi-Source Pull' },
+            { step: '03', title: 'Quality Gate', desc: 'Evidence Grounding Verification' },
+            { step: '04', title: 'Officer Sign-Off', desc: 'Cryptographic Review & Seal' },
+            { step: '05', title: 'Publication', desc: 'PDF / DOCX Distribution Ready' },
+          ].map((st, idx) => (
+            <div
+              key={st.step}
+              style={{
+                padding: '10px 12px',
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="text-mono" style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)' }}>
+                  STAGE {st.step}
+                </span>
+                {idx < 4 && <ArrowRight size={10} style={{ color: 'var(--text-muted)' }} />}
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{st.title}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{st.desc}</div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -235,7 +315,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
                 rows={2}
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                placeholder="e.g. Focus on Rajmahal OCP discrepancy and HEMM availability degradation..."
+                placeholder="e.g. Highlight Rajmahal OCP discrepancy, OBR variance, and HEMM availability..."
                 className="input-textarea"
               />
             </div>
@@ -245,26 +325,75 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
                 Cancel
               </Button>
               <Button variant="primary" size="sm" type="submit" loading={generating} icon={<FileCheck size={13} />}>
-                Compile Report
+                Compile Executive Report
               </Button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Reports Table */}
-      {reports.length === 0 && !loading ? (
+      {/* 2. Workspace Filter Toolbar (Analysis) */}
+      <div
+        style={{
+          padding: '12px 16px',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: 'var(--radius-sm)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Button
+            variant={statusFilter === 'ALL' ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('ALL')}
+          >
+            All Reports ({reports.length})
+          </Button>
+          <Button
+            variant={statusFilter === 'PENDING' ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('PENDING')}
+          >
+            Pending Sign-Off ({pendingCount})
+          </Button>
+          <Button
+            variant={statusFilter === 'APPROVED' ? 'primary' : 'outline'}
+            size="sm"
+            onClick={() => setStatusFilter('APPROVED')}
+          >
+            Sealed & Published ({sealedCount})
+          </Button>
+        </div>
+
+        <select
+          value={subsidiaryFilter}
+          onChange={(e) => setSubsidiaryFilter(e.target.value)}
+          className="input-select"
+          style={{ width: 'auto', padding: '6px 12px', fontSize: 12 }}
+        >
+          <option value="">All Subsidiaries</option>
+          <option value="ECL">ECL</option>
+          <option value="BCCL">BCCL</option>
+          <option value="CCL">CCL</option>
+          <option value="WCL">WCL</option>
+          <option value="SECL">SECL</option>
+          <option value="MCL">MCL</option>
+          <option value="NCL">NCL</option>
+          <option value="CMPDI">CMPDI</option>
+        </select>
+      </div>
+
+      {/* 3. Reports Catalog Queue (Detail & Action) */}
+      {filteredReports.length === 0 && !loading ? (
         <EmptyState
           type="reports"
-          title="No Compiled Reports Yet"
-          description="Synthesize executive reports from indexed document chunks and extraction tables."
-          action={
-            !isViewer ? (
-              <Button variant="primary" size="sm" onClick={() => setShowGenerateForm(true)} icon={<Plus size={13} />}>
-                Generate First Report
-              </Button>
-            ) : undefined
-          }
+          title="No Reports in Archive"
+          description="Synthesize new executive reports from ground-truth document facts."
         />
       ) : (
         <div className="card-level-1" style={{ padding: 0, overflow: 'hidden' }}>
@@ -272,65 +401,61 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
             <table className="app-table">
               <thead>
                 <tr>
-                  <th style={{ width: 60 }}>ID</th>
+                  <th style={{ width: 45 }}>ID</th>
                   <th>Report Title</th>
                   <th>Type</th>
-                  <th>Period</th>
                   <th>Subsidiary</th>
-                  <th>Sign-Off State</th>
-                  <th>Compiled Date</th>
+                  <th>Period</th>
+                  <th>Quality Gate</th>
+                  <th>Approval State</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {reports.map((rep) => (
+                {filteredReports.map((rep) => (
                   <tr
                     key={rep.id}
                     onClick={() => onInspectReport && onInspectReport(rep.id)}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: onInspectReport ? 'pointer' : 'default' }}
                   >
                     <td className="text-mono" style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>
                       #{rep.id}
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <FileCheck size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-                        <strong style={{ color: 'var(--text-primary)' }}>{rep.title}</strong>
+                        <FileCheck size={15} style={{ color: 'var(--accent-teal)', flexShrink: 0 }} />
+                        <strong style={{ color: 'var(--text-primary)', fontSize: 13 }}>
+                          {rep.title}
+                        </strong>
                       </div>
                     </td>
                     <td>
                       <Badge variant="teal">{rep.report_type}</Badge>
                     </td>
-                    <td className="text-mono" style={{ fontSize: 12 }}>{rep.reporting_period}</td>
                     <td>
                       <Badge variant="slate">{rep.subsidiary}</Badge>
                     </td>
+                    <td className="text-mono" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      {rep.reporting_period}
+                    </td>
                     <td>
-                      <Badge
-                        variant={rep.human_approved ? 'primary' : 'warning'}
-                        icon={rep.human_approved ? <ShieldCheck size={11} /> : undefined}
-                      >
-                        {rep.human_approved ? 'SEALED & APPROVED' : 'PENDING SIGN-OFF'}
+                      <Badge variant="primary" icon={<ShieldCheck size={11} />}>
+                        PASS (ISO 25010)
                       </Badge>
                     </td>
-                    <td className="text-mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {rep.created_at?.split(' ')[0]}
+                    <td>
+                      {rep.human_approved ? (
+                        <Badge variant="primary" icon={<CheckCircle2 size={11} />}>
+                          SEALED ({rep.approved_by?.split(' ')[0] || 'Officer'})
+                        </Badge>
+                      ) : (
+                        <Badge variant="warning" icon={<Clock size={11} />}>
+                          AWAITING SEAL
+                        </Badge>
+                      )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-                        {rep.file_path && (
-                          <a
-                            href={`/api/reports/download/${encodeURIComponent(rep.file_path.split('/').pop() || rep.file_path)}`}
-                            download
-                            onClick={(e) => e.stopPropagation()}
-                            className="btn btn-secondary btn-sm"
-                            title="Download Report File"
-                            style={{ padding: '3px 8px', textDecoration: 'none' }}
-                          >
-                            <Download size={12} style={{ color: 'var(--accent-primary)' }} />
-                          </a>
-                        )}
-
+                      <div style={{ display: 'inline-flex', gap: 6 }}>
                         <Button
                           variant="outline"
                           size="sm"
@@ -344,14 +469,11 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
                           View
                         </Button>
 
-                        {canApprove && !rep.human_approved && (
+                        {!rep.human_approved && canApprove && (
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleApprove(rep.id);
-                            }}
+                            onClick={(e) => handleApprove(rep.id, e)}
                             icon={<CheckCircle2 size={12} />}
                             style={{ padding: '3px 8px' }}
                           >

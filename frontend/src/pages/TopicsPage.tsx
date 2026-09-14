@@ -37,10 +37,10 @@ function computeTopicGraph(
   const minCount = Math.min(...words.map((w) => w.weight ?? w.count ?? 1), 1);
   const spread = Math.max(maxCount - minCount, 1);
 
-  // Take top 32 words
+  // Take top 26 words for a rich, well-populated cloud without chaotic overlap
   const sorted = [...words]
     .sort((a, b) => (b.weight ?? b.count ?? 0) - (a.weight ?? a.count ?? 0))
-    .slice(0, 32);
+    .slice(0, 26);
 
   // Group by topic
   const topicGroups = new Map<string, WordCloudWord[]>();
@@ -57,8 +57,8 @@ function computeTopicGraph(
 
   const centerX = viewWidth / 2;
   const centerY = viewHeight / 2;
-  const radiusX = Math.max(viewWidth * 0.32, 160);
-  const radiusY = Math.max(viewHeight * 0.28, 100);
+  const radiusX = Math.max(viewWidth * 0.33, 165);
+  const radiusY = Math.max(viewHeight * 0.29, 105);
 
   const initialNodes: TopicNode[] = [];
 
@@ -71,20 +71,21 @@ function computeTopicGraph(
     groupWords.forEach((w, wIdx) => {
       const cnt = w.weight ?? w.count ?? 1;
       const normalized = (cnt - minCount) / spread;
-      const fontSize = Math.round(11 + normalized * 14); // 11px to 25px
+      // Vibrant, readable font size: 11px to 18px
+      const fontSize = Math.round(11 + normalized * 7);
 
       // Color scheme
       let color = '#8B929E';
       if (wIdx === 0 && tIdx === 0) color = '#1F8A5C';
       else if (wIdx === 0 && tIdx === 1) color = '#2D9CA8';
       else if (wIdx === 0 && tIdx === 2) color = '#D9A441';
-      else if (normalized > 0.6) color = '#E8EAED';
+      else if (normalized > 0.5) color = '#E8EAED';
 
       const textLen = w.text.length;
-      const width = Math.max(Math.ceil(textLen * (fontSize * 0.58) + 24), 54);
-      const height = Math.ceil(fontSize + 14);
+      const width = Math.max(Math.ceil(textLen * (fontSize * 0.55) + 20), 52);
+      const height = Math.ceil(fontSize + 12);
 
-      // Distribute words in cluster around cluster center
+      // Distribute words around cluster center with organic spread
       let nodeX: number;
       let nodeY: number;
       if (wIdx === 0) {
@@ -92,7 +93,7 @@ function computeTopicGraph(
         nodeY = clusterY;
       } else {
         const itemAngle = angle + (wIdx * 1.35);
-        const itemRadius = 38 + (wIdx * 20);
+        const itemRadius = 36 + (wIdx * 20);
         nodeX = clusterX + itemRadius * Math.cos(itemAngle);
         nodeY = clusterY + (itemRadius * 0.75) * Math.sin(itemAngle);
       }
@@ -115,8 +116,8 @@ function computeTopicGraph(
     });
   });
 
-  // Soft collision resolution passes (15 iterations)
-  for (let iter = 0; iter < 15; iter++) {
+  // Soft collision resolution passes (18 iterations)
+  for (let iter = 0; iter < 18; iter++) {
     for (let i = 0; i < initialNodes.length; i++) {
       for (let j = i + 1; j < initialNodes.length; j++) {
         const na = initialNodes[i];
