@@ -115,3 +115,73 @@ def log_audit(action_type, user_role='Analyst', resource_type=None, resource_id=
             )
     except Exception as e:
         logger.error(f"Failed to write audit log: {e}")
+
+def revoke_token(token_str: str, user_email: Optional[str] = None, expires_at: Optional[str] = None) -> bool:
+    """
+    Persistently blacklist a token hash in the database.
+    Survives server restarts and synchronizes across workers.
+    """
+    import hashlib
+    if not token_str:
+        return False
+    try:
+        token_hash = hashlib.sha256(token_str.strip().encode("utf-8")).hexdigest()
+        with get_db() as conn:
+            conn.execute(
+                """
+                INSERT INTO revoked_tokens (token_hash, user_email, expires_at)
+                VALUES (?, ?, ?)
+                """,
+                (token_hash, user_email, expires_at)
+            )
+        return True
+    except Exception as e:
+        # If already revoked (UNIQUE constraint), treat as success
+        logger.debug(f"Token revocation record status: {e}")
+        return True
+
+def is_token_revoked(token_str: str) -> bool:
+    """
+    Check if a token hash exists in the persistent revoked_tokens table.
+    """
+    import hashlib
+    if not token_str:
+        return False
+    try:
+        token_hash = hashlib.sha256(token_str.strip().encode("utf-8")).hexdigest()
+        with get_db() as conn:
+            row = conn.execute(
+                "SELECT id FROM revoked_tokens WHERE token_hash = ?",
+                (token_hash,)
+            ).fetchone()
+            return bool(row)
+    except Exception as e:
+        logger.debug(f"Token revocation query status: {e}")
+        return False
+
+def check_db_health() -> Dict[str, Any]:
+    """Execute active database query check and return detailed health metrics."""
+    import time
+    start = time.time()
+    config = get_database_config()
+    try:
+        with get_db() as conn:
+            conn.execute("SELECT 1").fetchone()
+        latency_ms = round((time.time() - start) * 1000, 2)
+        return {
+            "status": "HEALTHY",
+            "backend": config.backend,
+            "connected": True,
+            "latency_ms": latency_ms,
+            "display_target": config.display_url
+        }
+    except Exception as e:
+        latency_ms = round((time.time() - start) * 1000, 2)
+        return {
+            "status": "UNHEALTHY",
+            "backend": config.backend,
+            "connected": False,
+            "latency_ms": latency_ms,
+            "error": str(e)
+        }
+

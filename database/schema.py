@@ -233,6 +233,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 14. Revoked Tokens Table (Persistent Blacklist for Server Restarts & Multi-Worker RBAC)
+CREATE TABLE IF NOT EXISTS revoked_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_hash TEXT NOT NULL UNIQUE,
+    user_email TEXT,
+    revoked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP
+);
+
 -- Indices for rapid retrieval
 CREATE INDEX IF NOT EXISTS idx_chunks_doc_id ON document_chunks(document_id);
 CREATE INDEX IF NOT EXISTS idx_extracted_field ON extracted_data(field_name, subsidiary, reporting_period);
@@ -242,6 +251,8 @@ CREATE INDEX IF NOT EXISTS idx_results_workflow ON agent_results(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_workflow ON workflow_checkpoints(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action_type, timestamp);
 CREATE INDEX IF NOT EXISTS idx_validation_status ON validation_issues(status);
+CREATE INDEX IF NOT EXISTS idx_docs_checksum ON documents(checksum);
+CREATE INDEX IF NOT EXISTS idx_revoked_token_hash ON revoked_tokens(token_hash);
 """
 
 SCHEMA_SQL_POSTGRES = """
@@ -465,6 +476,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 14. Revoked Tokens Table (Persistent Blacklist for Server Restarts & Multi-Worker RBAC)
+CREATE TABLE IF NOT EXISTS revoked_tokens (
+    id SERIAL PRIMARY KEY,
+    token_hash VARCHAR(128) NOT NULL UNIQUE,
+    user_email VARCHAR(256),
+    revoked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP
+);
+
 -- Indices for rapid retrieval
 CREATE INDEX IF NOT EXISTS idx_chunks_doc_id ON document_chunks(document_id);
 CREATE INDEX IF NOT EXISTS idx_extracted_field ON extracted_data(field_name, subsidiary, reporting_period);
@@ -474,6 +494,8 @@ CREATE INDEX IF NOT EXISTS idx_results_workflow ON agent_results(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_workflow ON workflow_checkpoints(workflow_id);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action_type, timestamp);
 CREATE INDEX IF NOT EXISTS idx_validation_status ON validation_issues(status);
+CREATE INDEX IF NOT EXISTS idx_docs_checksum ON documents(checksum);
+CREATE INDEX IF NOT EXISTS idx_revoked_token_hash ON revoked_tokens(token_hash);
 """
 
 # Backwards compatibility alias

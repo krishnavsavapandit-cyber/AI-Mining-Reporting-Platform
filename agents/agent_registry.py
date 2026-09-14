@@ -14,6 +14,12 @@ from agents.agent_messages import (
 )
 from database.db import get_db
 
+from config.settings import (
+    AGENT_TASK_TIMEOUT_SECONDS,
+    MAX_TASK_RETRIES,
+    RETRY_BACKOFF_FACTOR
+)
+
 logger = logging.getLogger(__name__)
 
 # Canonical 8-agent logical ID mappings
@@ -101,9 +107,13 @@ class AgentRegistry:
 
         task.status = "RUNNING"
         task.started_at = time.time()
+        effective_timeout = task.timeout_seconds if task.timeout_seconds else AGENT_TASK_TIMEOUT_SECONDS
+        task.timeout_seconds = effective_timeout
+        effective_max_retries = task.max_retries if task.max_retries is not None else MAX_TASK_RETRIES
+        task.max_retries = effective_max_retries
         self._persist_task(task)
 
-        # Bounded retry loop for transient agent execution
+        # Bounded retry loop for transient agent execution with exponential backoff
         last_result = None
         for attempt in range(task.retry_count, task.max_retries + 1):
             task.retry_count = attempt
@@ -113,10 +123,10 @@ class AgentRegistry:
                 elapsed = time.time() - start_t
                 
                 # Check for timeout
-                if task.timeout_seconds and elapsed > task.timeout_seconds:
-                    logger.warning(f"Task {task.task_id} timed out after {elapsed:.2f}s (limit: {task.timeout_seconds}s)")
+                if effective_timeout and elapsed > effective_timeout:
+                    logger.warning(f"Task {task.task_id} timed out after {elapsed:.2f}s (limit: {effective_timeout}s)")
                     result.status = "TIMEOUT"
-                    result.errors.append(f"Task timed out after {elapsed:.2f}s (threshold: {task.timeout_seconds}s).")
+                    result.errors.append(f"Task timed out after {elapsed:.2f}s (threshold: {effective_timeout}s).")
                     task.status = "TIMEOUT"
                 else:
                     task.status = "COMPLETED" if result.status in ("SUCCESS", "PARTIAL") else result.status
@@ -128,8 +138,9 @@ class AgentRegistry:
                 if result.status in ("SUCCESS", "PARTIAL", "REQUIRES_HUMAN_REVIEW", "REJECTED"):
                     break
                 elif attempt < task.max_retries:
-                    logger.warning(f"Task {task.task_id} returned {result.status}, retrying ({attempt + 1}/{task.max_retries})...")
-                    time.sleep(0.1)
+                    backoff = 0.1 * (RETRY_BACKOFF_FACTOR ** attempt)
+                    logger.warning(f"Task {task.task_id} returned {result.status}, retrying ({attempt + 1}/{task.max_retries}) in {backoff:.2f}s...")
+                    time.sleep(backoff)
 
             except Exception as e:
                 logger.error(f"Execution error on task {task.task_id} (attempt {attempt}): {e}")
@@ -149,7 +160,8 @@ class AgentRegistry:
                     sources=[]
                 )
                 if attempt < task.max_retries:
-                    time.sleep(0.1)
+                    backoff = 0.1 * (RETRY_BACKOFF_FACTOR ** attempt)
+                    time.sleep(backoff)
 
         # Record result in context and database
         context.tasks[task.task_id] = task

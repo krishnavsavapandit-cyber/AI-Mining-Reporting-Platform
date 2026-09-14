@@ -163,7 +163,7 @@ class ValidationService:
 
         try:
             with get_db() as conn:
-                conn.execute(
+                cur = conn.execute(
                     """
                     UPDATE validation_issues 
                     SET status = ?, resolved_by = ?, resolved_note = ?, resolved_at = CURRENT_TIMESTAMP 
@@ -171,6 +171,8 @@ class ValidationService:
                     """,
                     (new_status, reviewer, reviewer_note, issue_id)
                 )
+                if cur.rowcount == 0:
+                    return False
                 log_audit(f"VALIDATION_ISSUE_{new_status}", user_role=reviewer_role, resource_type="validation", resource_id=issue_id, details={
                     "status": new_status, "reviewer": reviewer, "note": reviewer_note
                 })

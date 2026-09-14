@@ -32,6 +32,17 @@ def create_app() -> Flask:
     # Initialize SQLite database schema
     init_db()
 
+    # Register request ID correlation middleware
+    @app.before_request
+    def before_request_hook():
+        from routes.auth_middleware import init_request_context
+        init_request_context()
+
+    @app.after_request
+    def after_request_hook(response):
+        from routes.auth_middleware import attach_response_headers
+        return attach_response_headers(response)
+
     # Register API Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(document_bp)

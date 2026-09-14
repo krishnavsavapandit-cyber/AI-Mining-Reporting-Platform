@@ -533,11 +533,31 @@ export interface SystemSettings {
   ai: AIProviderInfo;
 }
 
+export interface OCREngineHealth {
+  tesseract_primary_available?: boolean;
+  rapidocr_secondary_available?: boolean;
+  tesseract_version?: string;
+  status?: string;
+}
+
 export interface SystemHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
-  database: string;
-  database_connected: boolean;
-  database_target: string;
-  ocr_engine_ready: boolean;
-  ai_service: AIProviderInfo;
+  healthy?: boolean;
+  database?: string | {
+    backend?: string;
+    connected?: boolean;
+    target?: string;
+  };
+  database_connected?: boolean;
+  database_target?: string;
+  ocr_engine_ready?: boolean;
+  ocr_engine?: OCREngineHealth;
+  ai_service?: AIProviderInfo;
+  active_ai_info?: AIProviderInfo;
+  ai_providers?: Record<string, {
+    provider_name?: string;
+    healthy?: boolean;
+    consecutive_failures?: number;
+    error_type?: string;
+  }>;
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   Search,
@@ -17,11 +17,14 @@ import {
   ShieldAlert,
   Database,
   AlertTriangle,
+  Activity,
 } from 'lucide-react';
 import { MiningLogo } from '@/components/ui/MiningLogo';
 import { RoleSwitcher } from '@/components/ui/RoleSwitcher';
 import { NavigationTab } from '@/components/layout/Sidebar';
 import { MiningCartTrack } from '@/components/landing/MiningCartTrack';
+import { settingsService } from '@/services/api';
+import { SystemHealth } from '@/types';
 
 interface GeoNexusLandingProps {
   onEnterWorkspace: (targetTab?: NavigationTab) => void;
@@ -38,12 +41,37 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
   aiProviderName = 'Gemini Grounded Engine',
   aiProviderOnline = true,
 }) => {
+  const [liveHealth, setLiveHealth] = useState<SystemHealth | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    settingsService
+      .getHealth()
+      .then((res) => {
+        if (isMounted && res) {
+          setLiveHealth(res);
+        }
+      })
+      .catch(() => {
+        // Fallback gracefully to props
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  const isHealthy = liveHealth ? liveHealth.status === 'healthy' : aiProviderOnline;
+  const healthBadge = liveHealth ? liveHealth.status.toUpperCase() : (aiProviderOnline ? 'HEALTHY' : 'DEGRADED');
+  const dbBackend = (typeof liveHealth?.database === 'object' && liveHealth.database?.backend) || 'sqlite';
+  const ocrReady = liveHealth?.ocr_engine?.tesseract_primary_available !== false;
+  const currentProvider = liveHealth?.active_ai_info?.provider_name || aiProviderName;
 
   return (
     <div style={{ backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', minHeight: '100%', overflowX: 'hidden' }}>
@@ -180,7 +208,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           style={{
             maxWidth: '1100px',
             margin: '0 auto',
-            padding: '80px 24px 60px',
+            padding: '70px 24px 50px',
             textAlign: 'center',
             display: 'flex',
             flexDirection: 'column',
@@ -201,7 +229,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
               fontSize: 12,
               fontWeight: 600,
               letterSpacing: '0.04em',
-              marginBottom: 24,
+              marginBottom: 20,
               boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)',
             }}
           >
@@ -212,13 +240,13 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           {/* Main Headline */}
           <h1
             style={{
-              fontSize: 'clamp(34px, 5.2vw, 58px)',
+              fontSize: 'clamp(34px, 5.2vw, 56px)',
               fontWeight: 800,
               lineHeight: 1.15,
               letterSpacing: '-0.03em',
               color: '#FFFFFF',
               maxWidth: '960px',
-              marginBottom: 20,
+              marginBottom: 16,
               textShadow: '0 2px 20px rgba(0, 0, 0, 0.8)',
             }}
           >
@@ -228,16 +256,75 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           {/* Subheadline */}
           <p
             style={{
-              fontSize: 'clamp(15px, 1.8vw, 19px)',
+              fontSize: 'clamp(15px, 1.8vw, 18px)',
               lineHeight: 1.6,
               color: '#D1D5DB',
-              maxWidth: '780px',
-              marginBottom: 36,
+              maxWidth: '820px',
+              marginBottom: 24,
               fontWeight: 400,
             }}
           >
-            Transform geological and mining reports into validated, traceable intelligence through an orchestrated 8-agent AI platform.
+            Transform geological and mining reports into validated, traceable intelligence through an orchestrated 8-agent AI platform with evidence-grounded response gating.
           </p>
+
+          {/* 10-Step End-to-End Pipeline Narrative Strip */}
+          <div
+            style={{
+              maxWidth: '1040px',
+              width: '100%',
+              marginBottom: 32,
+              padding: '14px 20px',
+              backgroundColor: 'rgba(13, 18, 28, 0.88)',
+              border: '1px solid rgba(16, 185, 129, 0.28)',
+              borderRadius: 'var(--radius-md)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
+            }}
+          >
+            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-emerald)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+              End-to-End Intelligence Pipeline
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 5,
+                flexWrap: 'wrap',
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+              }}
+            >
+              {[
+                'Documents',
+                'OCR / Extraction',
+                'Mining Intelligence',
+                'Hybrid Retrieval',
+                'Evidence',
+                '8-Agent DAG',
+                'Validation',
+                'Quality Governance',
+                'Human Review',
+                'Report / Inquiry',
+              ].map((step, idx) => (
+                <React.Fragment key={step}>
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      color: idx === 5 ? 'var(--accent-primary)' : idx === 7 ? 'var(--text-emerald)' : '#E2E8F0',
+                    }}
+                  >
+                    {step}
+                  </span>
+                  {idx < 9 && <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>→</span>}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
 
           {/* Hero CTAs */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -271,47 +358,56 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
             </button>
           </div>
 
-          {/* Quick Telemetry Strip */}
+          {/* Live Dynamic Telemetry Strip connected to real backend */}
           <div
             style={{
-              marginTop: 48,
+              marginTop: 36,
               display: 'flex',
               alignItems: 'center',
-              gap: 28,
-              padding: '10px 24px',
-              backgroundColor: 'rgba(11, 14, 20, 0.7)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              gap: 20,
+              padding: '10px 22px',
+              backgroundColor: 'rgba(11, 14, 20, 0.85)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
               borderRadius: 'var(--radius-full)',
               backdropFilter: 'blur(8px)',
               fontSize: 12,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className={aiProviderOnline ? 'status-dot status-dot-success' : 'status-dot status-dot-warning'} />
-              <span style={{ color: 'var(--text-secondary)' }}>8 Active Autonomous Agents</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span className={isHealthy ? 'status-dot status-dot-success' : 'status-dot status-dot-warning'} />
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>System: {healthBadge}</span>
             </div>
             <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255, 255, 255, 0.15)' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Database size={13} style={{ color: 'var(--accent-teal)' }} />
               <span style={{ color: 'var(--text-secondary)' }}>
-                {docCount} Ingested Documents
+                DB: {dbBackend.toUpperCase()} ({docCount} Docs)
+              </span>
+            </div>
+            <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255, 255, 255, 0.15)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Activity size={13} style={{ color: ocrReady ? 'var(--text-emerald)' : 'var(--status-warning)' }} />
+              <span style={{ color: 'var(--text-secondary)' }}>
+                OCR: {ocrReady ? 'Tesseract Primary' : 'Fallback Mode'}
               </span>
             </div>
             {conflictsCount > 0 && (
               <>
                 <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255, 255, 255, 0.15)' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <AlertTriangle size={13} style={{ color: 'var(--status-warning)' }} />
                   <span style={{ color: 'var(--text-secondary)' }}>
-                    {conflictsCount} Discrepancies Tracked
+                    {conflictsCount} Discrepancies
                   </span>
                 </div>
               </>
             )}
             <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255, 255, 255, 0.15)' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Cpu size={13} style={{ color: 'var(--accent-primary)' }} />
-              <span style={{ color: 'var(--text-secondary)' }}>{aiProviderName}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{currentProvider}</span>
             </div>
           </div>
         </div>
@@ -435,10 +531,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                   <span className="badge badge-primary">Coordination</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Plans and coordinates the workflow
+                  Coordinates workflow DAG, retries, and bounded execution
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Dynamically constructs task DAGs, tracks dependencies, triggers parallel sub-tasks, and handles bounded retries.
+                  Dynamically constructs task DAGs, checks for cycles, tracks dependencies, triggers parallel sub-tasks, and handles bounded retries with persistent checkpoints.
                 </p>
               </div>
 
@@ -457,10 +553,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                   <span className="badge badge-teal">Extraction</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Understands documents and structured extraction
+                  Handles document extraction, adaptive OCR, and document quality
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Processes PDF, OCR, DOCX, CSV, and XLSX files; performs SHA-256 fingerprinting, classification, chunking, and fact harvesting.
+                  Processes PDF, DOCX, CSV, XLSX, and scanned images via Tesseract (adaptive PSM 3/6) and RapidOCR fallback, with SHA-256 fingerprinting and document classification.
                 </p>
               </div>
 
@@ -474,15 +570,15 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#60A5FA', fontFamily: 'var(--font-mono)' }}>
-                    03 — Retrieval & Evidence
+                    03 — Retrieval / RAG
                   </span>
                   <span className="badge badge-slate">Hybrid RRF</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Finds relevant context and supporting citations
+                  Retrieves evidence and enforces evidence-sufficiency controls
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Executes dual keyword + dense vector retrieval with Reciprocal Rank Fusion, attaching strict chunk provenance to all answers.
+                  Executes hybrid lexical and vector search with Reciprocal Rank Fusion, OCR-quality weighting, duplicate suppression, and strict page citations.
                 </p>
               </div>
 
@@ -501,10 +597,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                   <span className="badge badge-slate">Analytics</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Entities, KPIs, units, trends, comparisons, anomalies
+                  Extracts and normalizes supported mining-specific measurements
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Performs coal metric normalization (MT, Tonnes, Lakh Te), time-series variance analysis, and operational anomaly detection.
+                  Performs coal metric normalization (MT, Tonnes, Lakh Te, MCuM), stripping ratio calculations (OBR/Coal), G1–G17 GCV grade classification, and physical plausibility sanity checks.
                 </p>
               </div>
             </div>
@@ -538,15 +634,15 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--status-warning)', fontFamily: 'var(--font-mono)' }}>
-                    05 — Validation & Audit
+                    05 — Validation
                   </span>
                   <span className="badge badge-warning">Cross-Check</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Cross-checks calculations, metrics, consistency, and compliance
+                  Detects discrepancies, contradictions, and data-quality issues
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Identifies multi-source discrepancies (e.g. Rajmahal monthly vs target reports), computes exact variance %, and queues human review.
+                  Performs cross-document comparison, computing normalized variance %, direction of difference, severity levels, and discrepancy lifecycle management.
                 </p>
               </div>
 
@@ -565,10 +661,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                   <span className="badge badge-primary">Synthesis</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Produces structured statutory reports with evidence citations
+                  Produces evidence-backed reports with mandatory draft watermarks
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Compiles standardized statutory reports, executive briefings, and automated exports in PDF and DOCX formats.
+                  Compiles standardized statutory reports, executive briefings, and automated exports in PDF and DOCX formats with mandatory human verification draft wording.
                 </p>
               </div>
 
@@ -587,10 +683,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                   <span className="badge badge-slate">Statutory</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Prepares evidence-backed inquiry responses with human verification
+                  Supports evidence-based drafting for high-priority inquiries
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Drafts parliamentary Lok Sabha/Rajya Sabha responses with mandatory officer sign-off checkpoints before release.
+                  Drafts parliamentary Lok Sabha/Rajya Sabha responses and Ministry replies with mandatory officer sign-off checkpoints before release.
                 </p>
               </div>
 
@@ -605,15 +701,15 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
-                    08 — Quality & Governance
+                    08 — Quality Governance
                   </span>
                   <span className="badge badge-primary">Quality Gate</span>
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
-                  Evaluates quality, provenance, and release readiness
+                  Evaluates output quality, evidence sufficiency, and release readiness
                 </h4>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  Enforces zero-hallucination compliance, citation density rules, and acts as an unbypassable gate to block invalid releases.
+                  Enforces deterministic release gates (PASS, WARNING, REQUIRES_HUMAN_REVIEW, REJECT), ensuring unsupported claims are halted.
                 </p>
               </div>
             </div>
@@ -672,7 +768,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
               KEY CAPABILITIES
             </h2>
             <p style={{ fontSize: 15, color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto' }}>
-              Premium AI-powered and mining intelligence for operational excellence across Coal India & subsidiaries.
+              Mining intelligence and multi-agent governance engineered for Coal India & CMPDI operations.
             </p>
           </div>
 
@@ -691,10 +787,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                 <div style={{ padding: 8, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-primary)' }}>
                   <FileText size={18} />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Document Intelligence</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Adaptive Document Intelligence</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                PDF, scanned PDF, DOCX, CSV, XLSX, Image OCR processing with deduplication and metadata extraction.
+                Processes digital and scanned documents using PyMuPDF, adaptive Tesseract OCR (PSM 3/6), and SHA-256 fingerprinting.
               </p>
             </div>
 
@@ -704,10 +800,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                 <div style={{ padding: 8, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(20, 184, 166, 0.1)', color: 'var(--accent-teal)' }}>
                   <Search size={18} />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Evidence-Grounded Retrieval</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Hybrid Evidence Retrieval</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Search information and trace results back to supporting evidence chunks with strict page and line provenance.
+                Evidence-first retrieval fusing lexical/vector similarity with Reciprocal Rank Fusion, duplicate suppression, and page citations.
               </p>
             </div>
 
@@ -720,20 +816,20 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Mining Intelligence</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Entities, KPIs, units, trends, multi-subsidiary comparisons, and operational anomaly detection.
+                Extracts and normalizes production (MT), OBR (MCuM), stripping ratios, and standard Indian G1–G17 GCV grades.
               </p>
             </div>
 
-            {/* 4. Discrepancy Detection */}
+            {/* 4. Cross-Document Validation */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <div style={{ padding: 8, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: 'var(--status-warning)' }}>
                   <Scale size={18} />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Discrepancy Detection</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Cross-Document Validation</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Compare information across sources and identify meaningful variances with mathematical precision.
+                Compares normalized information across documents, calculating variance %, direction of difference, and discrepancy lifecycle.
               </p>
             </div>
 
@@ -743,10 +839,10 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                 <div style={{ padding: 8, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent-primary)' }}>
                   <UserCheck size={18} />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Human Verification</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Human-in-the-Loop Review</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Critical outputs and discrepancies can be reviewed, annotated, and authorized by designated officers before release.
+                Stateful PAUSE → REVIEW → APPROVE / REJECT / REQUEST REVISION → RESUME controls for critical discrepancies and sensitive reports.
               </p>
             </div>
 
@@ -759,7 +855,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Quality Governance</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Quality gates can block invalid or unverified report release until citations and checks pass.
+                Deterministic release gates (PASS, WARNING, REQUIRES_HUMAN_REVIEW, REJECT) enforcing evidence sufficiency gating.
               </p>
             </div>
 
@@ -769,23 +865,23 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
                 <div style={{ padding: 8, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#A78BFA' }}>
                   <Layers size={18} />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Provenance & Audit</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>End-to-End Provenance</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Trace information from source document through extraction to final report with immutable audit logs.
+                Trace information from source document through extraction, evidence, and validation to final deliverable with immutable logs.
               </p>
             </div>
 
-            {/* 8. Government Inquiry */}
+            {/* 8. Topic Intelligence */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <div style={{ padding: 8, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(236, 72, 153, 0.1)', color: '#F472B6' }}>
                   <Landmark size={18} />
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Government Inquiry</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Topic & Reporting Intelligence</h3>
               </div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Prepare structured evidence-backed parliamentary inquiry responses with official verification safeguards.
+                Identifies recurring terminology and reporting topics across processed geological records and statutory archives.
               </p>
             </div>
           </div>
@@ -819,14 +915,14 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
             {/* Right: Statutory Release Document Preview */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span className="badge badge-primary">AGENT 08 QUALITY GATE PASSED</span>
+                <span className="badge badge-primary">AGENT 08 QUALITY GATE VERIFIED</span>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>CIL/CMPDI Statutory Compliance</span>
               </div>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF' }}>
                 Auditable Statutory Deliverables with Immutable Provenance
               </h3>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Every report and parliamentary answer generated by GeoNexus links directly back to original ingested coal production files, drill core logs, and financial tables.
+                Every report and parliamentary draft generated by GeoNexus links directly back to original ingested coal production files, drill core logs, and financial tables.
               </p>
               <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
                 <button
@@ -877,7 +973,7 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
               TRUST / GOVERNANCE VISUAL
             </span>
             <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 800, color: '#FFFFFF' }}>
-              End-to-End Chain of Custody
+              End-to-End Chain of Custody & Evidence Lineage
             </h2>
           </div>
 
@@ -908,10 +1004,22 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
 
             <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
 
-            {/* Step 2: Evidence */}
+            {/* Step 2: Extraction & OCR */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: '120px' }}>
               <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-2)', border: '1px solid var(--border-hairline)', color: 'var(--accent-teal)' }}>
                 <Search size={22} />
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
+                EXTRACTION / OCR
+              </span>
+            </div>
+
+            <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
+
+            {/* Step 3: Retrieval & Evidence */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: '120px' }}>
+              <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-2)', border: '1px solid var(--border-hairline)', color: '#60A5FA' }}>
+                <Layers size={22} />
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
                 EVIDENCE
@@ -920,25 +1028,13 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
 
             <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
 
-            {/* Step 3: Validation */}
+            {/* Step 4: Validation */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: '120px' }}>
               <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-2)', border: '1px solid var(--border-hairline)', color: 'var(--status-warning)' }}>
                 <Scale size={22} />
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
                 VALIDATION
-              </span>
-            </div>
-
-            <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
-
-            {/* Step 4: Human Review */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: '120px' }}>
-              <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-2)', border: '1px solid var(--border-hairline)', color: '#60A5FA' }}>
-                <UserCheck size={22} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
-                HUMAN REVIEW
               </span>
             </div>
 
@@ -956,13 +1052,25 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
 
             <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
 
-            {/* Step 6: Report */}
+            {/* Step 6: Human Review */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: '120px' }}>
+              <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface-2)', border: '1px solid var(--border-hairline)', color: '#F87171' }}>
+                <UserCheck size={22} />
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
+                HUMAN REVIEW
+              </span>
+            </div>
+
+            <ArrowRight size={18} style={{ color: 'var(--text-muted)' }} />
+
+            {/* Step 7: Report Deliverable */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: '120px' }}>
               <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(16, 185, 129, 0.15)', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }}>
                 <FileCheck size={22} />
               </div>
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: '#FFFFFF' }}>
-                REPORT
+                REPORT / INQUIRY
               </span>
             </div>
           </div>

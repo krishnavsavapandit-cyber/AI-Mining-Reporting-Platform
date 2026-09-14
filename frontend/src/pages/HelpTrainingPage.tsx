@@ -70,7 +70,7 @@ export const HelpTrainingPage: React.FC = () => {
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             Defines the 8 formal quality benchmark KPIs, distinguishing project targets from actual empirical test results.
-            Enforces strict zero-hallucination policies across all AI generated answers and reports.
+            Enforces evidence-grounded response gating across all AI generated answers and reports.
           </p>
         </div>
 

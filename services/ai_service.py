@@ -1,17 +1,24 @@
 """
 AI Service Orchestrator for SIH26023.
 Manages provider selection, dynamic fallback chain (Gemini -> OpenModel -> Deterministic),
-evidence sufficiency evaluation (Hard No-Hallucination Gate), and semantic confidence breakdown.
+evidence sufficiency evaluation (Hard No-Hallucination Gate), semantic confidence breakdown,
+and comprehensive provider health telemetry.
 """
 
 import re
+import time
 import logging
 from typing import List, Dict, Any, Optional
 from services.ai_provider import AIProvider
 from services.gemini_provider import GeminiProvider
 from services.open_model_provider import OpenModelProvider
 from services.deterministic_provider import DeterministicProvider
-from config.settings import AI_PROVIDER, AI_FALLBACK_PROVIDER
+from config.settings import (
+    AI_PROVIDER,
+    AI_FALLBACK_PROVIDER,
+    DEFAULT_REQUEST_TIMEOUT_SECONDS,
+    HEALTH_CHECK_TIMEOUT_SECONDS
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +33,68 @@ class AIService:
         self.deterministic = DeterministicProvider()
         self.preferred_provider = AI_PROVIDER
         self.fallback_provider = AI_FALLBACK_PROVIDER
+        
+        # Telemetry and health tracking per provider
+        self.provider_stats = {
+            "gemini": {
+                "success_count": 0,
+                "failure_count": 0,
+                "consecutive_failures": 0,
+                "last_success_ts": None,
+                "last_error_ts": None,
+                "last_error_message": None,
+                "avg_latency_ms": 0.0
+            },
+            "open_model": {
+                "success_count": 0,
+                "failure_count": 0,
+                "consecutive_failures": 0,
+                "last_success_ts": None,
+                "last_error_ts": None,
+                "last_error_message": None,
+                "avg_latency_ms": 0.0
+            },
+            "deterministic": {
+                "success_count": 0,
+                "failure_count": 0,
+                "consecutive_failures": 0,
+                "last_success_ts": None,
+                "last_error_ts": None,
+                "last_error_message": None,
+                "avg_latency_ms": 0.0
+            }
+        }
+
+    def _record_success(self, provider_key: str, latency_ms: float):
+        """Record successful invocation telemetry."""
+        stats = self.provider_stats.get(provider_key)
+        if stats:
+            stats["success_count"] += 1
+            stats["consecutive_failures"] = 0
+            stats["last_success_ts"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            # Exponential moving average for latency
+            if stats["avg_latency_ms"] == 0.0:
+                stats["avg_latency_ms"] = round(latency_ms, 2)
+            else:
+                stats["avg_latency_ms"] = round(stats["avg_latency_ms"] * 0.8 + latency_ms * 0.2, 2)
+
+    def _record_failure(self, provider_key: str, error_msg: str):
+        """Record failed invocation telemetry."""
+        stats = self.provider_stats.get(provider_key)
+        if stats:
+            stats["failure_count"] += 1
+            stats["consecutive_failures"] += 1
+            stats["last_error_ts"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            stats["last_error_message"] = str(error_msg)[:300]
+
+    def is_transient_error(self, exception: Exception) -> bool:
+        """Classify if an error is transient (retryable: 429, 500, 502, 503, 504, timeout)."""
+        err_str = str(exception).lower()
+        transient_indicators = ["429", "500", "502", "503", "504", "timeout", "timed out", "connection reset", "connection error"]
+        return any(ind in err_str for ind in transient_indicators)
 
     def get_active_provider_info(self) -> Dict[str, Any]:
-        """Return operational status of all configured AI providers."""
+        """Return operational status and telemetry of all configured AI providers."""
         return {
             "preferred_provider": self.preferred_provider,
             "fallback_provider": self.fallback_provider,
@@ -36,20 +102,41 @@ class AIService:
                 "gemini": {
                     "configured": self.gemini.is_available(),
                     "name": self.gemini.provider_name(),
-                    "model": self.gemini.model
+                    "model": self.gemini.model,
+                    "stats": self.provider_stats["gemini"]
                 },
                 "open_model": {
                     "configured": self.open_model.is_available(),
                     "name": self.open_model.provider_name(),
-                    "endpoint": self.open_model.endpoint
+                    "endpoint": self.open_model.endpoint,
+                    "stats": self.provider_stats["open_model"]
                 },
                 "deterministic": {
                     "configured": True,
                     "name": self.deterministic.provider_name(),
-                    "status": "READY (Always Available)"
+                    "status": "READY (Always Available)",
+                    "stats": self.provider_stats["deterministic"]
                 }
             }
         }
+
+    def probe_provider_health(self) -> Dict[str, Any]:
+        """Probe all AI providers and return health summary."""
+        health = {}
+        for prov_id, prov_obj in [("gemini", self.gemini), ("open_model", self.open_model), ("deterministic", self.deterministic)]:
+            is_cfg = prov_obj.is_available()
+            stats = self.provider_stats[prov_id]
+            is_healthy = is_cfg and stats["consecutive_failures"] < 3
+            if prov_id == "deterministic":
+                is_healthy = True
+            health[prov_id] = {
+                "available": is_cfg,
+                "healthy": is_healthy,
+                "consecutive_failures": stats["consecutive_failures"],
+                "last_error": stats["last_error_message"],
+                "avg_latency_ms": stats["avg_latency_ms"]
+            }
+        return health
 
     def is_evidence_sufficient(self, prompt: str, evidence: List[Dict[str, Any]]) -> bool:
         """
@@ -142,7 +229,7 @@ class AIService:
         evidence: List[Dict[str, Any]],
         chat_history: Optional[List[Dict[str, str]]] = None
     ) -> Dict[str, Any]:
-        """Execute chat query through the fallback chain with strict evidence gating."""
+        """Execute chat query through the fallback chain with strict evidence gating and explainable trace."""
         # Hard No-Hallucination Pre-Check
         if not self.is_evidence_sufficient(prompt, evidence):
             logger.info("Hard No-Hallucination Gate triggered: Insufficient evidence found.")
@@ -152,33 +239,53 @@ class AIService:
                 "provider": "application_gate",
                 "model": "grounding_filter",
                 "confidence": 0.0,
-                "confidence_semantics": semantics
+                "confidence_semantics": semantics,
+                "fallback_chain_executed": ["application_gate"]
             }
+
+        execution_chain = []
+        t0 = time.time()
 
         # 1. Attempt Primary Provider
         if self.preferred_provider == "gemini" and self.gemini.is_available():
+            execution_chain.append("gemini")
             try:
                 logger.info("Executing chat query via Primary Provider (Gemini)")
                 res = self.gemini.generate_chat_response(prompt, system_prompt, evidence, chat_history)
+                lat = (time.time() - t0) * 1000.0
+                self._record_success("gemini", lat)
                 res["confidence_semantics"] = self.compute_confidence_semantics(evidence, is_sufficient=True)
+                res["fallback_chain_executed"] = execution_chain
                 return res
             except Exception as e:
+                self._record_failure("gemini", str(e))
                 logger.warning(f"Gemini provider failed ({e}). Falling back...")
 
         # 2. Attempt Fallback Provider
         if self.fallback_provider == "open_model" and self.open_model.is_available():
+            execution_chain.append("open_model")
+            t_fb = time.time()
             try:
                 logger.info("Executing chat query via Fallback Provider (OpenModel)")
                 res = self.open_model.generate_chat_response(prompt, system_prompt, evidence, chat_history)
+                lat = (time.time() - t_fb) * 1000.0
+                self._record_success("open_model", lat)
                 res["confidence_semantics"] = self.compute_confidence_semantics(evidence, is_sufficient=True)
+                res["fallback_chain_executed"] = execution_chain
                 return res
             except Exception as e:
+                self._record_failure("open_model", str(e))
                 logger.warning(f"OpenModel fallback failed ({e}). Falling back to Deterministic...")
 
         # 3. Final Fallback: Deterministic Grounded Engine
+        execution_chain.append("deterministic")
+        t_det = time.time()
         logger.info("Executing chat query via Deterministic Grounded Engine")
         res = self.deterministic.generate_chat_response(prompt, system_prompt, evidence, chat_history)
+        lat = (time.time() - t_det) * 1000.0
+        self._record_success("deterministic", lat)
         res["confidence_semantics"] = self.compute_confidence_semantics(evidence, is_sufficient=True)
+        res["fallback_chain_executed"] = execution_chain
         return res
 
     def generate_report_section(
@@ -192,19 +299,30 @@ class AIService:
         if not evidence or len(evidence) == 0:
             return self.deterministic.generate_report_section(section_name, topic, evidence, instructions)
 
+        t0 = time.time()
         if self.preferred_provider == "gemini" and self.gemini.is_available():
             try:
-                return self.gemini.generate_report_section(section_name, topic, evidence, instructions)
+                res = self.gemini.generate_report_section(section_name, topic, evidence, instructions)
+                self._record_success("gemini", (time.time() - t0) * 1000.0)
+                return res
             except Exception as e:
+                self._record_failure("gemini", str(e))
                 logger.warning(f"Gemini report generation failed ({e}). Falling back...")
 
+        t_fb = time.time()
         if self.fallback_provider == "open_model" and self.open_model.is_available():
             try:
-                return self.open_model.generate_report_section(section_name, topic, evidence, instructions)
+                res = self.open_model.generate_report_section(section_name, topic, evidence, instructions)
+                self._record_success("open_model", (time.time() - t_fb) * 1000.0)
+                return res
             except Exception as e:
+                self._record_failure("open_model", str(e))
                 logger.warning(f"OpenModel report generation failed ({e}). Falling back...")
 
-        return self.deterministic.generate_report_section(section_name, topic, evidence, instructions)
+        t_det = time.time()
+        res = self.deterministic.generate_report_section(section_name, topic, evidence, instructions)
+        self._record_success("deterministic", (time.time() - t_det) * 1000.0)
+        return res
 
     def generate_inquiry_response(
         self,
@@ -228,28 +346,41 @@ class AIService:
                 "provider": "application_gate",
                 "model": "grounding_filter",
                 "confidence": 0.0,
-                "confidence_semantics": self.compute_confidence_semantics(evidence, validation_warnings, is_sufficient=False)
+                "confidence_semantics": self.compute_confidence_semantics(evidence, validation_warnings, is_sufficient=False),
+                "fallback_chain_executed": ["application_gate"]
             }
 
+        t0 = time.time()
         if self.preferred_provider == "gemini" and self.gemini.is_available():
             try:
                 res = self.gemini.generate_inquiry_response(question, evidence, validation_warnings)
+                self._record_success("gemini", (time.time() - t0) * 1000.0)
                 res["confidence_semantics"] = self.compute_confidence_semantics(evidence, validation_warnings, is_sufficient=True)
+                res["fallback_chain_executed"] = ["gemini"]
                 return res
             except Exception as e:
+                self._record_failure("gemini", str(e))
                 logger.warning(f"Gemini inquiry generation failed ({e}). Falling back...")
 
+        t_fb = time.time()
         if self.fallback_provider == "open_model" and self.open_model.is_available():
             try:
                 res = self.open_model.generate_inquiry_response(question, evidence, validation_warnings)
+                self._record_success("open_model", (time.time() - t_fb) * 1000.0)
                 res["confidence_semantics"] = self.compute_confidence_semantics(evidence, validation_warnings, is_sufficient=True)
+                res["fallback_chain_executed"] = ["gemini", "open_model"]
                 return res
             except Exception as e:
+                self._record_failure("open_model", str(e))
                 logger.warning(f"OpenModel inquiry generation failed ({e}). Falling back...")
 
+        t_det = time.time()
         res = self.deterministic.generate_inquiry_response(question, evidence, validation_warnings)
+        self._record_success("deterministic", (time.time() - t_det) * 1000.0)
         res["confidence_semantics"] = self.compute_confidence_semantics(evidence, validation_warnings, is_sufficient=True)
+        res["fallback_chain_executed"] = ["gemini", "open_model", "deterministic"]
         return res
 
 # Global AI Service instance
 ai_service = AIService()
+

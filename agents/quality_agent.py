@@ -74,6 +74,12 @@ class QualityGovernanceAgent(BaseAgent):
             violations.extend(calc_errs)
         warnings.extend(calc_warnings)
 
+        # 3.5 OCR Quality & Confidence Audit
+        ocr_ok, ocr_warnings = self._audit_ocr_quality(context)
+        if ocr_ok:
+            checks_passed.append("OCR_QUALITY_AUDIT_VALID: Extraction confidence satisfies minimum clarity threshold.")
+        warnings.extend(ocr_warnings)
+
         # 4. Governance & Policy Checks (Watermarks, Discrepancies, RBAC)
         gov_ok, gov_warnings, gov_errs, requires_hitl = self._enforce_governance_policies(context, user_role)
         if gov_ok:
@@ -271,6 +277,18 @@ class QualityGovernanceAgent(BaseAgent):
 
         return (len(errs) == 0, warnings, errs, requires_hitl)
 
+    def _audit_ocr_quality(self, context: WorkflowContext) -> tuple[bool, List[str]]:
+        """Audit extraction quality and flag low-confidence OCR sources."""
+        warnings = []
+        for ev in context.accumulated_evidence:
+            conf = getattr(ev, "confidence", 1.0)
+            if conf < 0.60:
+                warnings.append(
+                    f"Low OCR Extraction Confidence ({conf:.2f}) for document '{ev.document_name}', page {ev.page_number}. Human review recommended."
+                )
+        return (len(warnings) == 0, warnings)
+
     def _extract_first_float(self, text: str) -> Optional[float]:
         m = re.search(r"[-+]?\d*\.\d+|\d+", text.replace(",", ""))
         return float(m.group(0)) if m else None
+

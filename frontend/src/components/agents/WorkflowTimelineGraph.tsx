@@ -343,7 +343,7 @@ export const WorkflowTimelineGraph: React.FC<WorkflowTimelineGraphProps> = ({
         </div>
 
         <span className="text-mono" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          Stage 6 Quality Gate enforces zero-hallucination compliance
+          Stage 6 Quality Gate enforces evidence-grounded compliance
         </span>
       </div>
     </div>

@@ -363,6 +363,9 @@ export const settingsService = {
 
   getHealth: () =>
     apiClient.get<SystemHealth>('/api/health'),
+
+  getReady: () =>
+    apiClient.get<{ status: string; ready: boolean; checks: Record<string, string> }>('/api/ready'),
 };
 
 // ==========================================

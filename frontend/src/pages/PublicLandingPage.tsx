@@ -8,8 +8,7 @@ import {
   Sparkles,
   ArrowRight,
   Lock,
-  FileCheck2,
-  HelpCircle,
+  Cpu,
   Layers,
   Users,
   Maximize2,
@@ -456,7 +455,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             fontSize: 'clamp(20px, 3.2vw, 34px)',
             fontWeight: 800,
             color: '#34D399',
-            marginBottom: 24,
+            marginBottom: 20,
             letterSpacing: '-0.015em',
             textShadow: '0 2px 16px rgba(0, 0, 0, 0.9)',
             position: 'relative',
@@ -469,19 +468,77 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         {/* Concise Platform Summary */}
         <p
           style={{
-            fontSize: 'clamp(15px, 1.8vw, 19px)',
+            fontSize: 'clamp(15px, 1.8vw, 18px)',
             lineHeight: 1.68,
             color: '#E2E8F0',
-            maxWidth: '880px',
-            marginBottom: 38,
+            maxWidth: '920px',
+            marginBottom: 30,
             textShadow: '0 2px 10px rgba(0, 0, 0, 0.85)',
             position: 'relative',
             zIndex: 2,
           }}
         >
-          An autonomous multi-agent intelligence suite built for CMPDI and Coal India subsidiaries (ECL, BCCL, CCL, WCL, SECL, NCL, MCL).
-          Transforms physical borehole logs, heavy machinery telemetric records, and monthly operational filings into cross-validated mathematical truth, verified DGMS compliance, and evidence-grounded parliamentary drafts.
+          Designed for AI-assisted processing of geological, mining and production information across CMPDI and Coal India subsidiaries (ECL, BCCL, CCL, WCL, SECL, NCL, MCL).
+          Transforms physical borehole logs, heavy earth-moving telemetry, and monthly operational filings into cross-validated mathematical data, verified DGMS compliance, and evidence-grounded reports.
         </p>
+
+        {/* Operational Problem Statement & GeoNexus Approach Callout */}
+        <div
+          style={{
+            maxWidth: '980px',
+            width: '100%',
+            marginBottom: 36,
+            padding: '20px 24px',
+            backgroundColor: 'rgba(15, 23, 42, 0.88)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: 'var(--radius-md)',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.65)',
+            position: 'relative',
+            zIndex: 2,
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--status-warning)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                The Operational Challenge
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0 }}>
+                Mining and reporting information exists across scanned PDFs, digital documents, spreadsheets, images, and historical archives — creating manual compilation bottlenecks, delayed reporting, inconsistent figures, difficult historical retrieval, and limited traceability.
+              </p>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-emerald)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                The GeoNexus Solution Pipeline
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                {['Ingest', 'Extract', 'Retrieve', 'Validate', 'Govern', 'Report'].map((step, idx) => (
+                  <React.Fragment key={step}>
+                    <span
+                      style={{
+                        padding: '3px 9px',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        border: '1px solid rgba(16, 185, 129, 0.35)',
+                        color: '#A7F3D0',
+                        fontSize: 11,
+                        fontWeight: 800,
+                        fontFamily: 'var(--font-mono)',
+                      }}
+                    >
+                      {step}
+                    </span>
+                    {idx < 5 && <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>→</span>}
+                  </React.Fragment>
+                ))}
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, lineHeight: 1.4 }}>
+                Evidence-grounded response gating ensures unsupported claims never proceed to statutory deliverables.
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Dual Primary Call to Actions */}
         <div
@@ -491,7 +548,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             gap: 18,
             flexWrap: 'wrap',
             justifyContent: 'center',
-            marginBottom: 48,
+            marginBottom: 44,
             position: 'relative',
             zIndex: 2,
           }}
@@ -569,7 +626,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               Hybrid RRF
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
-              BM25 + 768-Dim Vector
+              Lexical + Vector Retrieval
             </div>
           </div>
 
@@ -584,10 +641,10 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
 
           <div style={{ textAlign: 'center', padding: '8px' }}>
             <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--text-emerald)', fontFamily: 'var(--font-mono)' }}>
-              100% Grounded
+              Evidence Gating
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
-              Zero Hallucination Gate
+              Grounded Output Control
             </div>
           </div>
 
@@ -853,7 +910,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
       </section>
 
-      {/* 4. CORE CAPABILITIES (8 Architectural Pillars) */}
+      {/* 4. CORE CAPABILITIES (9 Master Architectural Pillars) */}
       <section
         id="capabilities"
         style={{
@@ -881,8 +938,8 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             <h3 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
               Engineered for Mining Precision & Statutory Rigor
             </h3>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: '680px', margin: '8px auto 0' }}>
-              Built from first principles to address real operational reporting bottlenecks across Coal India subsidiary commands.
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: '720px', margin: '8px auto 0' }}>
+              Built from first principles to address operational reporting bottlenecks and data fragmentation across Coal India subsidiary commands.
             </p>
           </div>
 
@@ -893,64 +950,83 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               gap: 20,
             }}
           >
-            {/* 1. Document Intelligence */}
+            {/* 1. Adaptive Document Intelligence */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(20, 184, 166, 0.14)', color: 'var(--accent-teal)' }}>
                   <FileText size={20} />
                 </div>
                 <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Document Intelligence & OCR</h4>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Multi-Format Parsing Engine</span>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Adaptive Document Intelligence</h4>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Multi-Format Parsing & OCR</span>
                 </div>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Direct ingestion of PDF, scanned reports, DOCX, XLSX, and CSV records. Combines PyMuPDF layout parsing with Tesseract OCR fallback for scanned geological borehole maps and SHA-256 integrity checksums.
+                Processes digital and scanned documents using document extraction, OCR, preprocessing and document-quality assessment. Combines PyMuPDF layout parsing with adaptive Tesseract OCR and SHA-256 integrity checksums.
               </p>
               <div style={{ fontSize: 11, color: 'var(--accent-teal)', fontWeight: 600 }}>
-                ✓ Table matrix extraction • Scanned text restoration • File fingerprinting
+                ✓ Table matrix extraction • Adaptive PSM 3/6 • SHA-256 fingerprinting
               </div>
             </div>
 
-            {/* 2. Evidence-Grounded Retrieval / RAG */}
-            <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(16, 185, 129, 0.14)', color: 'var(--accent-primary)' }}>
-                  <Search size={20} />
-                </div>
-                <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Evidence-Grounded RAG</h4>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Hybrid RRF Search</span>
-                </div>
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Dual-tier retrieval fusing BM25 lexical keyword matching with dense vector semantic embeddings via Reciprocal Rank Fusion (RRF). Every retrieved chunk preserves exact document, page number, and bounding-box provenance.
-              </p>
-              <div style={{ fontSize: 11, color: 'var(--accent-primary)', fontWeight: 600 }}>
-                ✓ Reciprocal Rank Fusion • Sub-second search • Page-level evidence
-              </div>
-            </div>
-
-            {/* 3. Mining Intelligence */}
+            {/* 2. Mining Intelligence */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(59, 130, 246, 0.14)', color: '#60A5FA' }}>
                   <TrendingUp size={20} />
                 </div>
                 <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Mining Intelligence & KPIs</h4>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Domain Extraction & Math</span>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Mining Intelligence</h4>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Domain Extraction & Normalization</span>
                 </div>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Automated extraction of domain entities: Coal Production (MT), Overburden Removal (OBR in MCuM), Stripping Ratio, and Coal Gross Calorific Value classification across standard Indian G1 through G17 grades.
+                Extracts structured mining information and normalizes supported units (MT, Tonnes, Lakh Te, MCuM), reporting periods, and domain measurements including stripping ratios and Indian G1–G17 GCV grade classification.
               </p>
               <div style={{ fontSize: 11, color: '#60A5FA', fontWeight: 600 }}>
-                ✓ G1–G17 GCV categorization • Stripping ratio • Metric normalization
+                ✓ G1–G17 GCV banding • Stripping ratio (OBR/Coal) • Unit normalization
               </div>
             </div>
 
-            {/* 4. Cross-Document Validation */}
+            {/* 3. Evidence-Centered Retrieval */}
+            <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(16, 185, 129, 0.14)', color: 'var(--accent-primary)' }}>
+                  <Search size={20} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Evidence-Centered Retrieval</h4>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Hybrid Evidence Search</span>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
+                Finds relevant source material while suppressing duplicate or weak evidence and preserving source context. Uses Reciprocal Rank Fusion (RRF) across lexical and vector indices with OCR-quality awareness.
+              </p>
+              <div style={{ fontSize: 11, color: 'var(--accent-primary)', fontWeight: 600 }}>
+                ✓ Reciprocal Rank Fusion • Duplicate suppression • Page-level evidence
+              </div>
+            </div>
+
+            {/* 4. 8-Agent Intelligence Workflow */}
+            <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(139, 92, 246, 0.14)', color: '#A78BFA' }}>
+                  <Cpu size={20} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>8-Agent Intelligence Workflow</h4>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>DAG Orchestration</span>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
+                Coordinates document processing, retrieval, mining intelligence, validation, reporting, inquiry handling and quality governance through eight specialized agents in an orchestrated DAG.
+              </p>
+              <div style={{ fontSize: 11, color: '#A78BFA', fontWeight: 600 }}>
+                ✓ Dependency-aware execution • Bounded concurrency • Stateful checkpoints
+              </div>
+            </div>
+
+            {/* 5. Cross-Document Validation */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(245, 158, 11, 0.14)', color: 'var(--status-warning)' }}>
@@ -962,33 +1038,52 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
                 </div>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Automated mathematical cross-checking comparing monthly review reports, annual summaries, and production targets. Discrepancies exceeding variance thresholds are flagged with automated severity scoring.
+                Compares normalized information across documents and identifies discrepancies, contradictions and data-quality issues with deterministic variance calculations and direction of difference.
               </p>
               <div style={{ fontSize: 11, color: 'var(--status-warning)', fontWeight: 600 }}>
-                ✓ Automated variance calculation • Target vs actual • Conflict dispute logs
+                ✓ Deterministic variance % • Direction of variance • Discrepancy lifecycle
               </div>
             </div>
 
-            {/* 5. Quality Governance */}
+            {/* 6. Quality Governance */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(16, 185, 129, 0.18)', color: 'var(--text-emerald)' }}>
                   <ShieldCheck size={20} />
                 </div>
                 <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Quality Governance & Gates</h4>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Zero-Hallucination Gatekeeper</span>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Quality Governance</h4>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Deterministic Release Gates</span>
                 </div>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Deterministic quality audit gates that inspect AI synthesis prior to publication. Unverified assertions or ungrounded statistics trigger automatic REJECT decisions, requiring human officer review.
+                Applies deterministic quality gates (PASS, WARNING, REQUIRES_HUMAN_REVIEW, REJECT) before important outputs proceed, enforcing evidence sufficiency gating.
               </p>
               <div style={{ fontSize: 11, color: 'var(--text-emerald)', fontWeight: 600 }}>
-                ✓ Deterministic PASS/REJECT • Zero unverified facts • Officer sign-off
+                ✓ 4-State release verdicts • Citation density checks • Statutory watermarking
               </div>
             </div>
 
-            {/* 6. Evidence Provenance */}
+            {/* 7. Human-in-the-Loop Governance */}
+            <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(239, 68, 68, 0.14)', color: '#F87171' }}>
+                  <Users size={20} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Human-in-the-Loop Governance</h4>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Stateful Review Flow</span>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
+                Routes critical discrepancies, insufficient evidence and sensitive workflows for human review with stateful PAUSE → REVIEW → APPROVE / REJECT / REQUEST REVISION → RESUME controls.
+              </p>
+              <div style={{ fontSize: 11, color: '#F87171', fontWeight: 600 }}>
+                ✓ Pause/Resume checkpoints • Discrepancy override • Reviewer attribution
+              </div>
+            </div>
+
+            {/* 8. Evidence & Provenance */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(139, 92, 246, 0.14)', color: '#A78BFA' }}>
@@ -996,53 +1091,133 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
                 </div>
                 <div>
                   <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Evidence & Provenance</h4>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Cryptographic Audit Logs</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>End-to-End Traceability</span>
                 </div>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Complete traceability linking every generated paragraph and chart metric back to source documents, page numbers, and extraction bounding boxes with timestamped user attribution.
+                Maintains traceability from source document and page through extraction, evidence, validation and generated output with tamper-evident audit logs.
               </p>
               <div style={{ fontSize: 11, color: '#A78BFA', fontWeight: 600 }}>
-                ✓ Source document links • Page citations • Tamper-evident logs
+                ✓ Source document links • Page citations • Cryptographic audit ledger
               </div>
             </div>
 
-            {/* 7. Report Generation */}
-            <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(236, 72, 153, 0.14)', color: '#F472B6' }}>
-                  <FileCheck2 size={20} />
-                </div>
-                <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Statutory Report Generation</h4>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Automated Synthesis</span>
-                </div>
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Instant compilation of DGMS compliance documents, monthly subsidiary review briefs, and geological reserve summaries with integrated charts, table matrices, and executive summaries.
-              </p>
-              <div style={{ fontSize: 11, color: '#F472B6', fontWeight: 600 }}>
-                ✓ DGMS compliance templates • Markdown & PDF export • Executive summaries
-              </div>
-            </div>
-
-            {/* 8. Government Inquiry */}
+            {/* 9. Resilient AI Gateway */}
             <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <div style={{ padding: 10, borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(249, 115, 22, 0.14)', color: '#FB923C' }}>
-                  <HelpCircle size={20} />
+                  <Sparkles size={20} />
                 </div>
                 <div>
-                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Parliamentary & Ministry Inquiries</h4>
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Evidence-Backed Answers</span>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Resilient AI Gateway</h4>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Multi-Tier Provider Chain</span>
                 </div>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                Rapid response drafting for Parliament questions (Lok Sabha / Rajya Sabha) and Ministry notices. Ingests inquiry notices, locates citations, and constructs verified draft answers for Joint Secretary sign-off.
+                Uses the configured AI provider chain (Gemini → OpenAI-compatible provider → deterministic fallback) with safe fallback behavior that does not generate unsupported LLM-derived claims.
               </p>
               <div style={{ fontSize: 11, color: '#FB923C', fontWeight: 600 }}>
-                ✓ Lok Sabha / Rajya Sabha drafts • Ministry QA • Mandatory officer review
+                ✓ Grounded fallback engine • Latency tracking • Graceful degradation
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4.5 SIH26023 ALIGNMENT SECTION */}
+      <section
+        id="sih-alignment"
+        style={{
+          padding: '64px 24px',
+          backgroundColor: '#0A0E17',
+          borderBottom: '1px solid var(--border-hairline)',
+        }}
+      >
+        <div style={{ maxWidth: '1220px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'var(--accent-primary)',
+                display: 'block',
+                marginBottom: 8,
+              }}
+            >
+              HACKATHON SPECIFICATION ALIGNMENT
+            </span>
+            <h3 style={{ fontSize: 28, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+              Smart India Hackathon 2026 • Problem Statement SIH26023
+            </h3>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', maxWidth: '780px', margin: '8px auto 0' }}>
+              Direct mapping of Ministry of Coal / Coal India Limited / CMPDI problem statement requirements to verified GeoNexus backend and agent capabilities.
+            </p>
+          </div>
+
+          <div
+            className="card-level-1"
+            style={{
+              backgroundColor: 'rgba(14, 19, 29, 0.95)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              padding: 0,
+              overflow: 'hidden',
+            }}
+          >
+            <div className="table-wrapper" style={{ border: 'none' }}>
+              <table className="app-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '32%' }}>SIH26023 Requirement</th>
+                    <th style={{ width: '38%' }}>GeoNexus Verified Platform Capability</th>
+                    <th style={{ width: '30%' }}>Operational Outcome</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>Document Processing</td>
+                    <td style={{ color: 'var(--accent-teal)', fontWeight: 600 }}>Document Intelligence + Adaptive OCR</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Ingestion of digital & scanned PDFs, tables, and geological logs with SHA-256 hashes</td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>Validation & Discrepancy Detection</td>
+                    <td style={{ color: 'var(--status-warning)', fontWeight: 600 }}>Cross-Document Validation</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Mathematical cross-comparison across reports with automated variance calculations</td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>Traceability & Provenance</td>
+                    <td style={{ color: '#A78BFA', fontWeight: 600 }}>Evidence + Provenance Engine</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>End-to-end citation binding from source page coordinates to final report paragraphs</td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>Automated Reports</td>
+                    <td style={{ color: '#F472B6', fontWeight: 600 }}>Report Generation Agent</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Evidence-backed DGMS & operational briefs with mandatory draft watermarks</td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>Word Cloud & Topic Identification</td>
+                    <td style={{ color: '#60A5FA', fontWeight: 600 }}>Topic & Reporting Intelligence</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Automated term extraction and recurring reporting topic discovery across archives</td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>AI Query & Interactive Q&A</td>
+                    <td style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Retrieval + Evidence + AI Gateway</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Evidence-grounded response gating preventing unsupported LLM assertions</td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>High-Priority Ministry Inquiries</td>
+                    <td style={{ color: '#FB923C', fontWeight: 600 }}>Government Inquiry Agent</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Parliamentary QA drafts (Lok Sabha/Rajya Sabha) prepared for officer sign-off</td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 700, color: '#FFFFFF' }}>Human Governance & Release Control</td>
+                    <td style={{ color: 'var(--text-emerald)', fontWeight: 600 }}>HITL + Quality Governance</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Stateful pause/resume workflow with deterministic PASS/WARNING/REJECT release gates</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1091,60 +1266,60 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           {/* Agent 1 */}
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid var(--accent-primary)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-primary)', fontWeight: 700 }}>01. Orchestrator</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(16, 185, 129, 0.18)', color: 'var(--text-emerald)', fontWeight: 700 }}>ACTIVE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-primary)', fontWeight: 700 }}>01. Manager / Orchestrator</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(16, 185, 129, 0.18)', color: 'var(--text-emerald)', fontWeight: 700 }}>ORCHESTRATOR</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>ManagerAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Parses user objectives, creates task DAGs, routes sub-tasks, monitors bounded execution, and aggregates outputs.
+              Coordinates dependency-aware execution, retries, timeouts, bounded concurrency, and workflow state across all agents.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              DAG_PLANNING • TASK_ROUTING
+              DAG_PLANNING • RETRY_BACKOFF • CHECKPOINTS
             </div>
           </div>
 
           {/* Agent 2 */}
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid var(--accent-teal)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-teal)', fontWeight: 700 }}>02. Ingestion</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(20, 184, 166, 0.18)', color: 'var(--accent-teal)', fontWeight: 700 }}>ACTIVE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent-teal)', fontWeight: 700 }}>02. Document Intelligence</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(20, 184, 166, 0.18)', color: 'var(--accent-teal)', fontWeight: 700 }}>EXTRACTION</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>DocumentIntelligenceAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Handles PDF, DOCX, XLSX, and scanned image OCR via Tesseract, extracting structured tables and SHA-256 hashes.
+              Handles document extraction, adaptive OCR, preprocessing, table matrix parsing, and document-quality evaluation.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              OCR • TABLE_PARSING • CHECKSUM
+              ADAPTIVE_OCR • TABLE_PARSER • PROVENANCE
             </div>
           </div>
 
           {/* Agent 3 */}
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid #60A5FA' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#60A5FA', fontWeight: 700 }}>03. Retrieval</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(59, 130, 246, 0.18)', color: '#60A5FA', fontWeight: 700 }}>ACTIVE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#60A5FA', fontWeight: 700 }}>03. Retrieval / RAG</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(59, 130, 246, 0.18)', color: '#60A5FA', fontWeight: 700 }}>HYBRID RRF</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>RetrievalAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Executes hybrid lexical BM25 and dense vector search fused via Reciprocal Rank Fusion (RRF) with exact page citations.
+              Retrieves relevant evidence using lexical/vector similarity with Reciprocal Rank Fusion, applying evidence-sufficiency controls.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              BM25 • VECTOR_SEARCH • RRF_FUSION
+              HYBRID_RETRIEVAL • RRF_FUSION • SUFFICIENCY_GATE
             </div>
           </div>
 
           {/* Agent 4 */}
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid #A78BFA' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#A78BFA', fontWeight: 700 }}>04. Mining Math</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(139, 92, 246, 0.18)', color: '#A78BFA', fontWeight: 700 }}>ACTIVE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#A78BFA', fontWeight: 700 }}>04. Mining Intelligence</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(139, 92, 246, 0.18)', color: '#A78BFA', fontWeight: 700 }}>DOMAIN MATH</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>MiningIntelligenceAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Extracts domain-specific entities, standardizes units (MT/Lakh Te), computes stripping ratio, and categorizes GCV grades.
+              Extracts and normalizes supported mining-specific measurements: coal grades (G1–G17), seams, OBR, stripping ratios, and units.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              GCV_CLASSIFICATION • OBR_MATH
+              GCV_CLASSIFICATION • OBR_MATH • UNIT_NORMALIZER
             </div>
           </div>
 
@@ -1152,59 +1327,59 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid var(--status-warning)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--status-warning)', fontWeight: 700 }}>05. Validation</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(245, 158, 11, 0.18)', color: 'var(--status-warning)', fontWeight: 700 }}>ACTIVE</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(245, 158, 11, 0.18)', color: 'var(--status-warning)', fontWeight: 700 }}>VARIANCE ENGINE</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>ValidationAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Cross-checks numbers across multiple documents, detects mathematical discrepancies, and calculates variance severity.
+              Detects discrepancies, contradictions and data-quality problems across documents with normalized variance scoring.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              CROSS_DOC_AUDIT • VARIANCE_ENGINE
+              CROSS_DOC_AUDIT • VARIANCE_CALC • SEVERITY_LOG
             </div>
           </div>
 
           {/* Agent 6 */}
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid #F472B6' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#F472B6', fontWeight: 700 }}>06. Synthesis</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(236, 72, 153, 0.18)', color: '#F472B6', fontWeight: 700 }}>ACTIVE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#F472B6', fontWeight: 700 }}>06. Report Generation</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(236, 72, 153, 0.18)', color: '#F472B6', fontWeight: 700 }}>SYNTHESIS</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>ReportGenerationAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Synthesizes structured reports, executive summaries, DGMS compliance audits, and multi-format export files.
+              Produces evidence-backed statutory reports and executive summaries from validated workflow outputs with draft safety watermarks.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              DGMS_TEMPLATES • REPORT_BUILDER
+              DGMS_TEMPLATES • REPORT_BUILDER • DRAFT_WATERMARK
             </div>
           </div>
 
           {/* Agent 7 */}
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid #FB923C' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#FB923C', fontWeight: 700 }}>07. Governance</span>
-              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(249, 115, 22, 0.18)', color: '#FB923C', fontWeight: 700 }}>ACTIVE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#FB923C', fontWeight: 700 }}>07. Government Inquiry</span>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(249, 115, 22, 0.18)', color: '#FB923C', fontWeight: 700 }}>PARLIAMENT QA</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>GovernmentInquiryAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Analyzes Lok Sabha & Rajya Sabha parliamentary inquiries, generates citation-grounded drafts for officer approval.
+              Supports evidence-based drafting for high-priority and parliamentary-style inquiries (Lok Sabha / Rajya Sabha) for officer review.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              MINISTRY_QA • PARLIAMENT_DRAFTER
+              MINISTRY_QA • PARLIAMENT_DRAFTER • CITATION_BINDING
             </div>
           </div>
 
           {/* Agent 8 */}
           <div className="card-level-1" style={{ backgroundColor: 'var(--bg-surface-2)', padding: '20px', borderLeft: '4px solid var(--text-emerald)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-emerald)', fontWeight: 700 }}>08. Quality Gate</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-emerald)', fontWeight: 700 }}>08. Quality Governance</span>
               <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 'var(--radius-full)', backgroundColor: 'rgba(16, 185, 129, 0.22)', color: 'var(--text-emerald)', fontWeight: 700 }}>GATEKEEPER</span>
             </div>
             <h5 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>QualityGovernanceAgent</h5>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-              Enforces zero-hallucination release gates, checking citation grounding before issuing PASS, WARNING, or REJECT decisions.
+              Evaluates output quality, evidence sufficiency, and statutory compliance, deciding whether results can proceed or require review.
             </p>
             <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-              RELEASE_GATE • ZERO_HALLUCINATION
+              RELEASE_GATE • PASS_WARNING_REJECT • GROUNDING_GATE
             </div>
           </div>
         </div>
@@ -1262,23 +1437,23 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 6 }}>BACKEND API</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Python 3.11 + Flask</div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Modular blueprint architecture, SQLite3 transaction layer, SSE streaming, and sub-second endpoint response.
+                Modular blueprint architecture, SQLite3 / PostgreSQL persistence, SSE streaming, and sub-second endpoint response.
               </p>
             </div>
 
             <div style={{ padding: '22px', backgroundColor: 'var(--bg-surface-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-hairline)' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#60A5FA', marginBottom: 6 }}>SEARCH ENGINE</div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Hybrid BM25 + Vector RRF</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Hybrid Evidence Retrieval</div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Dense 768-dim embeddings with rank-fusion keyword fallback for exact mining terminology recall.
+                Lexical TF-IDF + full-text search fused via Reciprocal Rank Fusion (RRF), OCR quality weighting, and duplicate suppression.
               </p>
             </div>
 
             <div style={{ padding: '22px', backgroundColor: 'var(--bg-surface-2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-hairline)' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA', marginBottom: 6 }}>AI ENGINE</div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Gemini Grounded / Ollama</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>Resilient Multi-Tier Gateway</div>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Pluggable LLM provider interface with deterministic zero-hallucination citation verification gates.
+                Gemini → OpenAI-compatible provider → Grounded deterministic fallback that does not generate unsupported claims.
               </p>
             </div>
           </div>
@@ -1315,15 +1490,15 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               Role-Based Access Control & Audit Trails
             </h3>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 20 }}>
-              Engineered specifically for Coal India hierarchical commands. Every document uploaded, query run, and report generated is cryptographically hashed with SHA-256 and tied to officer identity.
+              Engineered specifically for Coal India hierarchical commands. The backend serves as the single source of truth for authorization — all endpoints verify role permissions server-side.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                'Strict 4-Tier RBAC (Auditor, Analyst, Officer, Admin)',
+                'Strict 4-Tier Server-Side RBAC (Viewer, Analyst, Officer, Admin)',
                 'Cryptographic SHA-256 document hashing & tamper detection',
-                'Deterministic PASS / REJECT quality gate sign-off workflow',
-                'Complete audit trail of all AI agent decisions and task graphs',
+                'Deterministic PASS / WARNING / REQUIRES_HUMAN_REVIEW / REJECT release gates',
+                'Complete provenance ledger of all agent DAG handoffs and review decisions',
               ].map((point, idx) => (
                 <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-primary)' }}>
                   <CheckCircle2 size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
@@ -1336,7 +1511,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           {/* Access Tier Badges */}
           <div style={{ padding: '26px', backgroundColor: 'var(--bg-surface-3)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-hairline)' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>
-              Access Level Tiers
+              Server-Enforced Access Tiers
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

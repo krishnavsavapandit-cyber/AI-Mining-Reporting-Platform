@@ -42,9 +42,9 @@ export const PIPELINE_STAGES: PipelineStage[] = [
     title: 'Multi-Format Ingestion & Geological OCR',
     subtitle: 'Physical Borehole Logs & Stratigraphy Ingestion',
     description:
-      'Ingests physical scanned PDFs, CMPDI core drill logs, DOCX, XLSX, and CSV records with automatic PyMuPDF extraction, Tesseract OCR for geological borehole maps, and SHA-256 cryptographic provenance.',
+      'Ingests physical scanned PDFs, CMPDI core drill logs, DOCX, XLSX, and CSV records with automatic PyMuPDF extraction, adaptive Tesseract OCR for geological borehole maps, and SHA-256 cryptographic provenance.',
     icon: <FileText size={20} />,
-    badge: 'PyMuPDF + Tesseract OCR',
+    badge: 'PyMuPDF + Adaptive OCR',
     color: 'var(--accent-teal)',
     details: [
       'Scanned borehole drill logs & core stratigraphy',
@@ -59,12 +59,12 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   {
     id: 'retrieval',
     number: '02',
-    title: 'Evidence-Grounded RAG & Blast Coordinates',
+    title: 'Hybrid Evidence Retrieval & Search',
     subtitle: 'Hybrid Reciprocal Rank Fusion Search Engine',
     description:
-      'Combines lexical BM25 matching and dense 768-dim vector embeddings fused via Reciprocal Rank Fusion (RRF) with exact page, bench elevation, and coordinate citations across Coal India commands.',
+      'Combines lexical TF-IDF matching and full-text retrieval fused via Reciprocal Rank Fusion (RRF) with exact page and coordinate citations across Coal India commands.',
     icon: <Search size={20} />,
-    badge: 'BM25 + Vector RRF',
+    badge: 'Lexical + Vector RRF',
     color: 'var(--accent-primary)',
     details: [
       'Reciprocal Rank Fusion (RRF) rank merge',
@@ -139,16 +139,16 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   {
     id: 'governance',
     number: '06',
-    title: 'Quality & Subterranean Release Gates',
-    subtitle: 'Zero-Hallucination Gatekeeper & Sign-off',
+    title: 'Quality & Governance Release Gates',
+    subtitle: 'Evidence-Grounded Gatekeeper & Sign-off',
     description:
-      'QualityGovernanceAgent independently inspects all generated outputs, verifying 100% citation grounding against source strata records before issuing PASS, WARNING, or REJECT release verdicts.',
+      'QualityGovernanceAgent independently inspects all generated outputs, verifying evidence sufficiency and citation grounding before issuing PASS, WARNING, REQUIRES_HUMAN_REVIEW, or REJECT release verdicts.',
     icon: <ShieldCheck size={20} />,
     badge: 'Release Verdicts (PASS/REJECT)',
     color: 'var(--text-emerald)',
     details: [
-      'Deterministic PASS / REJECT verification',
-      'Zero ungrounded assertions allowed',
+      'Deterministic 4-state release verification',
+      'Evidence-grounded response gating',
       'Cryptographic review sign-off record',
     ],
     image: '/images/continuous_miner.jpg',
@@ -162,14 +162,14 @@ export const PIPELINE_STAGES: PipelineStage[] = [
     title: 'Statutory Reports & Ministry Inquiries',
     subtitle: 'Official Synthesis, DGMS Compliance & Dispatch',
     description:
-      'Generates executive summaries, DGMS statutory compliance drafts, and evidence-grounded parliamentary inquiry responses ready for Joint Secretary review and freight dispatch.',
+      'Generates executive summaries, DGMS statutory compliance drafts with mandatory draft watermarks, and evidence-grounded parliamentary inquiry responses ready for Joint Secretary review.',
     icon: <FileCheck2 size={20} />,
     badge: 'DGMS & Parliamentary',
     color: '#F472B6',
     details: [
       'DGMS statutory safety compliance reports',
       'Ministry & Lok Sabha/Rajya Sabha drafts',
-      'Executive Markdown & PDF document exports',
+      'Mandatory draft verification watermarks',
     ],
     image: '/images/coal_handling_plant.jpg',
     imageCaption: 'Coal Handling Plant (CHP) Rapid Silo Loading & Rail Freight Dispatch',

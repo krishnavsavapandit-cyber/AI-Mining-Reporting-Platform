@@ -25,7 +25,7 @@ const TAB_TITLES: Record<NavigationTab, { title: string; subtitle: string }> = {
   dashboard: { title: 'Executive Command Center', subtitle: 'Platform overview & operational telemetry' },
   documents: { title: 'Document Intelligence Ingestion', subtitle: 'Indexed statutory CIL files & OCR' },
   search: { title: 'Hybrid Semantic & Vector Search', subtitle: 'Sublinear TF-IDF + Cosine RRF' },
-  assistant: { title: 'Mining Intelligence Assistant', subtitle: 'Grounded RAG with strict zero-hallucination' },
+  assistant: { title: 'Mining Intelligence Assistant', subtitle: 'Evidence-grounded RAG with source citations' },
   reports: { title: 'Executive Report Generator', subtitle: 'Multi-source document compilation & approval' },
   inquiries: { title: 'Parliamentary Question Formulation', subtitle: 'Ministry of Coal starred inquiry drafts' },
   validation: { title: 'Discrepancy Resolution Matrix', subtitle: 'Cross-document variance audit' },

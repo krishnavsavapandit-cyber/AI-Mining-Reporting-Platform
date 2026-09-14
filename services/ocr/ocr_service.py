@@ -1,14 +1,10 @@
-"""
-Central OCR Orchestration Service for SIH26023.
-Manages dynamic quality assessment, engine routing (AUTO / TESSERACT / ADVANCED),
-multi-stage resilient fallback, provenance assembly, and audit logging.
-"""
-
 import io
 import time
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List
+from PIL import Image
+
 try:
     import pymupdf
     PYMUPDF_AVAILABLE = True
@@ -40,8 +36,9 @@ logger = logging.getLogger(__name__)
 
 class OCRService:
     """
-    Central coordinator for document OCR operations in SIH26023.
-    Guarantees zero-crash execution, transparent fallback, and rich provenance tracking.
+    Central Master-Level Coordinator for document OCR operations in SIH26023.
+    Guarantees Tesseract-primary routing, adaptive PSM selection, RapidOCR comparison fallback,
+    zero-crash execution, and rich provenance metadata.
     """
 
     def __init__(self):
@@ -54,27 +51,42 @@ class OCRService:
         """Check if at least one OCR engine backend is operational."""
         return self.tesseract_engine.is_available() or self.advanced_engine.is_available()
 
+    def get_ocr_health(self) -> Dict[str, Any]:
+        """Return operational health of all OCR engines."""
+        tess_avail = self.tesseract_engine.is_available()
+        adv_avail = self.advanced_engine.is_available()
+        rapid_avail = getattr(self.advanced_engine, "rapid_ocr", None) is not None
+        status = "HEALTHY" if tess_avail else ("DEGRADED" if adv_avail else "UNHEALTHY")
+        return {
+            "status": status,
+            "tesseract_primary_available": tess_avail,
+            "rapidocr_secondary_available": rapid_avail,
+            "advanced_engine_available": adv_avail,
+            "default_mode": self.default_mode,
+            "advanced_enabled": self.advanced_enabled
+        }
+
     def determine_document_quality(self, img: Image.Image, dpi: int = 150) -> QualityAssessment:
         """Evaluate image heuristics and determine if Advanced OCR is recommended."""
         return QualityDetector.assess_image(img, dpi=dpi)
 
     def select_ocr_engine(self, quality: QualityAssessment, requested_mode: Optional[str] = None) -> BaseOCREngine:
         """
-        Dynamically choose the optimal OCR engine based on quality assessment and configuration.
+        Dynamically choose the optimal OCR engine. Tesseract remains Priority 1.
         """
         mode = (requested_mode or self.default_mode).upper()
 
         if mode == "ADVANCED" and self.advanced_enabled and self.advanced_engine.is_available():
             return self.advanced_engine
 
-        if mode == "NORMAL" or mode == "TESSERACT":
+        if mode in ("NORMAL", "TESSERACT"):
             return self.tesseract_engine
 
         # AUTO mode: route based on quality assessment
         if self.advanced_enabled and quality.quality_level in (OCRQualityLevel.LOW.value, OCRQualityLevel.MEDIUM.value) and self.advanced_engine.is_available():
             return self.advanced_engine
 
-        # Default fallback to standard Tesseract
+        # Default to standard Tesseract as Primary Engine
         return self.tesseract_engine
 
     def process_page(
@@ -86,10 +98,11 @@ class OCRService:
         lang: str = CONFIG_OCR_LANG
     ) -> PageOCRResult:
         """
-        Execute robust OCR on a single page or pixmap with multi-tier fallback.
+        Execute robust adaptive OCR on a single page or pixmap with multi-tier fallback and provenance.
         """
         start_time = time.time()
         img: Optional[Image.Image] = None
+        ocr_provenance_attempts: List[Dict[str, Any]] = []
 
         # 1. Convert input to PIL Image safely
         try:
@@ -142,44 +155,80 @@ class OCRService:
                 human_review_required=False
             )
 
-        # 3. Engine Selection
+        # 3. Primary Engine Selection (Tesseract Priority 1)
         primary_engine = self.select_ocr_engine(quality_assessment, requested_mode=engine_mode)
         applied_preprocessing: List[str] = []
         warnings: List[str] = list(quality_assessment.reasons)
         extracted_text = ""
         confidence = 0.0
         engine_used_name = primary_engine.name
+        fallback_reason: Optional[str] = None
 
-        # 4. Resilient Execution with Fallback Chain
-        # Tier A: Try Primary Selected Engine
+        # 4. Adaptive Execution Strategy
+        # Attempt 1: Primary Engine with default layout PSM 3
         try:
-            extracted_text, confidence, engine_warnings = primary_engine.extract_text_and_confidence(img, lang=lang)
+            extracted_text, confidence, engine_warnings = primary_engine.extract_text_and_confidence(img, lang=lang, psm=3)
             warnings.extend(engine_warnings)
+            ocr_provenance_attempts.append({
+                "attempt": 1,
+                "engine": primary_engine.name,
+                "psm": 3,
+                "confidence": confidence,
+                "char_count": len(extracted_text),
+                "status": "SUCCESS" if confidence >= 0.65 else "LOW_CONFIDENCE"
+            })
         except Exception as e:
-            logger.warning(f"{primary_engine.name} failed on Pg {page_number}: {e}. Triggering fallback.")
-            log_audit("OCR_FALLBACK_TRIGGERED", details={
-                "page": page_number,
-                "primary_engine": primary_engine.name,
+            fallback_reason = f"Primary engine ({primary_engine.name}) error: {str(e)}"
+            logger.warning(f"{primary_engine.name} failed on Pg {page_number}: {e}. Triggering adaptive retry.")
+            ocr_provenance_attempts.append({
+                "attempt": 1,
+                "engine": primary_engine.name,
+                "psm": 3,
                 "error": str(e),
-                "filename": filename
+                "status": "FAILED"
             })
 
-            # Tier B: Fallback to Tesseract if Advanced failed
-            if primary_engine.name != self.tesseract_engine.name and self.tesseract_engine.is_available():
-                try:
-                    engine_used_name = self.tesseract_engine.name + " (Fallback)"
-                    extracted_text, confidence, engine_warnings = self.tesseract_engine.extract_text_and_confidence(img, lang=lang)
-                    warnings.extend(engine_warnings)
-                    warnings.append("Advanced OCR failed; successfully extracted via standard Tesseract fallback.")
-                except Exception as t_err:
-                    logger.error(f"Fallback Tesseract also failed on Pg {page_number}: {t_err}")
-                    extracted_text = ""
-                    confidence = 0.0
-                    warnings.append(f"All OCR engines failed: {str(t_err)}")
-            else:
-                extracted_text = ""
-                confidence = 0.0
-                warnings.append(f"OCR execution failure: {str(e)}")
+        # Attempt 2: If low confidence (<0.60) or low text yield, retry with dense layout PSM 6 or Otsu binarization
+        if (confidence < 0.60 or len(extracted_text) < 25) and self.tesseract_engine.is_available():
+            try:
+                img_p2, steps_p2 = ImagePreprocessor.apply_pipeline(img, ["grayscale", "contrast", "threshold"])
+                alt_text, alt_conf, alt_warn = self.tesseract_engine.extract_text_and_confidence(img_p2, lang=lang, psm=6)
+                ocr_provenance_attempts.append({
+                    "attempt": 2,
+                    "engine": "TesseractEngine (PSM 6 + Otsu Preprocessing)",
+                    "psm": 6,
+                    "confidence": alt_conf,
+                    "char_count": len(alt_text),
+                    "status": "SUCCESS" if alt_conf >= confidence else "NO_IMPROVEMENT"
+                })
+                if len(alt_text) > len(extracted_text) or alt_conf > confidence:
+                    extracted_text = alt_text
+                    confidence = alt_conf
+                    applied_preprocessing = steps_p2
+                    warnings.extend(alt_warn)
+                    engine_used_name = "TesseractEngine (Adaptive PSM 6)"
+            except Exception as e2:
+                logger.debug(f"Adaptive Tesseract retry failed on Pg {page_number}: {e2}")
+
+        # Attempt 3: If still poor result and Advanced Engine is available (and wasn't primary), try Advanced/RapidOCR
+        if (confidence < 0.60 or len(extracted_text) < 25) and primary_engine.name != self.advanced_engine.name and self.advanced_engine.is_available():
+            try:
+                adv_text, adv_conf, adv_warn = self.advanced_engine.extract_text_and_confidence(img, lang=lang)
+                ocr_provenance_attempts.append({
+                    "attempt": 3,
+                    "engine": self.advanced_engine.name,
+                    "confidence": adv_conf,
+                    "char_count": len(adv_text),
+                    "status": "SUCCESS" if adv_conf > confidence else "NO_IMPROVEMENT"
+                })
+                if len(adv_text) > len(extracted_text) or adv_conf > confidence:
+                    extracted_text = adv_text
+                    confidence = adv_conf
+                    engine_used_name = self.advanced_engine.name + " (Fallback)"
+                    warnings.extend(adv_warn)
+                    warnings.append("Enhanced via Advanced multi-pass OCR fallback.")
+            except Exception as adv_err:
+                logger.debug(f"Advanced fallback failed on Pg {page_number}: {adv_err}")
 
         # 5. Evaluate Final Quality Level and Human Review Flag
         elapsed_ms = int((time.time() - start_time) * 1000)
@@ -197,7 +246,8 @@ class OCRService:
                 "page": page_number,
                 "filename": filename,
                 "confidence": confidence,
-                "engine": engine_used_name
+                "engine": engine_used_name,
+                "attempts": ocr_provenance_attempts
             })
         elif confidence < 0.85:
             final_quality = OCRQualityLevel.MEDIUM.value
@@ -250,3 +300,4 @@ class OCRService:
 
 # Global Singleton OCR service instance
 ocr_service = OCRService()
+

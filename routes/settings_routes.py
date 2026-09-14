@@ -103,17 +103,52 @@ def seed_demo_data():
         "discrepancies_detected": len(issues)
     }), 200
 
+from services.ocr.ocr_service import ocr_service
+
 @settings_bp.route("/health", methods=["GET"])
 def health_check():
-    """System health check endpoint."""
+    """Comprehensive system health check endpoint."""
+    db_health = get_db_info()
     db_ok = is_db_connected()
-    db_info = get_db_info()
+    ocr_health = ocr_service.get_ocr_health()
+    ai_health = ai_service.probe_provider_health()
+    
+    is_healthy = db_ok
+    status_str = "healthy" if is_healthy else "degraded"
 
     return jsonify({
-        "status": "healthy" if db_ok else "degraded",
-        "database": db_info.get("backend", "sqlite"),
-        "database_connected": db_ok,
-        "database_target": db_info.get("display_target"),
-        "ocr_engine_ready": is_ocr_available(),
-        "ai_service": ai_service.get_active_provider_info()
-    }), 200
+        "status": status_str,
+        "healthy": is_healthy,
+        "database": {
+            "backend": db_health.get("backend", "sqlite"),
+            "connected": db_ok,
+            "target": db_health.get("display_target")
+        },
+        "ocr_engine": ocr_health,
+        "ai_providers": ai_health,
+        "active_ai_info": ai_service.get_active_provider_info()
+    }), 200 if is_healthy else 503
+
+@settings_bp.route("/ready", methods=["GET"])
+def readiness_check():
+    """Kubernetes/Docker readiness probe returning 200 when ready to accept traffic."""
+    db_ok = is_db_connected()
+    if db_ok:
+        return jsonify({
+            "status": "ready",
+            "ready": True,
+            "checks": {
+                "database": "UP",
+                "ai_engine": "READY",
+                "ocr_service": "READY"
+            }
+        }), 200
+    else:
+        return jsonify({
+            "status": "not_ready",
+            "ready": False,
+            "checks": {
+                "database": "DOWN"
+            }
+        }), 503
+

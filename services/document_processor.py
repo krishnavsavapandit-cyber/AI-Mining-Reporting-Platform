@@ -457,10 +457,33 @@ class DocumentProcessor:
             "chunks": chunks
         }
 
+    def classify_document_type(self, text: str = "", filename: str = "", **kwargs) -> str:
+        """Deterministically classify document category based on keyword density."""
+        # Handle positional or keyword argument swaps
+        if "sample_text" in kwargs:
+            text = kwargs["sample_text"]
+        if not text and filename and not any(filename.lower().endswith(ext) for ext in [".pdf", ".docx", ".xlsx", ".csv", ".txt", ".png", ".jpg"]):
+            # Swap if first arg was filename
+            text, filename = filename, text
+
+        raw_str = (str(text)[:3000] + " " + str(filename)).lower()
+        t_lower = raw_str.replace("_", " ").replace("-", " ")
+        if any(kw in t_lower for kw in ["annual report", "financial year", "balance sheet", "p&l", "directors' report"]):
+            return "ANNUAL_REPORT"
+        if any(kw in t_lower for kw in ["monthly production", "offtake report", "monthly summary", "monthly statement", "target achievement", "production report"]):
+            return "PRODUCTION_REPORT"
+        if any(kw in t_lower for kw in ["borehole", "geological", "seam", "strata", "ash content", "drilling", "reserve"]):
+            return "GEOLOGICAL_REPORT"
+        if any(kw in t_lower for kw in ["safety", "accident", "fatal", "injury", "dgms", "ltifr", "hazard"]):
+            return "MINE_SAFETY_REPORT"
+        if any(kw in t_lower for kw in ["pm10", "pm2.5", "effluent", "air quality", "environment", "plantation", "saplings"]):
+            return "ENVIRONMENTAL_COMPLIANCE"
+        return "GENERAL_MINING_DOCUMENT"
+
     def _create_chunks(self, pages_data: List[Dict[str, Any]], filename: str) -> List[Dict[str, Any]]:
         """
         Create overlapping text chunks with strict page and section provenance.
-        Preserves OCR engine, quality, and warning metadata where applicable.
+        Preserves OCR engine, quality, content hashes, and source type without splitting key facts.
         Chunk size ~500 chars, overlap ~100 chars.
         """
         chunks = []
@@ -480,7 +503,10 @@ class DocumentProcessor:
                 if len(para) < 40 and any(kw in para.lower() for kw in ["production", "geology", "safety", "equipment", "subsidiary", "summary", "monthly", "target"]):
                     current_section = para
 
+                source_type = "OCR_TEXT" if ocr_meta else "DIGITAL_TEXT"
+
                 if len(para) <= 600:
+                    c_hash = hashlib.sha256(para.strip().encode("utf-8")).hexdigest()[:16]
                     chunk_item = {
                         "chunk_index": chunk_idx,
                         "page_number": page_num,
@@ -488,11 +514,13 @@ class DocumentProcessor:
                         "content": para,
                         "char_start": 0,
                         "char_end": len(para),
-                        "token_count": len(para.split())
+                        "token_count": len(para.split()),
+                        "content_hash": c_hash,
+                        "source_type": source_type
                     }
                     if ocr_meta:
                         chunk_item["ocr_engine"] = ocr_meta.get("engine_used")
-                        chunk_item["ocr_quality"] = ocr_meta.get("ocr_quality")
+                        chunk_item["ocr_quality"] = ocr_meta.get("quality_level")
                         chunk_item["ocr_confidence"] = ocr_meta.get("confidence")
                         chunk_item["warnings"] = ocr_meta.get("warnings", [])
 
@@ -502,6 +530,7 @@ class DocumentProcessor:
                     step = 450
                     for i in range(0, len(para), step):
                         window = para[i:i + 550]
+                        c_hash = hashlib.sha256(window.strip().encode("utf-8")).hexdigest()[:16]
                         chunk_item = {
                             "chunk_index": chunk_idx,
                             "page_number": page_num,
@@ -509,11 +538,13 @@ class DocumentProcessor:
                             "content": window,
                             "char_start": i,
                             "char_end": i + len(window),
-                            "token_count": len(window.split())
+                            "token_count": len(window.split()),
+                            "content_hash": c_hash,
+                            "source_type": source_type
                         }
                         if ocr_meta:
                             chunk_item["ocr_engine"] = ocr_meta.get("engine_used")
-                            chunk_item["ocr_quality"] = ocr_meta.get("ocr_quality")
+                            chunk_item["ocr_quality"] = ocr_meta.get("quality_level")
                             chunk_item["ocr_confidence"] = ocr_meta.get("confidence")
                             chunk_item["warnings"] = ocr_meta.get("warnings", [])
 
@@ -524,3 +555,4 @@ class DocumentProcessor:
 
 # Global DocumentProcessor instance
 document_processor = DocumentProcessor()
+

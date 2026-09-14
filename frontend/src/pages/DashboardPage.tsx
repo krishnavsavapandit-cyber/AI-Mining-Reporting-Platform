@@ -291,7 +291,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <div className="card-header-clean">
             <div>
               <h3 className="card-title">Parliamentary Inquiries Awaiting Authorization</h3>
-              <p className="card-subtitle">Drafted strictly from ground-truth verified documents with zero hallucination.</p>
+              <p className="card-subtitle">Drafted strictly from ground-truth verified documents with evidence-grounded response gating.</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => onNavigate('inquiries')} icon={<ArrowRight size={13} />}>
               Inquiry Center
@@ -568,7 +568,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           <MetricCard
             label="Quality Gate Compliance"
             value="100%"
-            subtitle="Zero ungrounded hallucinations"
+            subtitle="Evidence-grounded response gating"
             icon={<ShieldCheck size={18} />}
           />
         </div>

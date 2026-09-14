@@ -11,9 +11,11 @@ Roles:
 
 import functools
 import logging
-from flask import request, jsonify, session
+import uuid
+from flask import request, jsonify, session, g
 from itsdangerous import BadSignature, SignatureExpired
 from database.db import log_audit
+from services.common_models import make_api_response, FailureCategory
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,26 @@ ROLES = {
     "ANALYST": {"level": 2, "name": "Mining Data Analyst"},
     "VIEWER": {"level": 1, "name": "Read-Only Viewer / Auditor"}
 }
+
+def get_request_id() -> str:
+    """Retrieve or generate active request correlation ID."""
+    if hasattr(g, "request_id") and g.request_id:
+        return g.request_id
+    req_id = request.headers.get("X-Request-ID") or f"req_{uuid.uuid4().hex[:12]}"
+    g.request_id = req_id
+    return req_id
+
+def init_request_context():
+    """Flask before_request hook to initialize request context and correlation ID."""
+    get_request_id()
+
+def attach_response_headers(response):
+    """Flask after_request hook to attach correlation ID and security headers."""
+    req_id = get_request_id()
+    if response and hasattr(response, "headers"):
+        response.headers["X-Request-ID"] = req_id
+    return response
+
 
 def get_current_authenticated_user():
     """
@@ -103,29 +125,55 @@ def require_role(allowed_roles):
     def decorator(f):
         @functools.wraps(f)
         def decorated_function(*args, **kwargs):
+            req_id = get_request_id()
             user = get_current_authenticated_user()
             if not user:
-                logger.warning(f"UNAUTHENTICATED ACCESS: Request to {request.path} lacks authenticated session.")
-                return jsonify({
-                    "status": "error",
-                    "error_code": "UNAUTHORIZED",
-                    "message": "Authentication required. Please sign in with an authorized account."
-                }), 401
+                logger.warning(f"UNAUTHENTICATED ACCESS: Request to {request.path} lacks authenticated session. [req_id={req_id}]")
+                err_payload = make_api_response(
+                    status="error",
+                    error={
+                        "error_code": "UNAUTHORIZED",
+                        "message": "Authentication required. Please sign in with an authorized account.",
+                        "category": FailureCategory.AUTHORIZATION_FAILURE.value
+                    },
+                    request_id=req_id,
+                    extra_root_keys={
+                        "status": "error",
+                        "error_code": "UNAUTHORIZED",
+                        "message": "Authentication required. Please sign in with an authorized account."
+                    }
+                )
+                resp = jsonify(err_payload)
+                resp.headers["X-Request-ID"] = req_id
+                return resp, 401
 
             current_role = get_current_user_role()
             if not current_role or current_role not in allowed_roles:
-                logger.warning(f"RBAC DENIAL: Role '{current_role}' attempted access to {request.path} requiring {allowed_roles}")
+                logger.warning(f"RBAC DENIAL: Role '{current_role}' attempted access to {request.path} requiring {allowed_roles} [req_id={req_id}]")
                 log_audit("UNAUTHORIZED_ACCESS_ATTEMPT", user_role=current_role or "VIEWER", resource_type="endpoint", details={
                     "path": request.path,
                     "method": request.method,
                     "required_roles": allowed_roles,
-                    "actual_role": current_role
+                    "actual_role": current_role,
+                    "request_id": req_id
                 })
-                return jsonify({
-                    "status": "error",
-                    "error_code": "FORBIDDEN",
-                    "message": f"Access denied: Role '{current_role}' lacks permission for this action. Required: {', '.join(allowed_roles)}."
-                }), 403
+                err_payload = make_api_response(
+                    status="error",
+                    error={
+                        "error_code": "FORBIDDEN",
+                        "message": f"Access denied: Role '{current_role}' lacks permission for this action. Required: {', '.join(allowed_roles)}.",
+                        "category": FailureCategory.AUTHORIZATION_FAILURE.value
+                    },
+                    request_id=req_id,
+                    extra_root_keys={
+                        "status": "error",
+                        "error_code": "FORBIDDEN",
+                        "message": f"Access denied: Role '{current_role}' lacks permission for this action. Required: {', '.join(allowed_roles)}."
+                    }
+                )
+                resp = jsonify(err_payload)
+                resp.headers["X-Request-ID"] = req_id
+                return resp, 403
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -137,13 +185,27 @@ def require_auth(f):
     """
     @functools.wraps(f)
     def decorated_function(*args, **kwargs):
+        req_id = get_request_id()
         user = get_current_authenticated_user()
         if not user:
-            logger.warning(f"UNAUTHENTICATED ACCESS: Request to {request.path} lacks authenticated session.")
-            return jsonify({
-                "status": "error",
-                "error_code": "UNAUTHORIZED",
-                "message": "Authentication required. Please sign in to access this resource."
-            }), 401
+            logger.warning(f"UNAUTHENTICATED ACCESS: Request to {request.path} lacks authenticated session. [req_id={req_id}]")
+            err_payload = make_api_response(
+                status="error",
+                error={
+                    "error_code": "UNAUTHORIZED",
+                    "message": "Authentication required. Please sign in to access this resource.",
+                    "category": FailureCategory.AUTHORIZATION_FAILURE.value
+                },
+                request_id=req_id,
+                extra_root_keys={
+                    "status": "error",
+                    "error_code": "UNAUTHORIZED",
+                    "message": "Authentication required. Please sign in to access this resource."
+                }
+            )
+            resp = jsonify(err_payload)
+            resp.headers["X-Request-ID"] = req_id
+            return resp, 401
         return f(*args, **kwargs)
     return decorated_function
+

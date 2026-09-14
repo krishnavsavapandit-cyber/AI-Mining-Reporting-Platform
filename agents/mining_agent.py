@@ -2,12 +2,12 @@
 Mining Intelligence Agent for SIH26023 Multi-Agent Platform (Agent 4).
 Specialized domain-intelligence agent responsible for extracting mining-specific entities,
 normalizing measurement units, computing domain KPIs (stripping ratio, LTIFR),
-identifying coal grades, seams, HEMM fleet statistics, and environmental metrics with strict page provenance.
+identifying coal grades (G1-G17), seams, HEMM fleet statistics, and environmental metrics with strict page provenance.
 """
 
 import re
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from agents.base_agent import BaseAgent
 from agents.agent_messages import AgentTask, AgentResult, WorkflowContext, EvidenceItem, ProvenanceEdgeType
 from database.db import get_db
@@ -23,13 +23,23 @@ COAL_GRADE_GCV_MAP = {
     "G17": (2201, 2500)
 }
 
+# Standard Indian Coal Seam Names
+KNOWN_COAL_SEAMS = [
+    "Hatnal", "Dishergarh", "Sanctoria", "Poniati", "Koithee", "Rana", "Samla", "Satgram",
+    "Sripur", "Jambad", "Kenda", "Dobrana", "Nega", "Narainpur", "Chora", "Upper Karo",
+    "Lower Karo", "Bermo", "Kargali", "Kathara", "Uchitdih", "Jarangdih", "Swang",
+    "Seam I", "Seam II", "Seam III", "Seam IV", "Seam V", "Seam VI", "Seam VII", "Seam VIII",
+    "Seam IX", "Seam X", "Seam XI", "Seam XII", "Seam XIII", "Seam XIV", "Seam XV", "Seam XVI",
+    "Bottom Seam", "Top Seam", "Middle Seam", "Main Seam", "Queen Seam", "King Seam", "Leader Seam"
+]
+
 class MiningIntelligenceAgent(BaseAgent):
     """Specialized Domain-Intelligence Agent for Coal India & CMPDI Mining Operations."""
 
     def __init__(self):
         super().__init__(
             name="MiningIntelligenceAgent",
-            description="Extracts mining entities, normalizes units, calculates stripping ratios, LTIFR, coal grades, HEMM metrics, and structures domain facts.",
+            description="Extracts mining entities, normalizes units, calculates stripping ratios, LTIFR, coal grades, HEMM metrics, validates physical plausibility, and structures domain facts.",
             capabilities=[
                 "MINING_ENTITY_EXTRACTION",
                 "UNIT_NORMALIZATION",
@@ -38,6 +48,7 @@ class MiningIntelligenceAgent(BaseAgent):
                 "SAFETY_METRICS_PARSING",
                 "HEMM_FLEET_ANALYSIS",
                 "ENVIRONMENTAL_METRICS_EXTRACTION",
+                "PHYSICAL_PLAUSIBILITY_VALIDATION",
                 "DOMAIN_PROVENANCE_STRUCTURING"
             ]
         )
@@ -56,6 +67,7 @@ class MiningIntelligenceAgent(BaseAgent):
 
         extracted_facts: List[Dict[str, Any]] = []
         evidence_items: List[EvidenceItem] = []
+        validation_warnings: List[str] = []
 
         # 1. If text is provided directly or extracted from accumulated evidence
         text_sources = []
@@ -92,6 +104,12 @@ class MiningIntelligenceAgent(BaseAgent):
                 default_period=period
             )
             for f in facts:
+                # Validate physical plausibility
+                is_plausible, plausibility_msg = self._validate_physical_plausibility(f)
+                if not is_plausible:
+                    f["plausibility_warning"] = plausibility_msg
+                    validation_warnings.append(plausibility_msg)
+
                 dedup_key = (f.get("metric"), f.get("mine"), f.get("reporting_period"), f.get("raw_value"), f.get("source_document"), f.get("page"))
                 if dedup_key not in seen_keys:
                     seen_keys.add(dedup_key)
@@ -113,7 +131,8 @@ class MiningIntelligenceAgent(BaseAgent):
                             "numeric_value": f.get("numeric_value"),
                             "unit": f.get("unit"),
                             "normalized_value": f.get("normalized_value"),
-                            "normalized_unit": f.get("normalized_unit")
+                            "normalized_unit": f.get("normalized_unit"),
+                            "plausibility_warning": f.get("plausibility_warning")
                         }
                     ))
 
@@ -137,15 +156,15 @@ class MiningIntelligenceAgent(BaseAgent):
                 )
 
         status = "SUCCESS" if extracted_facts or calculated_kpis else "PARTIAL"
-        warnings = []
         if not extracted_facts:
-            warnings.append("No specialized mining domain entities could be extracted from input sources.")
+            validation_warnings.append("No specialized mining domain entities could be extracted from input sources.")
 
         structured_data = {
             "facts_count": len(extracted_facts),
             "facts": extracted_facts,
             "calculated_kpis": calculated_kpis,
-            "units_normalized": True
+            "units_normalized": True,
+            "plausibility_warnings": validation_warnings
         }
 
         return AgentResult(
@@ -159,7 +178,7 @@ class MiningIntelligenceAgent(BaseAgent):
             result_data=structured_data,
             evidence=evidence_items,
             confidence=0.96 if extracted_facts else 0.50,
-            warnings=warnings,
+            warnings=validation_warnings,
             errors=[],
             sources=[
                 {"document_id": f.get("document_id"), "document_name": f.get("source_document"), "page": f.get("page")}
@@ -169,11 +188,43 @@ class MiningIntelligenceAgent(BaseAgent):
         )
 
     # -------------------------------------------------------------------------
+    # Physical Plausibility Sanity Checks
+    # -------------------------------------------------------------------------
+    def _validate_physical_plausibility(self, fact: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+        """Validate that extracted numerical values are within physical bounds."""
+        metric = fact.get("metric", "")
+        norm_val = fact.get("normalized_value")
+        raw_val = fact.get("raw_value", "")
+        
+        if norm_val is None:
+            return True, None
+
+        if metric in ("production", "dispatch", "obr") and norm_val < 0:
+            return False, f"Impossible negative value for {metric}: {norm_val} {fact.get('normalized_unit')}"
+        
+        if metric == "ash_percentage" and (norm_val < 0 or norm_val > 100):
+            return False, f"Ash percentage out of physical range (0-100%): {norm_val}%"
+        
+        if metric == "moisture_percentage" and (norm_val < 0 or norm_val > 100):
+            return False, f"Moisture percentage out of physical range (0-100%): {norm_val}%"
+            
+        if metric == "water_ph" and (norm_val < 0 or norm_val > 14):
+            return False, f"Water pH out of chemical range (0-14): {norm_val}"
+            
+        if metric in ("hemm_availability", "hemm_utilization") and (norm_val < 0 or norm_val > 100):
+            return False, f"HEMM {metric} percentage out of range (0-100%): {norm_val}%"
+
+        if metric == "gcv" and (norm_val < 1000 or norm_val > 9000):
+            return False, f"GCV value outside standard coal thermal range (1000-9000 kcal/kg): {norm_val}"
+
+        return True, None
+
+    # -------------------------------------------------------------------------
     # Internal Domain Extractors & Unit Normalizers
     # -------------------------------------------------------------------------
     def normalize_production_unit(self, value_str: str) -> Dict[str, Any]:
         """
-        Normalize production/offtake/OBR units to standard MT (Million Tonnes) or M.Cum.
+        Normalize production/offtake/OBR units to standard MT (Million Tonnes) or M.Cum / BCM.
         Supported inputs: '1.32 MT', '13.2 Lakh Tonnes', '1320000 Tonnes', '1320000 T', etc.
         """
         val_str = str(value_str).strip()
@@ -192,10 +243,13 @@ class MiningIntelligenceAgent(BaseAgent):
             return {"raw_value": val_str, "numeric_value": raw_num, "unit": "Cr Tonnes", "normalized_value": norm_val, "normalized_unit": "MT"}
         elif "MILLION TONNE" in upper or "MT" in upper or "M.T" in upper or "MTE" in upper:
             return {"raw_value": val_str, "numeric_value": raw_num, "unit": "MT", "normalized_value": raw_num, "normalized_unit": "MT"}
+        elif "BCM" in upper or "BILLION CUBIC METRE" in upper:
+            norm_val = round(raw_num * 1000.0, 4)
+            return {"raw_value": val_str, "numeric_value": raw_num, "unit": "BCM", "normalized_value": norm_val, "normalized_unit": "M.Cum"}
         elif "LAKH CU" in upper or "L.CUM" in upper or "LAKH M3" in upper:
             norm_val = round(raw_num * 0.1, 4)
             return {"raw_value": val_str, "numeric_value": raw_num, "unit": "L.Cum", "normalized_value": norm_val, "normalized_unit": "M.Cum"}
-        elif "MILLION CU" in upper or "M.CUM" in upper or "MCUM" in upper or "M M3" in upper:
+        elif "MILLION CU" in upper or "M.CUM" in upper or "MCUM" in upper or "M M3" in upper or "MILLION M3" in upper:
             return {"raw_value": val_str, "numeric_value": raw_num, "unit": "M.Cum", "normalized_value": raw_num, "normalized_unit": "M.Cum"}
         elif "CU.M" in upper or "CUBIC METRE" in upper or "M3" in upper:
             norm_val = round(raw_num / 1_000_000.0, 6)
@@ -229,6 +283,27 @@ class MiningIntelligenceAgent(BaseAgent):
 
         period_match = re.search(r"\b(FY\s*20\d{2}[-–]?\d{2,4}|Q[1-4]\s*FY\s*20\d{2}|Q[1-4]|202[0-9]-[0-9]{2}|April\s*20\d{2}|May\s*20\d{2}|June\s*20\d{2}|July\s*20\d{2}|August\s*20\d{2}|September\s*20\d{2}|October\s*20\d{2}|November\s*20\d{2}|December\s*20\d{2}|January\s*20\d{2}|February\s*20\d{2}|March\s*20\d{2})\b", text, re.I)
         detected_period = period_match.group(1).strip() if period_match else default_period
+
+        # 1.5 Detect Coal Seams
+        for seam in KNOWN_COAL_SEAMS:
+            if re.search(rf"\b{re.escape(seam)}\b", text, re.I):
+                facts.append({
+                    "metric": "coal_seam",
+                    "raw_value": seam,
+                    "numeric_value": None,
+                    "unit": "Seam",
+                    "normalized_value": seam,
+                    "normalized_unit": "Seam",
+                    "reporting_period": detected_period,
+                    "mine": detected_mine,
+                    "subsidiary": detected_sub,
+                    "source_document": doc_name,
+                    "document_id": doc_id,
+                    "page": page,
+                    "section": section,
+                    "source_excerpt": f"Coal Seam: {seam}",
+                    "confidence": 0.98
+                })
 
         # 2. Production Patterns
         prod_patterns = [
@@ -292,7 +367,7 @@ class MiningIntelligenceAgent(BaseAgent):
 
         # 4. Overburden Removal (OBR) Patterns
         obr_patterns = [
-            (r"(?:overburden\s+removal|OBR|overburden|excavation)\s*(?:of|was|is|:|=)?\s*([0-9.,]+\s*(?:M\.Cum|Million\s*Cu\.M|Lakh\s*Cu\.M|L\.Cum|Cu\.M|M3))", "obr"),
+            (r"(?:overburden\s+removal|OBR|overburden|excavation)\s*(?:of|was|is|:|=)?\s*([0-9.,]+\s*(?:M\.Cum|Million\s*Cu\.M|Lakh\s*Cu\.M|L\.Cum|Cu\.M|M3|BCM))", "obr"),
             (r"stripping\s+ratio\s*(?:of|was|is|:|=)?\s*([0-9.,]+(?:\s*:\s*1|\s*Cu\.M/Tonne|\s*M\.Cum/MT)?)", "stripping_ratio")
         ]
         for pat, metric in obr_patterns:
@@ -470,9 +545,15 @@ class MiningIntelligenceAgent(BaseAgent):
         if grades:
             kpis["identified_coal_grades"] = list(set(grades))
 
+        # Check coal seams
+        seams = [f["raw_value"] for f in facts if f.get("metric") == "coal_seam"]
+        if seams:
+            kpis["identified_coal_seams"] = list(set(seams))
+
         # Check fatal accidents
         fatalities = [f["numeric_value"] for f in facts if f.get("metric") == "fatalities"]
         if fatalities:
             kpis["total_fatalities_reported"] = sum(fatalities)
 
         return kpis
+

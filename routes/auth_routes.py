@@ -59,22 +59,36 @@ CANONICAL_LOOKUP = {
     "admin": "admin@cil.gov.in",
 }
 
-# Set of explicitly revoked/logged-out tokens
+# Set of explicitly revoked/logged-out tokens (fast in-memory cache)
 REVOKED_TOKENS = set()
 
-def revoke_token(token: str):
-    """Mark token as revoked upon logout."""
+def revoke_token(token: str, user_email: str = None):
+    """Mark token as revoked upon logout in memory and persistent database."""
     if token and isinstance(token, str):
         cleaned = token.replace("Bearer ", "").strip()
         if cleaned:
             REVOKED_TOKENS.add(cleaned)
+            try:
+                from database.db import revoke_token as db_revoke_token
+                db_revoke_token(cleaned, user_email=user_email)
+            except Exception as e:
+                logger.debug(f"Database token revocation record note: {e}")
 
 def is_token_revoked(token: str) -> bool:
-    """Check if token has been revoked."""
+    """Check if token has been revoked in memory or database."""
     if not token or not isinstance(token, str):
         return False
     cleaned = token.replace("Bearer ", "").strip()
-    return cleaned in REVOKED_TOKENS
+    if cleaned in REVOKED_TOKENS:
+        return True
+    try:
+        from database.db import is_token_revoked as db_is_token_revoked
+        if db_is_token_revoked(cleaned):
+            REVOKED_TOKENS.add(cleaned)
+            return True
+    except Exception:
+        pass
+    return False
 
 def generate_auth_token(email: str, name: str, role: str, account_type: str) -> str:
     """Generate cryptographically signed, time-limited authentication token (24h lifespan)."""
@@ -101,6 +115,7 @@ def verify_auth_token(token: str, max_age: int = 86400):
     except (BadSignature, SignatureExpired):
         return None
     return None
+
 
 @auth_bp.route("/authority/login", methods=["POST"])
 def authority_login():
@@ -301,16 +316,17 @@ def logout():
     Invalidate active server-side session, revoke Bearer token, and clear authentication context.
     """
     current_role = session.get("user_role", "VIEWER")
+    current_email = session.get("email") or (session.get("user", {}) or {}).get("email")
     session.clear()
 
     auth_header = request.headers.get("Authorization") or request.headers.get("X-Auth-Token")
     if auth_header:
-        revoke_token(auth_header)
+        revoke_token(auth_header, user_email=current_email)
     
     if request.is_json:
         req_token = (request.get_json() or {}).get("token")
         if req_token:
-            revoke_token(req_token)
+            revoke_token(req_token, user_email=current_email)
 
     log_audit("USER_LOGOUT", user_role=current_role, resource_type="auth")
 

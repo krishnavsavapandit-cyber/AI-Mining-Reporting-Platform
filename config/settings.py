@@ -101,3 +101,12 @@ MINING_TOPICS = [
     "Dispatch & Railway Rake Logistics",
     "Mine Planning & Seam Quality"
 ]
+
+# Master Resilience & Timeout Controls
+DEFAULT_REQUEST_TIMEOUT_SECONDS = int(os.getenv("DEFAULT_REQUEST_TIMEOUT_SECONDS", 30))
+AGENT_TASK_TIMEOUT_SECONDS = float(os.getenv("AGENT_TASK_TIMEOUT_SECONDS", 45.0))
+MAX_TASK_RETRIES = int(os.getenv("MAX_TASK_RETRIES", 2))
+RETRY_BACKOFF_FACTOR = float(os.getenv("RETRY_BACKOFF_FACTOR", 1.5))
+HEALTH_CHECK_TIMEOUT_SECONDS = float(os.getenv("HEALTH_CHECK_TIMEOUT_SECONDS", 5.0))
+TOKEN_EXPIRY_SECONDS = int(os.getenv("TOKEN_EXPIRY_SECONDS", 86400))  # 24 Hours
+

@@ -14,7 +14,7 @@ export const AssistantPage: React.FC = () => {
       id: 'welcome',
       role: 'assistant',
       content:
-        'Welcome to the CIL / CMPDI Grounded Mining Intelligence Assistant. I provide evidence-backed answers strictly verified against cataloged mining documents with zero hallucination. How can I assist you with production, geological surveys, or statutory compliance?',
+        'Welcome to the CIL / CMPDI Grounded Mining Intelligence Assistant. I provide evidence-backed answers strictly verified against cataloged mining documents with evidence-grounded response gating. How can I assist you with production, geological surveys, or statutory compliance?',
       timestamp: new Date().toLocaleTimeString(),
       provider_info: 'Deterministic Grounded Engine',
     },
@@ -120,7 +120,7 @@ export const AssistantPage: React.FC = () => {
               Mining Intelligence Grounded Assistant
             </h2>
             <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-              Strict zero-hallucination RAG with mandatory citation pointers to source document chunks.
+              Evidence-grounded RAG with mandatory citation pointers to source document chunks.
             </span>
           </div>
         </div>
