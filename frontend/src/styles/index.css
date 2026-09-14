@@ -935,8 +935,11 @@ html, body {
 }
 
 /* ==========================================================================
-   Responsive Breakpoints & Mobile Adaptations
+   Responsive Breakpoints & Mobile Adaptations (Additive Layer Only)
+   Desktop (>=1025px / >=769px) is strictly protected and remains unchanged.
    ========================================================================== */
+
+/* 1. Tablet Viewports (<=1024px) */
 @media (max-width: 1024px) {
   .auth-layout-grid {
     grid-template-columns: 1fr;
@@ -964,56 +967,296 @@ html, body {
   }
 }
 
+/* 2. Mobile Smartphone Viewports (<=768px) */
 @media (max-width: 768px) {
+  /* Layout & Viewport Containment */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+
+  .app-container {
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .app-main {
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .app-workspace {
+    padding: 14px 12px 36px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Slide-In Navigation Drawer & Backdrop Overlay */
   .app-sidebar {
     position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
+    width: 280px !important;
+    max-width: 85vw;
     transform: translateX(-100%);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
-    z-index: 90;
+    transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.85);
+    z-index: 95;
+    background-color: var(--bg-surface);
   }
 
   .app-sidebar.mobile-open {
     transform: translateX(0);
   }
 
-  .app-workspace {
-    padding: 16px 16px 36px;
+  .sidebar-backdrop {
+    display: none;
   }
 
+  .sidebar-backdrop.open {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.78) !important;
+    backdrop-filter: blur(6px) !important;
+    z-index: 90 !important;
+  }
+
+  /* TopBar on Mobile */
   .app-topbar {
-    padding: 0 14px;
+    padding: 0 12px;
+    height: 56px;
+    gap: 8px;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
+  .topbar-left {
+    gap: 8px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .mobile-nav-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    padding: 7px;
+    min-width: 36px;
+    min-height: 36px;
+    flex-shrink: 0;
+  }
+
+  .breadcrumb-section {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+
+  .topbar-right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .topbar-right .badge {
+    display: none !important;
+  }
+
+  /* Authentication Pages on Mobile */
   .auth-header-bar {
-    padding: 0 16px;
-    height: 60px;
-  }
-
-  .auth-form-card {
-    padding: 26px 20px;
+    padding: 0 14px;
+    height: 58px;
   }
 
   .auth-layout-grid {
-    padding: 20px 12px;
+    padding: 16px 10px;
+    gap: 18px;
+    max-width: 100%;
   }
 
+  .auth-hero-card {
+    padding: 20px 16px;
+    gap: 16px;
+  }
+
+  .auth-form-card {
+    padding: 24px 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .auth-input-field {
+    height: 44px;
+    font-size: 16px; /* Prevents auto-zoom on iOS */
+    padding: 0 12px 0 38px;
+  }
+
+  .auth-toggle-visibility-btn {
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .authority-selection-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .authority-portal-card {
+    padding: 16px 14px;
+  }
+
+  /* Cards & Containers on Mobile */
   .card-level-1, .card-level-2 {
-    padding: 16px;
+    padding: 14px 12px;
+  }
+
+  .card-header-clean {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .card-header-clean .btn,
+  .card-header-clean button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Dashboard Metrics Grid on Mobile */
+  .grid-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .metric-card {
+    padding: 12px 14px !important;
+  }
+
+  /* Tables in Touch-Scroll Containers */
+  .table-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: var(--radius-sm) !important;
+    display: block !important;
+  }
+
+  .app-table {
+    min-width: 480px !important;
+  }
+
+  .app-table th, .app-table td {
+    padding: 10px 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* Charts Container */
+  canvas {
+    max-width: 100% !important;
+  }
+
+  .chart-container, .analytics-chart-box {
+    min-height: 220px !important;
+    max-height: 280px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Modals on Mobile */
+  .modal-overlay {
+    padding: 8px !important;
+  }
+
+  .modal-content {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 94vh !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .modal-header {
+    padding: 12px 14px !important;
+  }
+
+  .modal-body {
+    padding: 14px 12px !important;
+  }
+
+  .modal-footer {
+    padding: 10px 14px !important;
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+
+  .modal-footer .btn,
+  .modal-footer button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Assistant / Query Chat Interface on Mobile */
+  .assistant-message-bubble {
+    max-width: 100% !important;
+  }
+
+  .chat-input-bar {
+    padding: 10px 12px !important;
+  }
+
+  .chat-input-textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS */
+  }
+
+  /* General Form Inputs */
+  .input-text, .input-select, .input-textarea {
+    font-size: 16px; /* Prevents iOS auto-zoom */
+    min-height: 42px;
   }
 }
 
+/* 3. Small Smartphone Viewports (<=480px) */
 @media (max-width: 480px) {
   .btn-responsive-hide-text span {
     display: none;
   }
   
   .auth-form-card {
-    padding: 22px 16px;
-    border-radius: var(--radius-md);
+    padding: 20px 14px;
+  }
+
+  .breadcrumb-section {
+    max-width: 120px;
+    font-size: 11px;
+  }
+
+  .grid-metrics {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }
+
+/* 4. Ultra-Compact Smartphone Viewports (<=360px) */
+@media (max-width: 360px) {
+  .breadcrumb-section {
+    display: none;
+  }
+
+  .auth-form-card {
+    padding: 16px 10px;
+  }
+}
+
 
