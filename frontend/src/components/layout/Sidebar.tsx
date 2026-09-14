@@ -51,6 +51,8 @@ export interface SidebarProps {
   onToggleCollapse?: () => void;
   aiProviderName?: string;
   aiProviderOnline?: boolean;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 interface NavItem {
@@ -75,6 +77,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   aiProviderName = 'Gemini Grounded Engine',
   aiProviderOnline = true,
+  mobileOpen = false,
+  onCloseMobile,
 }) => {
   const { role, isPublicViewerAccount } = useAuth();
 
@@ -226,11 +230,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const RoleIcon = currentRoleMeta.icon;
 
   return (
-    <aside
-      className={`app-sidebar ${collapsed ? 'collapsed' : ''}`}
-      role="navigation"
-      aria-label="Sidebar Navigation"
-    >
+    <>
+      {mobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 89,
+            backdropFilter: 'blur(4px)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`app-sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
+        role="navigation"
+        aria-label="Sidebar Navigation"
+      >
       {/* Brand Header */}
       <div
         className="sidebar-brand"
@@ -334,7 +352,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => onSelectTab(item.id)}
+                    onClick={() => {
+                      onSelectTab(item.id);
+                      if (onCloseMobile) onCloseMobile();
+                    }}
                     className={`nav-item ${isActive ? 'active' : ''}`}
                     title={collapsed ? item.label : undefined}
                     aria-current={isActive ? 'page' : undefined}
@@ -406,6 +427,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   );
 };

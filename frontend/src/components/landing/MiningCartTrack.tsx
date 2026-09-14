@@ -985,7 +985,7 @@ export const MiningCartTrack: React.FC = () => {
             padding: '24px',
             border: '1px solid rgba(255, 255, 255, 0.14)',
             display: 'grid',
-            gridTemplateColumns: activeStage.image ? '1fr 340px' : '1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
             gap: 24,
             alignItems: 'center',
             boxShadow: '0 16px 36px rgba(0, 0, 0, 0.6)',

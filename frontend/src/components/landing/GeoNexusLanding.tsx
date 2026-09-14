@@ -85,9 +85,9 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          backgroundImage: 'linear-gradient(to bottom, rgba(7, 10, 15, 0.82) 0%, rgba(11, 16, 26, 0.62) 42%, rgba(7, 10, 15, 0.98) 100%), url("/images/open_surface_mine.jpg")',
+          backgroundImage: 'linear-gradient(to bottom, rgba(7, 10, 15, 0.88) 0%, rgba(11, 16, 26, 0.78) 42%, rgba(7, 10, 15, 0.98) 100%), url("/images/open_surface_mine.jpg")',
           backgroundSize: 'cover',
-          backgroundPosition: 'center 42%',
+          backgroundPosition: 'center 18%',
           borderBottom: '1px solid var(--border-hairline)',
         }}
       >

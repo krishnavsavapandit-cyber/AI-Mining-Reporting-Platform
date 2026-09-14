@@ -29,6 +29,7 @@ export const AppShell: React.FC = () => {
   const { isViewer } = useAuth();
   const [activeTab, setActiveTab] = useState<NavigationTab>('overview');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [docCount, setDocCount] = useState(0);
   const [conflictsCount, setConflictsCount] = useState(0);
@@ -137,6 +138,8 @@ export const AppShell: React.FC = () => {
         conflictsCount={conflictsCount}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
         aiProviderName={aiProviderName}
         aiProviderOnline={aiProviderOnline}
       />
@@ -150,6 +153,7 @@ export const AppShell: React.FC = () => {
           onQuickSeed={handleQuickSeed}
           isSeeding={isSeeding}
           dbConnected={dbConnected}
+          onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)}
         />
 
         {/* Workspace Pages */}

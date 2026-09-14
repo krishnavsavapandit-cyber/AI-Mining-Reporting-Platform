@@ -10,6 +10,8 @@ import {
   EyeOff,
   AlertCircle,
   Users,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 import { MiningLogo } from '@/components/ui/MiningLogo';
 import { useAuth } from '@/context/AuthContext';
@@ -45,7 +47,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!email.trim()) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
       setErrorMessage('Please enter your registered email address.');
       return;
     }
@@ -57,7 +60,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     setIsSubmitting(true);
     try {
-      const res = await authService.loginPublic({ email: email.trim(), password });
+      const res = await authService.loginPublic({ email: cleanEmail, password });
       setIsSubmitting(false);
 
       if (res && res.user) {
@@ -72,8 +75,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         );
       } else {
         login({
-          email: email.trim(),
-          name: email.split('@')[0] || 'Public Auditor',
+          email: cleanEmail,
+          name: cleanEmail.split('@')[0] || 'Public Auditor',
           accountType: 'PUBLIC_VIEWER',
           authorizedRole: 'VIEWER',
         });
@@ -81,55 +84,30 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
       toast.success(
         'Public Auditor Authenticated',
-        `Logged in as Public Auditor & Viewer (${email}). Read-only transparency exploration active.`
+        `Logged in as Public Auditor & Viewer (${cleanEmail}). Read-only transparency exploration active.`
       );
       onLoginSuccess();
     } catch {
-      // Fallback
+      // Fallback in case of mock/demo mode
       setIsSubmitting(false);
       login({
-        email: email.trim(),
-        name: email.split('@')[0] || 'Public Auditor',
+        email: cleanEmail,
+        name: cleanEmail.split('@')[0] || 'Public Auditor',
         accountType: 'PUBLIC_VIEWER',
         authorizedRole: 'VIEWER',
       });
       toast.success(
         'Public Auditor Authenticated',
-        `Logged in as Public Auditor & Viewer (${email}). Read-only transparency exploration active.`
+        `Logged in as Public Auditor & Viewer (${cleanEmail}). Read-only transparency exploration active.`
       );
       onLoginSuccess();
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        width: '100vw',
-        backgroundColor: '#070A0F',
-        color: 'var(--text-primary)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'hidden',
-      }}
-    >
+    <div className="auth-page-container">
       {/* Top Header Bar */}
-      <header
-        style={{
-          height: '64px',
-          padding: '0 32px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          backgroundColor: 'rgba(11, 14, 20, 0.95)',
-          backdropFilter: 'blur(12px)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 40,
-          flexShrink: 0,
-        }}
-      >
+      <header className="auth-header-bar">
         <button
           type="button"
           onClick={onNavigateToHome}
@@ -141,29 +119,53 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             border: 'none',
             cursor: 'pointer',
             padding: 0,
+            textAlign: 'left',
           }}
+          aria-label="GeoNexus Home"
         >
-          <MiningLogo size={30} />
-          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-            <span style={{ fontSize: 17, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-              GeoNexus
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+          <MiningLogo size={32} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                GeoNexus
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  color: 'var(--text-emerald)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                PUBLIC
+              </span>
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
               SIH26023 • Coal India Limited • Public Access
             </span>
           </div>
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {onNavigateToAuthorityLogin && (
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={onNavigateToAuthorityLogin}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, borderColor: 'var(--border-emerald)' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                borderColor: 'var(--border-emerald)',
+                backgroundColor: 'rgba(16, 185, 129, 0.06)',
+              }}
             >
               <Users size={13} style={{ color: 'var(--text-emerald)' }} />
-              <span>Official Authority Portal</span>
+              <span style={{ color: 'var(--text-emerald)', fontWeight: 600 }}>Official Authority Portal</span>
             </button>
           )}
 
@@ -173,43 +175,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             onClick={onNavigateToHome}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={13} />
             <span>Back to Home</span>
           </button>
         </div>
       </header>
 
-      {/* Main Split-Screen Layout */}
-      <div
-        style={{
-          flex: 1,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-          maxWidth: '1240px',
-          width: '100%',
-          margin: '0 auto',
-          padding: '40px 24px',
-          gap: '36px',
-          alignItems: 'center',
-        }}
-      >
+      {/* Main Split Layout */}
+      <main className="auth-layout-grid">
         {/* Left Side: Visual Overview Card */}
         <div
+          className="auth-hero-card"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 24,
-            padding: '36px',
-            backgroundColor: 'rgba(17, 22, 32, 0.7)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 'var(--radius-lg)',
             backgroundImage: `
-              linear-gradient(180deg, rgba(11, 14, 20, 0.85) 0%, rgba(17, 22, 32, 0.94) 100%),
+              linear-gradient(180deg, rgba(11, 14, 20, 0.88) 0%, rgba(17, 22, 32, 0.96) 100%),
               url("/images/open_surface_mine.jpg")
             `,
             backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
+            backgroundPosition: 'center top',
           }}
         >
           <div
@@ -217,79 +200,71 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              padding: '4px 12px',
+              padding: '5px 12px',
               borderRadius: 'var(--radius-full)',
               backgroundColor: 'rgba(16, 185, 129, 0.15)',
               border: '1px solid rgba(16, 185, 129, 0.4)',
               color: 'var(--text-emerald)',
               fontSize: 11,
-              fontWeight: 700,
+              fontWeight: 800,
               width: 'fit-content',
+              letterSpacing: '0.04em',
             }}
           >
-            <ShieldCheck size={13} />
+            <ShieldCheck size={14} />
             <span>PUBLIC TRANSPARENCY & AUDITOR PORTAL</span>
           </div>
 
           <div>
             <h1
               style={{
-                fontSize: 'clamp(26px, 3vw, 36px)',
+                fontSize: 'clamp(24px, 2.6vw, 34px)',
                 fontWeight: 900,
                 color: '#FFFFFF',
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
+                lineHeight: 1.25,
+                letterSpacing: '-0.025em',
                 marginBottom: 12,
               }}
             >
               Explore Grounded Mining Intelligence
             </h1>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: '#D1D5DB' }}>
+            <p style={{ fontSize: 13.5, lineHeight: 1.65, color: '#D1D5DB' }}>
               Public visitors, academic researchers, and external auditors can inspect published compliance reports, browse audited document catalogs, and review immutable SHA-256 provenance trails.
             </p>
           </div>
 
           <div
             style={{
-              padding: '16px',
+              padding: '18px 20px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'rgba(11, 14, 20, 0.75)',
-              border: '1px solid var(--border-hairline)',
+              backgroundColor: 'rgba(11, 14, 20, 0.85)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 10,
+              gap: 12,
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
-              Public Demonstration Highlights:
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Sparkles size={14} style={{ color: 'var(--accent-primary)' }} />
+              <span>Public Demonstration Capabilities</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--accent-primary)' }} />
-              <span>Full read-only access to multi-subsidiary mining metrics</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <CheckCircle2 size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+              <span>Full read-only inspection of multi-subsidiary mining metrics</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--accent-primary)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <CheckCircle2 size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
               <span>Grounded provenance verification on DGMS filings</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--accent-primary)' }} />
-              <span>Live 8-agent DAG concurrency visualization</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <CheckCircle2 size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+              <span>Live 8-agent DAG concurrency visualization & benchmarks</span>
             </div>
           </div>
         </div>
 
         {/* Right Side: Public Login Form */}
-        <div
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-hairline-alt)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '36px 32px',
-            boxShadow: 'var(--shadow-level-2)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
+        <div className="auth-form-card">
           {/* Header Title */}
           <div style={{ marginBottom: 24 }}>
             <div
@@ -297,43 +272,47 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: '3px 10px',
+                padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
                 backgroundColor: 'rgba(16, 185, 129, 0.12)',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
                 color: 'var(--text-emerald)',
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 700,
-                marginBottom: 10,
+                letterSpacing: '0.04em',
+                marginBottom: 12,
               }}
             >
-              <Lock size={11} /> PUBLIC & AUDITOR ACCESS
+              <Lock size={12} />
+              <span>PUBLIC AUDITOR ACCESS</span>
             </div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginBottom: 6, letterSpacing: '-0.02em' }}>
               Sign In to GeoNexus
             </h2>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Enter your registered public viewer credentials to access the platform.
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Enter your registered public credentials to explore evidence-grounded reports.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleViewerLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleViewerLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }} noValidate>
             {errorMessage && (
               <div
                 style={{
-                  padding: '10px 12px',
-                  borderRadius: 'var(--radius-sm)',
+                  padding: '12px 14px',
+                  borderRadius: 'var(--radius-md)',
                   backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
                   color: '#FCA5A5',
-                  fontSize: 12,
+                  fontSize: 12.5,
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: 8,
+                  gap: 10,
+                  lineHeight: 1.45,
                 }}
+                role="alert"
               >
-                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>{errorMessage}</span>
               </div>
             )}
@@ -341,89 +320,69 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Email Field */}
             <div>
               <label
+                htmlFor="public-login-email"
                 style={{
                   display: 'block',
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: 6,
+                  marginBottom: 7,
+                  letterSpacing: '0.02em',
                 }}
               >
                 Registered Email
               </label>
-              <div style={{ position: 'relative' }}>
-                <Mail
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                  }}
-                />
+              <div className="auth-input-container">
                 <input
+                  id="public-login-email"
                   type="email"
-                  className="input"
+                  name="email"
+                  autoComplete="email"
                   required
                   placeholder="auditor.public@geonexus.cil"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 38 }}
+                  className={`auth-input-field ${errorMessage && !email ? 'has-error' : ''}`}
                 />
+                <Mail size={16} className="auth-field-icon" />
               </div>
             </div>
 
             {/* Password Field */}
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: 'var(--text-secondary)',
-                  marginBottom: 6,
-                }}
-              >
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Key
-                  size={16}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+                <label
+                  htmlFor="public-login-password"
                   style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: 'var(--text-secondary)',
+                    letterSpacing: '0.02em',
                   }}
-                />
+                >
+                  Password
+                </label>
+              </div>
+              <div className="auth-input-container">
                 <input
+                  id="public-login-password"
                   type={showPassword ? 'text' : 'password'}
-                  className="input"
+                  name="password"
+                  autoComplete="current-password"
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 38, paddingRight: 38 }}
+                  className={`auth-input-field ${errorMessage && !password ? 'has-error' : ''}`}
+                  style={{ paddingRight: 42 }}
                 />
+                <Key size={16} className="auth-field-icon" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="auth-toggle-visibility-btn"
                   title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -432,12 +391,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Remember Me */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 12.5,
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={rememberSession}
                   onChange={(e) => setRememberSession(e.target.checked)}
-                  style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+                  style={{
+                    accentColor: 'var(--accent-primary)',
+                    cursor: 'pointer',
+                    width: 15,
+                    height: 15,
+                  }}
                 />
                 <span>Remember session on this device</span>
               </label>
@@ -446,19 +420,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Public Viewer Notice */}
             <div
               style={{
-                padding: '10px 12px',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'var(--bg-surface-2)',
+                padding: '11px 13px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'rgba(11, 14, 20, 0.65)',
                 border: '1px solid var(--border-hairline)',
-                fontSize: 11,
+                fontSize: 11.5,
                 color: 'var(--text-muted)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 10,
+                lineHeight: 1.45,
               }}
             >
               <ShieldCheck size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
-              <span>Public accounts enter under the <strong>Auditor / Viewer</strong> perspective.</span>
+              <span>
+                Public accounts authenticate under the <strong style={{ color: 'var(--text-primary)' }}>Auditor / Viewer</strong> role.
+              </span>
             </div>
 
             {/* Submit Button */}
@@ -470,15 +447,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 width: '100%',
                 padding: '13px',
                 fontSize: 14,
-                fontWeight: 700,
-                marginTop: 4,
+                fontWeight: 800,
+                marginTop: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
+                letterSpacing: '0.01em',
               }}
             >
-              <span>{isSubmitting ? 'Authenticating...' : 'Sign In as Public Viewer'}</span>
+              <span>{isSubmitting ? 'Authenticating Session...' : 'Sign In as Public Viewer'}</span>
               <ArrowRight size={16} />
             </button>
           </form>
@@ -487,18 +465,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <div
             style={{
               textAlign: 'center',
-              marginTop: 22,
-              paddingTop: 18,
-              borderTop: '1px solid var(--border-hairline)',
+              marginTop: 24,
+              paddingTop: 20,
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 10,
+              gap: 12,
               fontSize: 13,
               color: 'var(--text-secondary)',
             }}
           >
             <div>
-              Don't have a public account?{' '}
+              Don't have an account yet?{' '}
               <button
                 type="button"
                 onClick={onNavigateToRegister}
@@ -506,12 +484,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   background: 'none',
                   border: 'none',
                   color: 'var(--accent-primary)',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   textDecoration: 'underline',
+                  padding: 0,
+                  fontSize: 13,
                 }}
               >
-                Register for Viewer Access
+                Register for Free Access
               </button>
             </div>
 
@@ -525,9 +505,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     background: 'none',
                     border: 'none',
                     color: 'var(--text-emerald)',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     textDecoration: 'underline',
+                    padding: 0,
+                    fontSize: 12,
                   }}
                 >
                   Access Official Authority Portal
@@ -536,7 +518,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

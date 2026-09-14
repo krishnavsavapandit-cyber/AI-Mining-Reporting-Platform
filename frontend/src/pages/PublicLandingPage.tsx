@@ -15,6 +15,7 @@ import {
   X,
   Truck,
   CheckCircle2,
+  Menu,
 } from 'lucide-react';
 import { MiningLogo } from '@/components/ui/MiningLogo';
 import { MiningCartTrack } from '@/components/landing/MiningCartTrack';
@@ -194,6 +195,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
     'all' | 'excavation' | 'haulage' | 'drilling' | 'underground' | 'logistics' | 'geology'
   >('all');
   const [lightboxVehicle, setLightboxVehicle] = useState<MiningFleetItem | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -224,7 +226,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
       <header
         style={{
           height: '70px',
-          padding: '0 32px',
+          padding: '0 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -239,16 +241,16 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
       >
         {/* Brand & Logo */}
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', flexShrink: 0 }}
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
-          <MiningLogo size={34} />
+          <MiningLogo size={32} />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: 19, fontWeight: 900, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
+            <span style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
               GeoNexus
             </span>
             <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
-              CMPDI • Coal India Limited Intelligence Suite
+              CMPDI • Coal India Limited
             </span>
           </div>
         </div>
@@ -258,7 +260,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 26,
+            gap: 22,
           }}
           className="desktop-nav"
         >
@@ -337,12 +339,12 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </nav>
 
         {/* Header Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
           <button
             type="button"
             className="btn btn-secondary btn-sm"
             onClick={onLogin}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, borderColor: 'rgba(255,255,255,0.2)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, borderColor: 'rgba(255,255,255,0.2)' }}
           >
             <Lock size={13} style={{ color: 'var(--accent-primary)' }} />
             <span>Login</span>
@@ -352,9 +354,9 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             type="button"
             className="btn btn-primary btn-sm"
             onClick={onRegister}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, fontWeight: 700 }}
           >
-            <span>Register / Access</span>
+            <span>Register</span>
           </button>
 
           <button
@@ -362,30 +364,98 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             className="btn btn-secondary btn-sm"
             onClick={onAuthorityAccess || onLogin}
             title="Authority RBAC Portal"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, borderColor: 'var(--border-emerald)' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              borderColor: 'var(--border-emerald)',
+              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+            }}
           >
             <Users size={13} style={{ color: 'var(--text-emerald)' }} />
-            <span>Authority Portal</span>
+            <span style={{ color: 'var(--text-emerald)' }}>Authority</span>
+          </button>
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              display: 'none',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.18)',
+              borderRadius: 'var(--radius-sm)',
+              color: '#FFFFFF',
+              padding: '6px',
+              cursor: 'pointer',
+            }}
+            className="mobile-nav-toggle-btn"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </header>
+
+      {/* Mobile Slide-Down Navigation Menu */}
+      {mobileMenuOpen && (
+        <div
+          style={{
+            backgroundColor: 'rgba(11, 14, 20, 0.98)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+            padding: '16px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            zIndex: 49,
+            position: 'sticky',
+            top: 70,
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          {['pipeline', 'mining-fleet', 'capabilities', 'agents', 'tech-stack', 'governance'].map((sec) => (
+            <button
+              key={sec}
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                scrollToSection(sec);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                fontSize: 14,
+                fontWeight: 600,
+                textAlign: 'left',
+                padding: '8px 0',
+                cursor: 'pointer',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                textTransform: 'capitalize',
+              }}
+            >
+              {sec.replace('-', ' ')}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* 2. HERO SECTION WITH CINEMATIC OPEN SURFACE MINE BACKGROUND */}
       <section
         style={{
           position: 'relative',
-          padding: '96px 24px 72px',
+          padding: '80px 20px 64px',
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
           backgroundImage: `
-            linear-gradient(180deg, rgba(7, 10, 15, 0.82) 0%, rgba(11, 16, 26, 0.62) 45%, rgba(7, 10, 15, 0.98) 100%),
+            linear-gradient(180deg, rgba(7, 10, 15, 0.88) 0%, rgba(11, 16, 26, 0.78) 42%, rgba(7, 10, 15, 0.98) 100%),
             url("/images/open_surface_mine.jpg")
           `,
           backgroundSize: 'cover',
-          backgroundPosition: 'center 42%',
+          backgroundPosition: 'center 18%',
           borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
           overflow: 'hidden',
         }}

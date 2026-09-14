@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   Sparkles,
   Lock,
+  Menu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -18,6 +19,7 @@ interface TopBarProps {
   onQuickSeed?: () => void;
   isSeeding?: boolean;
   dbConnected?: boolean;
+  onToggleMobileSidebar?: () => void;
 }
 
 const TAB_TITLES: Record<NavigationTab, { title: string; subtitle: string }> = {
@@ -43,14 +45,34 @@ export const TopBar: React.FC<TopBarProps> = ({
   onQuickSeed,
   isSeeding = false,
   dbConnected = true,
+  onToggleMobileSidebar,
 }) => {
   const { isOfficer, isAnalyst, isAdmin, isViewer } = useAuth();
   const currentTab = TAB_TITLES[activeTab] || { title: 'GeoNexus Mining Intelligence', subtitle: 'Enterprise Operating Environment' };
 
   return (
     <header className="app-topbar">
-      {/* Left: Breadcrumbs & Current Page Title */}
+      {/* Left: Mobile Toggle, Breadcrumbs & Current Page Title */}
       <div className="topbar-left">
+        {onToggleMobileSidebar && (
+          <button
+            type="button"
+            onClick={onToggleMobileSidebar}
+            className="mobile-nav-toggle-btn"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border-hairline-alt)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-primary)',
+              padding: '6px',
+              cursor: 'pointer',
+              display: 'none',
+            }}
+            aria-label="Toggle navigation menu"
+          >
+            <Menu size={16} />
+          </button>
+        )}
         <div className="breadcrumb-section">
           <span className="breadcrumb-root" style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
             GeoNexus

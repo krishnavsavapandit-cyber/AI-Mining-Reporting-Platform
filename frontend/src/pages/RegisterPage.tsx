@@ -11,6 +11,7 @@ import {
   EyeOff,
   AlertCircle,
   Users,
+  CheckCircle2,
 } from 'lucide-react';
 import { MiningLogo } from '@/components/ui/MiningLogo';
 import { useToast } from '@/components/ui/ToastContext';
@@ -43,7 +44,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!fullName.trim() || !email.trim() || !password) {
+    const cleanName = fullName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanName || !cleanEmail || !password) {
       setErrorMessage('Please complete all required fields.');
       return;
     }
@@ -62,8 +66,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
 
     try {
       await authService.registerPublic({
-        email: email.trim().toLowerCase(),
-        fullName: fullName.trim(),
+        email: cleanEmail,
+        fullName: cleanName,
         organization: organization.trim(),
         password,
       });
@@ -72,8 +76,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
       try {
         const publicUsers = JSON.parse(localStorage.getItem('geonexus_public_users') || '[]');
         publicUsers.push({
-          fullName: fullName.trim(),
-          email: email.trim().toLowerCase(),
+          fullName: cleanName,
+          email: cleanEmail,
           accountType: 'PUBLIC_VIEWER',
           role: 'VIEWER',
           registeredAt: new Date().toISOString(),
@@ -86,9 +90,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
       setIsSubmitting(false);
       toast.success(
         'Registration Completed',
-        `Account created for ${fullName.trim()} with Public Auditor & Viewer privileges.`
+        `Account created for ${cleanName} with Public Auditor & Viewer privileges.`
       );
-      onNavigateToLogin(email.trim().toLowerCase());
+      onNavigateToLogin(cleanEmail);
     } catch (err: unknown) {
       setIsSubmitting(false);
       const apiErr = err as { message?: string; status?: number };
@@ -99,34 +103,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        width: '100vw',
-        backgroundColor: '#070A0F',
-        color: 'var(--text-primary)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'hidden',
-      }}
-    >
+    <div className="auth-page-container">
       {/* Top Header Bar */}
-      <header
-        style={{
-          height: '64px',
-          padding: '0 32px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          backgroundColor: 'rgba(11, 14, 20, 0.95)',
-          backdropFilter: 'blur(12px)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 40,
-          flexShrink: 0,
-        }}
-      >
+      <header className="auth-header-bar">
         <button
           type="button"
           onClick={onNavigateToHome}
@@ -138,29 +117,53 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             border: 'none',
             cursor: 'pointer',
             padding: 0,
+            textAlign: 'left',
           }}
+          aria-label="GeoNexus Home"
         >
-          <MiningLogo size={30} />
-          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-            <span style={{ fontSize: 17, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
-              GeoNexus
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+          <MiningLogo size={32} />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+                GeoNexus
+              </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  color: 'var(--text-emerald)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                REGISTRATION
+              </span>
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
               SIH26023 • Coal India Limited • Public Registration
             </span>
           </div>
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {onNavigateToAuthorityLogin && (
             <button
               type="button"
               className="btn btn-secondary btn-sm"
               onClick={onNavigateToAuthorityLogin}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, borderColor: 'var(--border-emerald)' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                borderColor: 'var(--border-emerald)',
+                backgroundColor: 'rgba(16, 185, 129, 0.06)',
+              }}
             >
               <Users size={13} style={{ color: 'var(--text-emerald)' }} />
-              <span>Official Authority Portal</span>
+              <span style={{ color: 'var(--text-emerald)', fontWeight: 600 }}>Official Authority Portal</span>
             </button>
           )}
 
@@ -170,43 +173,24 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             onClick={onNavigateToHome}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={13} />
             <span>Back to Home</span>
           </button>
         </div>
       </header>
 
-      {/* Main Split-Screen Layout */}
-      <div
-        style={{
-          flex: 1,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-          maxWidth: '1240px',
-          width: '100%',
-          margin: '0 auto',
-          padding: '40px 24px',
-          gap: '36px',
-          alignItems: 'center',
-        }}
-      >
+      {/* Main Split Layout */}
+      <main className="auth-layout-grid">
         {/* Left Side: Intelligence & Transparency Overview */}
         <div
+          className="auth-hero-card"
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 24,
-            padding: '36px',
-            backgroundColor: 'rgba(17, 22, 32, 0.7)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: 'var(--radius-lg)',
             backgroundImage: `
-              linear-gradient(180deg, rgba(11, 14, 20, 0.85) 0%, rgba(17, 22, 32, 0.94) 100%),
+              linear-gradient(180deg, rgba(11, 14, 20, 0.88) 0%, rgba(17, 22, 32, 0.96) 100%),
               url("/images/dragline_excavator.jpg")
             `,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)',
           }}
         >
           <div
@@ -214,79 +198,71 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              padding: '4px 12px',
+              padding: '5px 12px',
               borderRadius: 'var(--radius-full)',
               backgroundColor: 'rgba(16, 185, 129, 0.15)',
               border: '1px solid rgba(16, 185, 129, 0.4)',
               color: 'var(--text-emerald)',
               fontSize: 11,
-              fontWeight: 700,
+              fontWeight: 800,
               width: 'fit-content',
+              letterSpacing: '0.04em',
             }}
           >
-            <Sparkles size={13} />
-            <span>OPEN RESEARCHER & CITIZEN AUDITOR ACCESS</span>
+            <Sparkles size={14} />
+            <span>RESEARCHER & CITIZEN AUDITOR ACCESS</span>
           </div>
 
           <div>
             <h1
               style={{
-                fontSize: 'clamp(26px, 3vw, 36px)',
+                fontSize: 'clamp(24px, 2.6vw, 34px)',
                 fontWeight: 900,
                 color: '#FFFFFF',
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
+                lineHeight: 1.25,
+                letterSpacing: '-0.025em',
                 marginBottom: 12,
               }}
             >
               Verify Mining Truth & Provenance
             </h1>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: '#D1D5DB' }}>
+            <p style={{ fontSize: 13.5, lineHeight: 1.65, color: '#D1D5DB' }}>
               Register for public demonstration access to explore automated document intelligence, cross-validation metrics, and multi-agent reporting models.
             </p>
           </div>
 
           <div
             style={{
-              padding: '16px',
+              padding: '18px 20px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'rgba(11, 14, 20, 0.75)',
-              border: '1px solid var(--border-hairline)',
+              backgroundColor: 'rgba(11, 14, 20, 0.85)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 10,
+              gap: 12,
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
-              Public Account Permissions:
+            <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ShieldCheck size={14} style={{ color: 'var(--accent-primary)' }} />
+              <span>Public Account Entitlements</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <ShieldCheck size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <CheckCircle2 size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
               <span>Full read-only inspection of multi-subsidiary mining metrics</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <ShieldCheck size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <CheckCircle2 size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
               <span>Browse certified reports & ISO/IEC 25010 benchmark evaluations</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-              <ShieldCheck size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <CheckCircle2 size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
               <span>Inspect immutable SHA-256 hash provenance audit records</span>
             </div>
           </div>
         </div>
 
         {/* Right Side: Public Registration Form */}
-        <div
-          style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-hairline-alt)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '36px 32px',
-            boxShadow: 'var(--shadow-level-2)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
+        <div className="auth-form-card">
           {/* Header Title */}
           <div style={{ marginBottom: 24 }}>
             <div
@@ -294,43 +270,47 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: '3px 10px',
+                padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
                 backgroundColor: 'rgba(16, 185, 129, 0.12)',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
                 color: 'var(--text-emerald)',
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: 700,
-                marginBottom: 10,
+                letterSpacing: '0.04em',
+                marginBottom: 12,
               }}
             >
-              <Sparkles size={11} /> PUBLIC VISITOR REGISTRATION
+              <Sparkles size={12} />
+              <span>PUBLIC ACCOUNT CREATION</span>
             </div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', marginBottom: 6, letterSpacing: '-0.02em' }}>
               Register for GeoNexus Access
             </h2>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               Create your public auditor account to inspect multi-agent workflows and telemetry.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }} noValidate>
             {errorMessage && (
               <div
                 style={{
-                  padding: '10px 12px',
-                  borderRadius: 'var(--radius-sm)',
+                  padding: '12px 14px',
+                  borderRadius: 'var(--radius-md)',
                   backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
                   color: '#FCA5A5',
-                  fontSize: 12,
+                  fontSize: 12.5,
                   display: 'flex',
                   alignItems: 'flex-start',
-                  gap: 8,
+                  gap: 10,
+                  lineHeight: 1.45,
                 }}
+                role="alert"
               >
-                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} />
+                <AlertCircle size={17} style={{ flexShrink: 0, marginTop: 1 }} />
                 <span>{errorMessage}</span>
               </div>
             )}
@@ -338,125 +318,100 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             {/* Full Name */}
             <div>
               <label
+                htmlFor="register-fullname"
                 style={{
                   display: 'block',
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: 6,
+                  marginBottom: 7,
+                  letterSpacing: '0.02em',
                 }}
               >
                 Full Name
               </label>
-              <div style={{ position: 'relative' }}>
-                <User
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                  }}
-                />
+              <div className="auth-input-container">
                 <input
+                  id="register-fullname"
                   type="text"
-                  className="input"
+                  name="name"
+                  autoComplete="name"
                   required
                   placeholder="e.g. Dr. Rajesh Kumar"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 38 }}
+                  className={`auth-input-field ${errorMessage && !fullName ? 'has-error' : ''}`}
                 />
+                <User size={16} className="auth-field-icon" />
               </div>
             </div>
 
             {/* Email */}
             <div>
               <label
+                htmlFor="register-email"
                 style={{
                   display: 'block',
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: 6,
+                  marginBottom: 7,
+                  letterSpacing: '0.02em',
                 }}
               >
                 Email Address
               </label>
-              <div style={{ position: 'relative' }}>
-                <Mail
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                  }}
-                />
+              <div className="auth-input-container">
                 <input
+                  id="register-email"
                   type="email"
-                  className="input"
+                  name="email"
+                  autoComplete="email"
                   required
                   placeholder="rajesh.kumar@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 38 }}
+                  className={`auth-input-field ${errorMessage && !email ? 'has-error' : ''}`}
                 />
+                <Mail size={16} className="auth-field-icon" />
               </div>
             </div>
 
             {/* Password */}
             <div>
               <label
+                htmlFor="register-password"
                 style={{
                   display: 'block',
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: 6,
+                  marginBottom: 7,
+                  letterSpacing: '0.02em',
                 }}
               >
-                Password
+                Password (min. 6 characters)
               </label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                  }}
-                />
+              <div className="auth-input-container">
                 <input
+                  id="register-password"
                   type={showPassword ? 'text' : 'password'}
-                  className="input"
+                  name="password"
+                  autoComplete="new-password"
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 38, paddingRight: 38 }}
+                  className={`auth-input-field ${errorMessage && !password ? 'has-error' : ''}`}
+                  style={{ paddingRight: 42 }}
                 />
+                <Lock size={16} className="auth-field-icon" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="auth-toggle-visibility-btn"
                   title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -466,53 +421,38 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             {/* Confirm Password */}
             <div>
               <label
+                htmlFor="register-confirm-password"
                 style={{
                   display: 'block',
                   fontSize: 12,
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: 'var(--text-secondary)',
-                  marginBottom: 6,
+                  marginBottom: 7,
+                  letterSpacing: '0.02em',
                 }}
               >
                 Confirm Password
               </label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                  }}
-                />
+              <div className="auth-input-container">
                 <input
+                  id="register-confirm-password"
                   type={showConfirmPassword ? 'text' : 'password'}
-                  className="input"
+                  name="confirmPassword"
+                  autoComplete="new-password"
                   required
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ width: '100%', paddingLeft: 38, paddingRight: 38 }}
+                  className={`auth-input-field ${errorMessage && password !== confirmPassword ? 'has-error' : ''}`}
+                  style={{ paddingRight: 42 }}
                 />
+                <Lock size={16} className="auth-field-icon" />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="auth-toggle-visibility-btn"
                   title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
                   {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -523,8 +463,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             <div
               style={{
                 padding: '12px 14px',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'var(--bg-surface-2)',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'rgba(11, 14, 20, 0.65)',
                 border: '1px solid var(--border-hairline)',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -532,8 +472,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
               }}
             >
               <ShieldCheck size={18} style={{ color: 'var(--accent-primary)', flexShrink: 0, marginTop: 2 }} />
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-                Public registered accounts are assigned <strong>Auditor / Viewer</strong> read-only privileges. Official authority credentials for Analyst, Officer, or Admin operations require provisioned CIL/CMPDI verification.
+              <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                Public registered accounts are assigned <strong style={{ color: 'var(--text-primary)' }}>Auditor / Viewer</strong> read-only privileges. Official authority credentials for Analyst, Officer, or Admin operations require provisioned CIL/CMPDI verification.
               </div>
             </div>
 
@@ -546,15 +486,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                 width: '100%',
                 padding: '13px',
                 fontSize: 14,
-                fontWeight: 700,
-                marginTop: 4,
+                fontWeight: 800,
+                marginTop: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
+                letterSpacing: '0.01em',
               }}
             >
-              <span>{isSubmitting ? 'Creating Account...' : 'Complete Registration'}</span>
+              <span>{isSubmitting ? 'Creating Account...' : 'Complete Public Registration'}</span>
               <ArrowRight size={16} />
             </button>
           </form>
@@ -565,16 +506,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
               textAlign: 'center',
               marginTop: 22,
               paddingTop: 18,
-              borderTop: '1px solid var(--border-hairline)',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 10,
+              gap: 12,
               fontSize: 13,
               color: 'var(--text-secondary)',
             }}
           >
             <div>
-              Already registered?{' '}
+              Already have an account?{' '}
               <button
                 type="button"
                 onClick={() => onNavigateToLogin(email)}
@@ -582,9 +523,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                   background: 'none',
                   border: 'none',
                   color: 'var(--accent-primary)',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   textDecoration: 'underline',
+                  padding: 0,
+                  fontSize: 13,
                 }}
               >
                 Sign In to Public Portal
@@ -601,9 +544,11 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
                     background: 'none',
                     border: 'none',
                     color: 'var(--text-emerald)',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     textDecoration: 'underline',
+                    padding: 0,
+                    fontSize: 12,
                   }}
                 >
                   Access Official Authority Portal
@@ -612,7 +557,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
