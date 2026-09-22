@@ -235,27 +235,65 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onSeeded }) => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div
-              style={{
-                padding: '12px',
-                backgroundColor: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-hairline)',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Database size={16} style={{ color: 'var(--accent-primary)' }} />
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Database Engine
-                </span>
-              </div>
-              <span className="text-mono" style={{ fontSize: 12, color: 'var(--accent-teal)' }}>
-                {health?.database_target || 'SQLite 3.x (mining_platform.db)'}
-              </span>
-            </div>
+            {/* Database Engine Status Details */}
+            {(() => {
+              const dbObj = typeof health?.database === 'object' ? health.database : null;
+              const backendType = dbObj?.backend || (health?.database_target?.toLowerCase().includes('postgres') ? 'postgresql' : 'sqlite');
+              const isPostgres = backendType === 'postgresql';
+              const targetDisplay = dbObj?.target || health?.database_target || (isPostgres ? 'PostgreSQL (Enterprise Instance)' : 'SQLite 3.x (mining_platform.db)');
+              const isConnected = dbObj?.connected ?? health?.database_connected ?? health?.healthy ?? true;
+
+              return (
+                <div
+                  style={{
+                    padding: '14px',
+                    backgroundColor: 'var(--bg-surface-2)',
+                    border: '1px solid var(--border-hairline)',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Database size={16} style={{ color: isPostgres ? 'var(--accent-teal)' : 'var(--accent-primary)' }} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        Active Database Backend
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Badge variant={isPostgres ? 'teal' : 'primary'}>
+                        {isPostgres ? 'POSTGRESQL (PRIMARY)' : 'SQLITE 3 (FALLBACK / STANDALONE)'}
+                      </Badge>
+                      <Badge variant={isConnected ? 'primary' : 'error'}>
+                        {isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div
+                    className="text-mono"
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--text-secondary)',
+                      backgroundColor: 'var(--bg-surface)',
+                      padding: '6px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-hairline)',
+                    }}
+                  >
+                    Target: {targetDisplay}
+                  </div>
+
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    {isPostgres
+                      ? 'Connected to primary Enterprise PostgreSQL instance for concurrent multi-worker production workloads.'
+                      : 'Running on embedded SQLite 3 engine (zero-dependency standalone mode). To switch to PostgreSQL, configure DATABASE_URL in your .env file.'}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div
               style={{
