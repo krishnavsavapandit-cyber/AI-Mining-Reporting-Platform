@@ -61,7 +61,7 @@ AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini" if _HAS_GEMINI_KEY else "determi
 AI_FALLBACK_PROVIDER = os.getenv("AI_FALLBACK_PROVIDER", "deterministic").lower()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
 OPEN_MODEL_ENDPOINT = os.getenv("OPEN_MODEL_ENDPOINT", "http://localhost:11434/v1/chat/completions")
 OPEN_MODEL_API_KEY = os.getenv("OPEN_MODEL_API_KEY", "")

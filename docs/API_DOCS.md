@@ -91,7 +91,7 @@ Deletes document and cascades all chunks and records.
 {
   "status": "success",
   "answer": "Based on verified document records, Rajmahal OCP achieved total Coal Production of 1.32 Million Tonnes...",
-  "provider_info": { "provider": "gemini", "model": "gemini-2.0-flash" },
+  "provider_info": { "provider": "gemini", "model": "gemini-3.8-flash" },
   "sources": [
     { "document_name": "ECL_Rajmahal_Monthly_Production_May_2025.pdf", "page_number": 1 }
   ],

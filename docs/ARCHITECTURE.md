@@ -85,7 +85,7 @@ The system implements a genuine modular multi-agent architecture with structured
 └──────────────────┘  └───────────────────┘  └──────────────────┘
 ```
 
-1. **Primary Provider (Google Gemini API)**: High-speed, high-reasoning cloud LLM (`gemini-2.0-flash`).
+1. **Primary Provider (Google Gemini API)**: High-speed, high-reasoning cloud LLM (`gemini-3.8-flash`).
 2. **Fallback Provider (Open-Weight Model)**: Standard OpenAI-compatible REST endpoint for local Ollama, vLLM, or cloud GPU instances.
 3. **Deterministic Grounded Synthesizer**: Zero-cost, 100% local heuristic synthesis engine based strictly on regex matching, sentence boundary extraction, and fact-grounded templates. Never fabricates and ensures the platform is 100% functional offline without an API key or GPU!
 

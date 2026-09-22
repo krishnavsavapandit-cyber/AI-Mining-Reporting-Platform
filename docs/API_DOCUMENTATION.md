@@ -156,7 +156,7 @@ The system secures API endpoints using header-based RBAC middleware (`routes/aut
   "answer": "Based on verified records, ECL Rajmahal achieved total Coal Production of 1.32 Million Tonnes in May 2025. [EXTRACTED FACT]",
   "provider_info": {
     "provider": "gemini",
-    "model": "gemini-2.0-flash",
+    "model": "gemini-3.8-flash",
     "is_fallback": false
   },
   "confidence_semantics": {

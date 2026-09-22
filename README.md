@@ -277,7 +277,7 @@ GeoNexus implements a 3-tier cascading fallback chain ensuring the platform rema
                                   │
                                   ▼
        ┌────────────────────────────────────────────────────────┐
-       │   Tier 1: Google Gemini API (gemini-2.0-flash)         │
+       │   Tier 1: Google Gemini API (gemini-3.8-flash)         │
        │   • High-speed cloud reasoning & synthesis             │
        └──────────────────────────┬─────────────────────────────┘
                                   │ (On Timeout / Rate Limit / No Key)
@@ -338,26 +338,7 @@ The frontend is built with React 19, TypeScript, Vite, and Vanilla CSS (Dark Gla
 | **Operational Analytics** | Interactive Chart.js graphs: Coal production by subsidiary, Target vs. Actual, and Safety KPIs. |
 | **8-Agent DAG Monitor** | Real-time agent health monitors, task execution history, interactive DAG modal, and pause/resume buttons. |
 | **Audit Trail & Provenance** | Searchable audit event log with user role attribution, IP address, timestamp, and JSON payloads. |
-| **System Settings & Health** | AI provider health status (Gemini, OpenModel, Deterministic), database configuration info, and demo data seeder. |
-| **Help & Training** | User manual, architecture reference, keyboard shortcuts, and step-by-step SIH demo guide. |
-
----
-
-## Technology Stack
-
-| Domain | Technology / Library | Version / Details |
-| :--- | :--- | :--- |
-| **Frontend Framework** | React + TypeScript + Vite | React `^19.0.0`, Vite `^6.1.0`, TypeScript `^5.7.3` |
-| **Frontend Styling** | Vanilla CSS (Curated Tokens) | Dark Glassmorphism, Responsive Grid/Flexbox |
-| **Frontend Charts & Icons** | Chart.js & Lucide React | `chart.js ^4.4.8`, `lucide-react ^0.475.0` |
-| **Backend Framework** | Python / Flask | Flask `>=3.0.0`, Application Factory pattern |
-| **Production WSGI** | Gunicorn | Gunicorn `>=23.0.0` with dynamic port binding |
-| **Primary Database** | PostgreSQL | `psycopg[binary] >=3.1.0` (v3 with v2 fallback) |
-| **Fallback Database** | SQLite (Thread-Local WAL) | Python standard library `sqlite3` |
-| **Document Processing** | PyMuPDF, python-docx, openpyxl, pandas | `pymupdf >=1.24.0`, `python-docx >=1.1.0`, `pandas >=2.2.0` |
-| **OCR Subsystem** | Tesseract OCR + Pillow + NumPy | `pytesseract >=0.3.10`, `Pillow >=10.0.0`, `numpy >=1.26.0` |
-| **Report Compilation** | fpdf2 & python-docx | `fpdf2 >=2.7.0` (PDF) & `python-docx >=1.1.0` (DOCX) |
-| **AI Providers** | Google Gemini, Open-Model, Deterministic | `gemini-2.0-flash`, Ollama / vLLM, Offline Synthesizer |
+| **System Settings & Health** | AI provider health status (Gemini, OpenModel, Deterministic), database configuration info, and demo data seeder. || **AI Providers** | Google Gemini, Open-Model, Deterministic | `gemini-3.8-flash`, Ollama / vLLM, Offline Synthesizer |
 | **Backend Testing** | Python `unittest` | 117 automated unit, integration, and failure injection tests |
 | **Frontend Testing** | Vitest + React Testing Library | Vitest `^3.0.5`, `@testing-library/react ^16.2.0` |
 
@@ -466,6 +447,7 @@ python -m unittest tests.test_failure_injection -v
 cd frontend
 npm test
 npm run build
+cd ..
 ```
 
 ---
@@ -528,6 +510,25 @@ GeoNexus is pre-configured for one-click deployment on platforms such as **Rende
 
 - **Gunicorn Production Server**: Configured in `gunicorn.conf.py` with dynamic port binding (`$PORT`), 2 sync worker processes (optimized for 512MB RAM free-tier instances), and a 120-second timeout for LLM/OCR workloads.
 - **Frontend SPA Serving**: Flask serves the pre-built React SPA directly from `frontend/dist/` with asset routing.
+- **PostgreSQL Ready**: Simply supply `DATABASE_URL` in the hosting environment settings. The platform automatically detects PostgreSQL and executes schema initialization and migrations on startup.
+
+### Render Build & Start Commands
+- **Build Command**: `pip install -r requirements.txt && cd frontend && npm install && npm run build && cd ..`
+- **Start Command**: `gunicorn -c gunicorn.conf.py app:app`
+
+---
+
+## Environment Variables Reference
+
+| Variable | Description | Default Value | Required? |
+| :--- | :--- | :---: | :---: |
+| `PORT` | Web server listening port | `5000` (Local) / `10000` (Render) | Optional |
+| `SECRET_KEY` | Flask session encryption key | `sih26023-coal-india-secret-key-2026` | Optional |
+| `DATABASE_URL` | PostgreSQL connection URL (defaults to SQLite if unset) | `""` (Uses SQLite fallback) | Optional |
+| `AI_PROVIDER` | Preferred AI provider (`gemini`, `open_model`, `deterministic`) | `gemini` | Optional |
+| `AI_FALLBACK_PROVIDER` | Secondary AI provider | `open_model` | Optional |
+| `GEMINI_API_KEY` | Google Gemini API Key for Tier 1 cloud AI | `""` (Falls back to Tier 2/3) | Optional |
+| `GEMINI_MODEL` | Gemini model identifier | `gemini-3.8-flash` | Optional |rom `frontend/dist/` with asset routing.
 - **PostgreSQL Ready**: Simply supply `DATABASE_URL` in the hosting environment settings. The platform automatically detects PostgreSQL and executes schema initialization and migrations on startup.
 
 ### Render Build & Start Commands
