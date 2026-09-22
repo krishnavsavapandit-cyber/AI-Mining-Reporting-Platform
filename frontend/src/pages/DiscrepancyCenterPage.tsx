@@ -167,6 +167,94 @@ export const DiscrepancyCenterPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Quick Interactive Guide Banner */}
+      <div
+        style={{
+          padding: '14px 18px',
+          backgroundColor: 'var(--bg-surface)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={15} style={{ color: 'var(--status-warning)' }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+              HOW DISCREPANCY AUDIT & RECONCILIATION WORKS
+            </span>
+          </div>
+          <Badge variant="warning">3-STEP WORKFLOW</Badge>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 10,
+          }}
+        >
+          <div
+            style={{
+              padding: '10px 12px',
+              backgroundColor: 'var(--bg-surface-2)',
+              border: '1px solid var(--border-hairline)',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--status-warning)' }}>
+              1. Scan & Cross-Match
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              Click <strong>"Run Invariant Scan"</strong> to automatically compare figures across documents for the same mine and reporting period.
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: '10px 12px',
+              backgroundColor: 'var(--bg-surface-2)',
+              border: '1px solid var(--border-hairline)',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-teal)' }}>
+              2. Inspect Side-by-Side
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              Select any conflict in the queue to inspect <strong>Source Doc A vs Source Doc B</strong> values, page citations, and calculated variance %.
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: '10px 12px',
+              backgroundColor: 'var(--bg-surface-2)',
+              border: '1px solid var(--border-hairline)',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent-primary)' }}>
+              3. Officer Reconciliation
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              Enter resolution notes and click <strong>Resolve Conflict</strong>, <strong>Flag Under Review</strong>, or <strong>Dismiss</strong> to record in the Audit Trail.
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 1. Discrepancy Overview Summary Bar (Summary) */}
       <div
         style={{
