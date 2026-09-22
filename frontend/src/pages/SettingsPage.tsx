@@ -26,7 +26,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onSeeded }) => {
 
   // Form State
   const [preferredProvider, setPreferredProvider] = useState<'gemini' | 'open_model' | 'deterministic'>('gemini');
-  const [geminiApiKey, setGeminiApiKey] = useState('');
   const [openModelEndpoint, setOpenModelEndpoint] = useState('http://localhost:11434/v1/chat/completions');
 
   const toast = useToast();
@@ -66,11 +65,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onSeeded }) => {
     try {
       await settingsService.updateAIProvider({
         preferred_provider: preferredProvider,
-        gemini_api_key: geminiApiKey || undefined,
         open_model_endpoint: openModelEndpoint || undefined,
       });
       toast.success('AI Provider Updated', 'Primary and fallback provider configuration saved.');
-      setGeminiApiKey('');
       loadSettingsAndHealth();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to save settings';
@@ -174,25 +171,30 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onSeeded }) => {
                 className="input-select"
                 disabled={!canModifySettings}
               >
-                <option value="gemini">Google Gemini (Gemini 2.0 Flash / Pro)</option>
+                <option value="gemini">Google Gemini (Gemini 3.8 Flash — Configured via .env)</option>
                 <option value="open_model">Open-Source Local / OpenAI-Compatible (Ollama, vLLM)</option>
                 <option value="deterministic">Deterministic Grounded Engine (Local Heuristics — Always Ready)</option>
               </select>
             </div>
 
             {preferredProvider === 'gemini' && (
-              <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-                  GEMINI API KEY (LEAVE BLANK TO KEEP ACTIVE ENV KEY)
-                </label>
-                <input
-                  type="password"
-                  value={geminiApiKey}
-                  onChange={(e) => setGeminiApiKey(e.target.value)}
-                  placeholder="AIzaSy..."
-                  className="input-text"
-                  disabled={!canModifySettings}
-                />
+              <div
+                style={{
+                  padding: '12px 14px',
+                  backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid var(--border-hairline)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 12,
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <Sparkles size={15} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
+                <span>
+                  <strong>Gemini 3.8 Flash</strong> keys are read securely from your server environment (<code>.env</code> / <code>GEMINI_API_KEY</code>). No plain-text keys are exposed on the screen.
+                </span>
               </div>
             )}
 
