@@ -116,6 +116,20 @@ def health_check():
     is_healthy = db_ok
     status_str = "healthy" if is_healthy else "degraded"
 
+    active_info = ai_service.get_active_provider_info()
+    pref_prov = active_info.get("preferred_provider", "deterministic")
+    prov_details = active_info.get("providers", {}).get(pref_prov, {})
+    
+    is_prov_connected = prov_details.get("configured", False) if pref_prov != "deterministic" else True
+    prov_display_name = prov_details.get("name", "Deterministic Grounded Engine")
+
+    ai_service_payload = {
+        "preferred_provider": pref_prov,
+        "provider_name": prov_display_name,
+        "is_connected": is_prov_connected,
+        "status_message": "Online & Ready" if is_prov_connected else "Offline / Key Required"
+    }
+
     return jsonify({
         "status": status_str,
         "healthy": is_healthy,
@@ -126,7 +140,8 @@ def health_check():
         },
         "ocr_engine": ocr_health,
         "ai_providers": ai_health,
-        "active_ai_info": ai_service.get_active_provider_info()
+        "active_ai_info": active_info,
+        "ai_service": ai_service_payload
     }), 200 if is_healthy else 503
 
 @settings_bp.route("/ready", methods=["GET"])

@@ -240,9 +240,57 @@ export const GovernmentInquiryPage: React.FC = () => {
       {/* Formulate Inquiry Form */}
       {showForm && (
         <div className="card-level-2">
-          <h3 className="card-title" style={{ marginBottom: 16 }}>
-            Formulate Ministry Parliamentary Response
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 className="card-title" style={{ margin: 0 }}>
+              Formulate Ministry Parliamentary Response
+            </h3>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              Select a quick template or enter custom question
+            </span>
+          </div>
+
+          {/* Quick Template Pills */}
+          <div style={{ marginBottom: 14 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
+              ⚡ 1-CLICK QUESTION TEMPLATES:
+            </span>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: 11, padding: '4px 10px' }}
+                onClick={() => {
+                  setQuestionText('What is the raw coal production achievement and target shortfall for BCCL and ECL in the current fiscal year?');
+                  setInquiryRef('LS-STARRED-PQ-142');
+                }}
+              >
+                📊 Production Shortfall & Targets
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: 11, padding: '4px 10px' }}
+                onClick={() => {
+                  setQuestionText('What is the total overburden removal volume (OBR) and current stripping ratio across open cast mines?');
+                  setInquiryRef('RS-UNSTARRED-288');
+                }}
+              >
+                🚜 OBR & Stripping Ratios
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: 11, padding: '4px 10px' }}
+                onClick={() => {
+                  setQuestionText('What are the documented DGMS mine safety audit findings, statutory inspections, and compliance actions taken?');
+                  setInquiryRef('MOC-VIP-REF-904');
+                }}
+              >
+                🛡️ DGMS Safety Compliance
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleDraft} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
               <div>
@@ -253,11 +301,11 @@ export const GovernmentInquiryPage: React.FC = () => {
                   type="text"
                   value={inquiryRef}
                   onChange={(e) => setInquiryRef(e.target.value)}
+                  className="input-field"
                   placeholder="e.g. STARRED-PQ-142"
-                  className="input-text"
+                  required
                 />
               </div>
-
               <div>
                 <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
                   MINISTRY / PARLIAMENTARY BODY
@@ -266,22 +314,23 @@ export const GovernmentInquiryPage: React.FC = () => {
                   type="text"
                   value={ministryBody}
                   onChange={(e) => setMinistryBody(e.target.value)}
+                  className="input-field"
                   placeholder="e.g. Lok Sabha / Ministry of Coal"
-                  className="input-text"
+                  required
                 />
               </div>
             </div>
 
             <div>
               <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
-                OFFICIAL PARLIAMENTARY QUESTION TEXT
+                PARLIAMENTARY QUESTION TEXT
               </label>
               <textarea
-                rows={3}
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
-                placeholder="Enter official parliamentary question (e.g. (a) whether there is a shortfall in coal production in ECL Rajmahal; (b) details of targets vs actuals...)"
-                className="input-textarea"
+                className="input-field"
+                rows={3}
+                placeholder="Enter exact question raised in Parliament..."
                 required
               />
             </div>
@@ -290,7 +339,7 @@ export const GovernmentInquiryPage: React.FC = () => {
               <Button variant="outline" size="sm" type="button" onClick={() => setShowForm(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" type="submit" loading={drafting} icon={<Landmark size={13} />}>
+              <Button variant="primary" size="sm" type="submit" loading={drafting} icon={<ShieldCheck size={13} />}>
                 Draft Grounded Response
               </Button>
             </div>

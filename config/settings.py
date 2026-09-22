@@ -55,11 +55,13 @@ MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 50 * 1024 * 1024)) # 50
 ALLOWED_EXTENSIONS = {"pdf", "docx", "csv", "xlsx", "xls", "png", "jpg", "jpeg", "txt"}
 
 # AI Provider Configuration
-AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini").lower()
-AI_FALLBACK_PROVIDER = os.getenv("AI_FALLBACK_PROVIDER", "open_model").lower()
+# Automatically defaults to 100% offline deterministic engine if GEMINI_API_KEY is not supplied
+_HAS_GEMINI_KEY = bool(os.getenv("GEMINI_API_KEY", "").strip())
+AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini" if _HAS_GEMINI_KEY else "deterministic").lower()
+AI_FALLBACK_PROVIDER = os.getenv("AI_FALLBACK_PROVIDER", "deterministic").lower()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 OPEN_MODEL_ENDPOINT = os.getenv("OPEN_MODEL_ENDPOINT", "http://localhost:11434/v1/chat/completions")
 OPEN_MODEL_API_KEY = os.getenv("OPEN_MODEL_API_KEY", "")

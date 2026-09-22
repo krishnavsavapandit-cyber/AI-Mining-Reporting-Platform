@@ -20,6 +20,7 @@ import { UploadModal } from '@/components/modals/UploadModal';
 import { DocumentDetailModal } from '@/components/modals/DocumentDetailModal';
 import { WorkflowDAGModal } from '@/components/modals/WorkflowDAGModal';
 import { ReportModal } from '@/components/modals/ReportModal';
+import { AiHealthModal } from '@/components/ui/AiHealthModal';
 
 import { analyticsService, settingsService } from '@/services/api';
 import { useToast } from '@/components/ui/ToastContext';
@@ -33,13 +34,14 @@ export const AppShell: React.FC = () => {
   const [isSeeding, setIsSeeding] = useState(false);
   const [docCount, setDocCount] = useState(0);
   const [conflictsCount, setConflictsCount] = useState(0);
-  const [aiProviderName, setAiProviderName] = useState('Gemini Grounded Engine');
+  const [aiProviderName, setAiProviderName] = useState('Deterministic Grounded Engine');
   const [aiProviderOnline, setAiProviderOnline] = useState(true);
   const [dbConnected, setDbConnected] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Global Modals State
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [aiHealthModalOpen, setAiHealthModalOpen] = useState(false);
   const [inspectDocId, setInspectDocId] = useState<number | null>(null);
   const [inspectWorkflowId, setInspectWorkflowId] = useState<string | null>(null);
   const [inspectReportId, setInspectReportId] = useState<number | null>(null);
@@ -149,10 +151,14 @@ export const AppShell: React.FC = () => {
         {/* TopBar */}
         <TopBar
           activeTab={activeTab}
+          onNavigate={handleSelectTab}
           onOpenUpload={() => setUploadModalOpen(true)}
           onQuickSeed={handleQuickSeed}
+          onOpenAiHealth={() => setAiHealthModalOpen(true)}
           isSeeding={isSeeding}
           dbConnected={dbConnected}
+          aiProviderName={aiProviderName}
+          aiProviderOnline={aiProviderOnline}
           onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)}
         />
 
@@ -221,6 +227,12 @@ export const AppShell: React.FC = () => {
         isOpen={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         onUploadComplete={() => setRefreshTrigger((prev) => prev + 1)}
+      />
+
+      <AiHealthModal
+        isOpen={aiHealthModalOpen}
+        onClose={() => setAiHealthModalOpen(false)}
+        onProviderUpdated={refreshGlobalTelemetry}
       />
 
       <DocumentDetailModal

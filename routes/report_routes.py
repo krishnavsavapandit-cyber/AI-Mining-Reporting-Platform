@@ -124,3 +124,37 @@ def approve_report(report_id: int):
     except Exception as e:
         logger.error(f"Failed to approve report {report_id}: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@report_bp.route("/<int:report_id>/revoke", methods=["POST"])
+@require_role(["ADMIN", "OFFICER"])
+def revoke_report_approval(report_id: int):
+    """Revoke accidental human approval, returning report back to DRAFT state."""
+    current_role = get_current_user_role()
+    try:
+        with get_db() as conn:
+            conn.execute(
+                "UPDATE reports SET human_approved = 0, approved_by = NULL, status = 'DRAFT' WHERE id = ?",
+                (report_id,)
+            )
+            log_audit("REPORT_APPROVAL_REVOKED", user_role=current_role, resource_type="report", resource_id=report_id, details={"action": "Revoked to Draft"})
+
+        return jsonify({"status": "success", "message": "Report approval revoked. Reverted back to Draft."}), 200
+    except Exception as e:
+        logger.error(f"Failed to revoke approval for report {report_id}: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@report_bp.route("/<int:report_id>", methods=["DELETE"])
+@require_role(["ADMIN", "OFFICER"])
+def delete_report(report_id: int):
+    """Delete a report permanently (Admin and Officer only)."""
+    current_role = get_current_user_role()
+    try:
+        with get_db() as conn:
+            conn.execute("DELETE FROM reports WHERE id = ?", (report_id,))
+            log_audit("REPORT_DELETED", user_role=current_role, resource_type="report", resource_id=report_id, details={"action": "Permanently deleted"})
+
+        return jsonify({"status": "success", "message": f"Report #{report_id} permanently deleted."}), 200
+    except Exception as e:
+        logger.error(f"Failed to delete report {report_id}: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+

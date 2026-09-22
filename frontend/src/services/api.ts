@@ -221,6 +221,17 @@ export const reportService = {
       data || {}
     ),
 
+  revokeApproval: (reportId: number) =>
+    apiClient.post<{ status: string; message: string }>(
+      `/api/reports/${reportId}/revoke`,
+      {}
+    ),
+
+  deleteReport: (reportId: number) =>
+    apiClient.delete<{ status: string; message: string }>(
+      `/api/reports/${reportId}`
+    ),
+
   getDownloadUrl: (filename: string) => `/api/reports/download/${encodeURIComponent(filename)}`,
 };
 

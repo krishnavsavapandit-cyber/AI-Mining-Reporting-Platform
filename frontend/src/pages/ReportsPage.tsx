@@ -9,6 +9,8 @@ import {
   Clock,
   ArrowRight,
   Zap,
+  RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -95,6 +97,32 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
     }
   };
 
+  const handleRevoke = async (reportId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`Revoke approval for report #${reportId} and revert to Draft?`)) return;
+    try {
+      await reportService.revokeApproval(reportId);
+      toast.success('Approval Revoked', `Report #${reportId} reverted back to Draft.`);
+      loadReports();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Revoke failed';
+      toast.error('Revocation Error', msg);
+    }
+  };
+
+  const handleDelete = async (reportId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`Permanently delete report #${reportId}?`)) return;
+    try {
+      await reportService.deleteReport(reportId);
+      toast.success('Report Deleted', `Report #${reportId} permanently removed.`);
+      loadReports();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Delete failed';
+      toast.error('Delete Error', msg);
+    }
+  };
+
   const filteredReports = reports.filter((rep) => {
     if (statusFilter === 'APPROVED' && !rep.human_approved) return false;
     if (statusFilter === 'PENDING' && rep.human_approved) return false;
@@ -147,24 +175,30 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {!isViewer && (
             <Button
               variant="primary"
-              size="sm"
+              size="md"
               onClick={() => setShowGenerateForm(!showGenerateForm)}
-              icon={<Plus size={13} />}
+              icon={<Plus size={16} />}
+              style={{
+                padding: '10px 18px',
+                fontSize: 13,
+                fontWeight: 700,
+                boxShadow: '0 0 14px rgba(31, 138, 92, 0.4)',
+              }}
             >
-              {showGenerateForm ? 'Cancel Form' : 'Generate New Report'}
+              {showGenerateForm ? 'Cancel Form' : '+ Generate New Executive Report'}
             </Button>
           )}
 
           <Button
             variant="outline"
-            size="sm"
+            size="md"
             onClick={loadReports}
             loading={loading}
-            icon={<RefreshCw size={13} />}
+            icon={<RefreshCw size={14} />}
           >
             Refresh
           </Button>
@@ -479,6 +513,30 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
                           >
                             Approve
                           </Button>
+                        )}
+
+                        {rep.human_approved && canApprove && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleRevoke(rep.id, e)}
+                            icon={<RotateCcw size={12} style={{ color: 'var(--status-warning)' }} />}
+                            style={{ padding: '3px 8px', color: 'var(--status-warning)', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+                            title="Revert accidental approval back to Draft"
+                          >
+                            Revoke
+                          </Button>
+                        )}
+
+                        {canApprove && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleDelete(rep.id, e)}
+                            icon={<Trash2 size={12} style={{ color: 'var(--status-error)' }} />}
+                            style={{ padding: '3px 8px', color: 'var(--status-error)', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                            title="Permanently delete report"
+                          />
                         )}
                       </div>
                     </td>

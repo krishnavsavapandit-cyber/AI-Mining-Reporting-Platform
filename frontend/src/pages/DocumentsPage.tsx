@@ -140,28 +140,64 @@ export const DocumentsPage: React.FC<DocumentsPageProps> = ({
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {canUpload && onOpenUpload && (
             <Button
               variant="primary"
-              size="sm"
+              size="md"
               onClick={onOpenUpload}
-              icon={<Upload size={13} />}
+              icon={<Upload size={16} />}
+              style={{
+                padding: '10px 18px',
+                fontSize: 13,
+                fontWeight: 700,
+                boxShadow: '0 0 14px rgba(31, 138, 92, 0.4)',
+              }}
             >
-              Upload Ingestion File
+              + Upload Ingestion File
             </Button>
           )}
 
           <Button
             variant="outline"
-            size="sm"
+            size="md"
             onClick={loadDocuments}
             loading={loading}
-            icon={<RefreshCw size={13} />}
+            icon={<RefreshCw size={14} />}
           >
             Refresh
           </Button>
         </div>
+      </div>
+
+      {/* Quick-Start Workflow Guide Banner for Operators & Engineers */}
+      <div
+        style={{
+          padding: '14px 18px',
+          backgroundColor: 'rgba(15, 23, 42, 0.7)',
+          border: '1px solid var(--border-hairline)',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
+          backgroundImage: 'linear-gradient(90deg, rgba(217, 119, 6, 0.06) 0%, transparent 100%)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Document Pipeline Flow:
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+            1. Upload File ➔ 2. Auto-OCR & Facts (Agent 2 & 4) ➔ 3. Consistency Audit (Agent 5) ➔ 4. Ready for Copilot Querying
+          </span>
+        </div>
+        {canUpload && onOpenUpload && (
+          <Button variant="primary" size="sm" onClick={onOpenUpload} icon={<Upload size={12} />}>
+            Upload Document Now
+          </Button>
+        )}
       </div>
 
       {/* 1. Document Processing State HUD (Summary) */}

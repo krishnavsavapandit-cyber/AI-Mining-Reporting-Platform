@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileCheck, CheckCircle2, Download, FileText } from 'lucide-react';
+import { FileCheck, CheckCircle2, Download, FileText, RotateCcw, Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -72,6 +72,37 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     }
   };
 
+  const handleRevokeApproval = async () => {
+    if (!reportId) return;
+    if (!window.confirm('Are you sure you want to revoke this approval and revert the report back to Draft?')) return;
+    setIsApproving(true);
+    try {
+      await reportService.revokeApproval(reportId);
+      toast.success('Approval Revoked', 'Report has been reverted back to Draft status.');
+      loadReport(reportId);
+      if (onReportApproved) onReportApproved();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Revoke failed';
+      toast.error('Revocation Error', msg);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleDeleteReport = async () => {
+    if (!reportId) return;
+    if (!window.confirm('Are you sure you want to permanently delete this report? This cannot be undone.')) return;
+    try {
+      await reportService.deleteReport(reportId);
+      toast.success('Report Deleted', 'Report removed from records.');
+      onClose();
+      if (onReportApproved) onReportApproved();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Delete failed';
+      toast.error('Delete Error', msg);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -137,6 +168,33 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                 icon={<CheckCircle2 size={12} />}
               >
                 Approve & Sign-Off
+              </Button>
+            )}
+
+            {report && report.human_approved && isOfficerOrAbove && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRevokeApproval}
+                loading={isApproving}
+                icon={<RotateCcw size={12} style={{ color: 'var(--status-warning)' }} />}
+                style={{ borderColor: 'var(--status-warning)', color: 'var(--status-warning)' }}
+                title="Revert accidental approval back to Draft"
+              >
+                Revoke Approval
+              </Button>
+            )}
+
+            {report && isOfficerOrAbove && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDeleteReport}
+                icon={<Trash2 size={12} style={{ color: 'var(--status-error)' }} />}
+                style={{ borderColor: 'rgba(239, 68, 68, 0.4)', color: 'var(--status-error)' }}
+                title="Permanently delete this report"
+              >
+                Delete
               </Button>
             )}
 

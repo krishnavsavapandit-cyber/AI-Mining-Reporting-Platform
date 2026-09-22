@@ -446,6 +446,331 @@ export const GeoNexusLanding: React.FC<GeoNexusLandingProps> = ({
       </section>
 
       {/* =========================================================================
+          2.5. PLATFORM NAVIGATOR — WHERE TO REACH FOR WHAT TO DO (1-Click Action Hub)
+          ========================================================================= */}
+      <section
+        id="quick-navigator"
+        style={{
+          padding: '60px 24px',
+          backgroundColor: 'rgba(10, 14, 23, 0.95)',
+          borderBottom: '1px solid var(--border-hairline)',
+          backgroundImage: 'radial-gradient(ellipse at 50% 0%, rgba(217, 119, 6, 0.08) 0%, transparent 70%)',
+        }}
+      >
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+                color: 'var(--accent-primary)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: 'rgba(217, 119, 6, 0.12)',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid rgba(217, 119, 6, 0.3)',
+                marginBottom: 10,
+              }}
+            >
+              <Sparkles size={12} /> OPERATIONAL ROUTE MAP
+            </span>
+            <h2
+              style={{
+                fontSize: 'clamp(26px, 3.2vw, 38px)',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                color: '#FFFFFF',
+                marginBottom: 10,
+              }}
+            >
+              Where to Reach for What You Need to Do
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 14, maxWidth: '700px', margin: '0 auto' }}>
+              Jump directly to any operational module with one click. Everything is synchronized with the live 8-agent backend.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {/* Card 1: Upload Files */}
+            <div
+              style={{
+                backgroundColor: 'rgba(17, 24, 39, 0.75)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: 8, backgroundColor: 'rgba(16, 185, 129, 0.15)', borderRadius: 'var(--radius-md)', color: 'var(--text-emerald)' }}>
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>1. Ingest Documents</h3>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Where to put your files</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+                  Upload PDF, Word, or Excel mining files. Triggers auto-OCR, chunking, deduplication, and vector indexing.
+                </p>
+              </div>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => onEnterWorkspace('documents')}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <span>Open Documents Hub</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Card 2: 8-Agent Live Monitor */}
+            <div
+              style={{
+                backgroundColor: 'rgba(17, 24, 39, 0.75)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: 8, backgroundColor: 'rgba(217, 119, 6, 0.15)', borderRadius: 'var(--radius-md)', color: 'var(--accent-primary)' }}>
+                    <Cpu size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>2. Watch 8 Agents</h3>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>See each step working</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+                  Inspect the live DAG execution graph, worker concurrency, parent-child dependencies, and task latencies in real time.
+                </p>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onEnterWorkspace('agents')}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <span>Launch Agent Swarm</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Card 3: AI Copilot */}
+            <div
+              style={{
+                backgroundColor: 'rgba(17, 24, 39, 0.75)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: 8, backgroundColor: 'rgba(59, 130, 246, 0.15)', borderRadius: 'var(--radius-md)', color: '#60A5FA' }}>
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>3. AI Copilot Chat</h3>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Ask questions with citations</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+                  Query production, coal seams, stripping ratios, or safety stats with zero hallucination and exact page sources.
+                </p>
+              </div>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => onEnterWorkspace('assistant')}
+                style={{ width: '100%', justifyContent: 'center', backgroundColor: '#2563EB' }}
+              >
+                <span>Ask AI Copilot</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Card 4: Executive Reports */}
+            <div
+              style={{
+                backgroundColor: 'rgba(17, 24, 39, 0.75)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: 8, backgroundColor: 'rgba(168, 85, 247, 0.15)', borderRadius: 'var(--radius-md)', color: '#C084FC' }}>
+                    <FileCheck size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>4. Executive Reports</h3>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Generate PDF & DOCX</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+                  Compile multi-section statutory reports with key figure tables, discrepancy caveats, and 1-click PDF/Word exports.
+                </p>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onEnterWorkspace('reports')}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <span>Compile Reports</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Card 5: Discrepancy Center */}
+            <div
+              style={{
+                backgroundColor: 'rgba(17, 24, 39, 0.75)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: 8, backgroundColor: 'rgba(239, 68, 68, 0.15)', borderRadius: 'var(--radius-md)', color: '#F87171' }}>
+                    <ShieldAlert size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>5. Discrepancy Center</h3>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Detect conflicting figures</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+                  Compare numbers across multiple uploaded files. Resolve variance conflicts with 1-click human-in-the-loop approvals.
+                </p>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onEnterWorkspace('validation')}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <span>Audit Conflicts</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Card 6: Parliament Desk */}
+            <div
+              style={{
+                backgroundColor: 'rgba(17, 24, 39, 0.75)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: 8, backgroundColor: 'rgba(245, 158, 11, 0.15)', borderRadius: 'var(--radius-md)', color: 'var(--status-warning)' }}>
+                    <Landmark size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>6. Parliament Desk</h3>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Lok Sabha / Ministry QA</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+                  Draft structured parliamentary responses for Lok Sabha/Rajya Sabha inquiries with statutory watermarks and citation trees.
+                </p>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onEnterWorkspace('inquiries')}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <span>Draft Parliamentary QA</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+
+            {/* Card 7: Settings & AI Health */}
+            <div
+              style={{
+                backgroundColor: 'rgba(17, 24, 39, 0.75)',
+                border: '1px solid var(--border-hairline)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: 8, backgroundColor: 'rgba(20, 184, 166, 0.15)', borderRadius: 'var(--radius-md)', color: '#2DD4BF' }}>
+                    <Activity size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>7. AI Health & Demo Seed</h3>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Gemini, Ollama & Data</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+                  Test your Gemini API key, connect local Ollama, or load 5 synthetic test mining reports with 1 click.
+                </p>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => onEnterWorkspace('settings')}
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <span>Open Settings & Health</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
           3. HOW IT WORKS — 8-AGENT ORCHESTRATION FLOW (Exact Reference Workflow)
           ========================================================================= */}
       <section
