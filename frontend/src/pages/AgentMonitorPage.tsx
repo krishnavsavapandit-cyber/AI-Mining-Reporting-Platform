@@ -17,10 +17,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { agentService } from '@/services/api';
+import { agentService, documentService } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/ToastContext';
-import { Agent, WorkflowRecord } from '@/types';
+import { Agent, WorkflowRecord, DocumentRecord } from '@/types';
 
 interface AgentMonitorPageProps {
   onInspectWorkflow?: (id: string) => void;
@@ -106,6 +106,8 @@ export const AgentMonitorPage: React.FC<AgentMonitorPageProps> = ({ onInspectWor
   const { role, canExecuteWorkflows } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [workflows, setWorkflows] = useState<WorkflowRecord[]>([]);
+  const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [selectedDocId, setSelectedDocId] = useState<string>('');
   const [selectedAgentName, setSelectedAgentName] = useState<string>('ManagerAgent');
   const [loading, setLoading] = useState(true);
   const [triggeringDemo, setTriggeringDemo] = useState(false);
@@ -118,9 +120,10 @@ export const AgentMonitorPage: React.FC<AgentMonitorPageProps> = ({ onInspectWor
   const loadAgentsAndWorkflows = async () => {
     setLoading(true);
     try {
-      const [agRes, wfRes] = await Promise.allSettled([
+      const [agRes, wfRes, docRes] = await Promise.allSettled([
         agentService.getAgents(),
         agentService.getWorkflows({ limit: 15 }),
+        documentService.getDocuments(),
       ]);
 
       if (agRes.status === 'fulfilled') {
@@ -131,6 +134,13 @@ export const AgentMonitorPage: React.FC<AgentMonitorPageProps> = ({ onInspectWor
         }
       }
       if (wfRes.status === 'fulfilled') setWorkflows(wfRes.value.workflows || []);
+      if (docRes.status === 'fulfilled') {
+        const docs = docRes.value.documents || [];
+        setDocuments(docs);
+        if (docs.length > 0 && !selectedDocId) {
+          setSelectedDocId(String(docs[0].id));
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error loading agents';
       toast.error('Agent Load Error', msg);
@@ -139,12 +149,19 @@ export const AgentMonitorPage: React.FC<AgentMonitorPageProps> = ({ onInspectWor
     }
   };
 
-  const handleRunDemo = async () => {
+  const handleRunPipeline = async () => {
     setTriggeringDemo(true);
-    toast.info('Dispatching Multi-Agent DAG', 'Executing Rajmahal production discrepancy workflow...');
+    const chosenDoc = documents.find((d) => String(d.id) === selectedDocId);
+    const targetName = chosenDoc ? chosenDoc.original_name : 'Uploaded Repository';
+
+    toast.info('Dispatching 8-Agent Pipeline', `Executing multi-agent ingestion & validation on: ${targetName}`);
     try {
-      await agentService.runRajmahalDemo();
-      toast.success('DAG Completed', 'Multi-agent orchestration executed successfully.');
+      if (chosenDoc) {
+        await documentService.reprocessDocument(chosenDoc.id);
+      } else {
+        await agentService.runRajmahalDemo();
+      }
+      toast.success('Pipeline Completed', `8-Agent orchestration completed for ${targetName}.`);
       loadAgentsAndWorkflows();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Execution failed';
@@ -222,16 +239,34 @@ export const AgentMonitorPage: React.FC<AgentMonitorPageProps> = ({ onInspectWor
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {canExecuteWorkflows && documents.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>DOCUMENT:</span>
+              <select
+                value={selectedDocId}
+                onChange={(e) => setSelectedDocId(e.target.value)}
+                className="input-select"
+                style={{ width: 'auto', maxWidth: 220, padding: '6px 10px', fontSize: 12 }}
+              >
+                {documents.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    #{d.id} {d.original_name} ({d.subsidiary})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {canExecuteWorkflows && (
             <Button
               variant="primary"
               size="sm"
-              onClick={handleRunDemo}
+              onClick={handleRunPipeline}
               loading={triggeringDemo}
               icon={<Play size={13} />}
             >
-              Dispatch Rajmahal Discrepancy DAG
+              {documents.length > 0 ? 'Dispatch Agent Pipeline on Document' : 'Dispatch Multi-Agent DAG'}
             </Button>
           )}
 

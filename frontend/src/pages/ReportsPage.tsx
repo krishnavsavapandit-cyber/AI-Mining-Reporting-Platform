@@ -28,6 +28,9 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
   const { role, canApprove, isViewer } = useAuth();
   const [reports, setReports] = useState<ReportRecord[]>([]);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'APPROVED' | 'PENDING'>('ALL');
+  const [timeFilter, setTimeFilter] = useState<
+    'ALL' | '15M' | '1H' | '6H' | '24H' | '1W' | '1M' | '3M' | '6M' | '1Y'
+  >('ALL');
   const [subsidiaryFilter, setSubsidiaryFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -123,10 +126,46 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
     }
   };
 
+  const isWithinTimeRange = (createdAt: string, range: string): boolean => {
+    if (range === 'ALL' || !createdAt) return true;
+    const now = Date.now();
+    const createdTime = new Date(createdAt.replace(' ', 'T')).getTime();
+    if (isNaN(createdTime)) return true;
+    const diffMs = now - createdTime;
+
+    const MINUTE = 60 * 1000;
+    const HOUR = 60 * MINUTE;
+    const DAY = 24 * HOUR;
+
+    switch (range) {
+      case '15M':
+        return diffMs <= 15 * MINUTE;
+      case '1H':
+        return diffMs <= 1 * HOUR;
+      case '6H':
+        return diffMs <= 6 * HOUR;
+      case '24H':
+        return diffMs <= 24 * HOUR;
+      case '1W':
+        return diffMs <= 7 * DAY;
+      case '1M':
+        return diffMs <= 30 * DAY;
+      case '3M':
+        return diffMs <= 90 * DAY;
+      case '6M':
+        return diffMs <= 180 * DAY;
+      case '1Y':
+        return diffMs <= 365 * DAY;
+      default:
+        return true;
+    }
+  };
+
   const filteredReports = reports.filter((rep) => {
     if (statusFilter === 'APPROVED' && !rep.human_approved) return false;
     if (statusFilter === 'PENDING' && rep.human_approved) return false;
     if (subsidiaryFilter && rep.subsidiary !== subsidiaryFilter) return false;
+    if (!isWithinTimeRange(rep.created_at, timeFilter)) return false;
     return true;
   });
 
@@ -404,22 +443,48 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
           </Button>
         </div>
 
-        <select
-          value={subsidiaryFilter}
-          onChange={(e) => setSubsidiaryFilter(e.target.value)}
-          className="input-select"
-          style={{ width: 'auto', padding: '6px 12px', fontSize: 12 }}
-        >
-          <option value="">All Subsidiaries</option>
-          <option value="ECL">ECL</option>
-          <option value="BCCL">BCCL</option>
-          <option value="CCL">CCL</option>
-          <option value="WCL">WCL</option>
-          <option value="SECL">SECL</option>
-          <option value="MCL">MCL</option>
-          <option value="NCL">NCL</option>
-          <option value="CMPDI">CMPDI</option>
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>TIME:</span>
+            <select
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value as any)}
+              className="input-select"
+              style={{ width: 'auto', padding: '6px 12px', fontSize: 12, backgroundColor: 'var(--bg-surface-2)' }}
+            >
+              <option value="ALL">All Time</option>
+              <option value="15M">Last 15 Mins</option>
+              <option value="1H">Last 1 Hour</option>
+              <option value="6H">Last 6 Hours</option>
+              <option value="24H">Last 24 Hours</option>
+              <option value="1W">Last 1 Week</option>
+              <option value="1M">Last 1 Month</option>
+              <option value="3M">Last 3 Months</option>
+              <option value="6M">Last 6 Months</option>
+              <option value="1Y">Last 1 Year</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>SUBSIDIARY:</span>
+            <select
+              value={subsidiaryFilter}
+              onChange={(e) => setSubsidiaryFilter(e.target.value)}
+              className="input-select"
+              style={{ width: 'auto', padding: '6px 12px', fontSize: 12 }}
+            >
+              <option value="">All Subsidiaries</option>
+              <option value="ECL">ECL</option>
+              <option value="BCCL">BCCL</option>
+              <option value="CCL">CCL</option>
+              <option value="WCL">WCL</option>
+              <option value="SECL">SECL</option>
+              <option value="MCL">MCL</option>
+              <option value="NCL">NCL</option>
+              <option value="CMPDI">CMPDI</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* 3. Reports Catalog Queue (Detail & Action) */}
