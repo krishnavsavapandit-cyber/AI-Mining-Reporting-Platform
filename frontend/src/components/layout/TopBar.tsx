@@ -7,6 +7,8 @@ import {
   Network,
   Bot,
   FileCheck,
+  ShieldAlert,
+  Landmark,
   Cpu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -114,7 +116,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
       </div>
 
-      {/* Center: Clean 4-Step Pipeline Quick Navigation Strip */}
+      {/* Center: Clean Multi-Step Pipeline Quick Navigation Strip */}
       {onNavigate && (
         <nav
           className="topbar-pipeline-strip"
@@ -137,7 +139,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              padding: '3px 8px',
+              padding: '3px 7px',
               borderRadius: 'var(--radius-full)',
               border: 'none',
               background: activeTab === 'documents' ? 'var(--accent-primary)' : 'transparent',
@@ -150,7 +152,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             title="Step 1: Upload mining reports & OCR"
           >
             <FileText size={11} />
-            <span>1. Upload</span>
+            <span>1. Documents</span>
           </button>
 
           <span style={{ color: 'var(--text-muted)', fontSize: 9 }}>/</span>
@@ -162,7 +164,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              padding: '3px 8px',
+              padding: '3px 7px',
               borderRadius: 'var(--radius-full)',
               border: 'none',
               background: activeTab === 'agents' ? 'var(--accent-primary)' : 'transparent',
@@ -187,7 +189,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              padding: '3px 8px',
+              padding: '3px 7px',
               borderRadius: 'var(--radius-full)',
               border: 'none',
               background: activeTab === 'assistant' ? 'var(--accent-primary)' : 'transparent',
@@ -207,12 +209,62 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           <button
             type="button"
+            onClick={() => onNavigate('validation')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '3px 7px',
+              borderRadius: 'var(--radius-full)',
+              border: 'none',
+              background: activeTab === 'validation' ? 'var(--accent-primary)' : 'transparent',
+              color: activeTab === 'validation' ? '#fff' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'validation' ? 700 : 500,
+              fontSize: 11,
+              transition: 'all 0.15s ease',
+            }}
+            title="Step 4: Cross-document discrepancy & variance detection"
+          >
+            <ShieldAlert size={11} />
+            <span>4. Discrepancies</span>
+          </button>
+
+          <span style={{ color: 'var(--text-muted)', fontSize: 9 }}>/</span>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('inquiries')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '3px 7px',
+              borderRadius: 'var(--radius-full)',
+              border: 'none',
+              background: activeTab === 'inquiries' ? 'var(--accent-primary)' : 'transparent',
+              color: activeTab === 'inquiries' ? '#fff' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontWeight: activeTab === 'inquiries' ? 700 : 500,
+              fontSize: 11,
+              transition: 'all 0.15s ease',
+            }}
+            title="Step 5: Parliamentary inquiry & Ministry of Coal drafting"
+          >
+            <Landmark size={11} />
+            <span>5. Govt Inquiry</span>
+          </button>
+
+          <span style={{ color: 'var(--text-muted)', fontSize: 9 }}>/</span>
+
+          <button
+            type="button"
             onClick={() => onNavigate('reports')}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              padding: '3px 8px',
+              padding: '3px 7px',
               borderRadius: 'var(--radius-full)',
               border: 'none',
               background: activeTab === 'reports' ? 'var(--accent-primary)' : 'transparent',
@@ -222,10 +274,10 @@ export const TopBar: React.FC<TopBarProps> = ({
               fontSize: 11,
               transition: 'all 0.15s ease',
             }}
-            title="Step 4: Executive synthesis & sign-off"
+            title="Step 6: Executive synthesis & sign-off"
           >
             <FileCheck size={11} />
-            <span>4. Reports</span>
+            <span>6. Reports</span>
           </button>
         </nav>
       )}

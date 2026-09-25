@@ -46,12 +46,15 @@ def run_scan():
 @validation_bp.route("/issues/<int:issue_id>/lifecycle", methods=["POST"])
 @require_role(["ADMIN", "OFFICER", "ANALYST"])
 def update_lifecycle(issue_id: int):
-    """Transition discrepancy along lifecycle with reviewer note."""
+    """Transition discrepancy along lifecycle with reviewer note and optional adopted ground truth."""
     data = request.get_json() or {}
     new_status = data.get("status", DiscrepancyLifecycleStatus.RESOLVED).upper()
     current_role = get_current_user_role()
-    reviewer = data.get("reviewer", f"User ({current_role})")
+    reviewer = data.get("reviewer", f"Officer ({current_role})")
     reviewer_note = data.get("note", "Reviewed and updated via discrepancy audit console.")
+    adopted_source = data.get("adopted_source")
+    resolved_value = data.get("resolved_value")
+    decision_type = data.get("decision_type")
 
     try:
         success = validation_service.update_issue_lifecycle(
@@ -59,10 +62,18 @@ def update_lifecycle(issue_id: int):
             new_status=new_status,
             reviewer=reviewer,
             reviewer_role=current_role,
-            reviewer_note=reviewer_note
+            reviewer_note=reviewer_note,
+            adopted_source=adopted_source,
+            resolved_value=resolved_value,
+            decision_type=decision_type
         )
         if success:
-            return jsonify({"status": "success", "message": f"Issue transitioned to {new_status}."}), 200
+            return jsonify({
+                "status": "success",
+                "message": f"Discrepancy #{issue_id} transitioned to {new_status}.",
+                "adopted_source": adopted_source,
+                "resolved_value": resolved_value
+            }), 200
         return jsonify({"status": "error", "message": "Failed to update discrepancy lifecycle status."}), 400
     except Exception as e:
         logger.error(f"Error updating lifecycle for issue {issue_id}: {e}")
@@ -71,21 +82,31 @@ def update_lifecycle(issue_id: int):
 @validation_bp.route("/issues/<int:issue_id>/resolve", methods=["POST"])
 @require_role(["ADMIN", "OFFICER", "ANALYST"])
 def resolve_issue(issue_id: int):
-    """Mark a validation conflict as acknowledged / resolved."""
+    """Mark a validation conflict as certified ground truth / resolved."""
     data = request.get_json() or {}
     current_role = get_current_user_role()
-    resolved_by = data.get("resolved_by", f"User ({current_role})")
-    note = data.get("note", "Resolved")
+    resolved_by = data.get("resolved_by", f"Officer ({current_role})")
+    note = data.get("note", "Ground truth established by reviewing officer.")
+    adopted_source = data.get("adopted_source")
+    resolved_value = data.get("resolved_value")
+    decision_type = data.get("decision_type", "ADOPT_SOURCE")
+
     try:
-        success = validation_service.update_issue_lifecycle(
+        success = validation_service.resolve_issue(
             issue_id=issue_id,
-            new_status=DiscrepancyLifecycleStatus.RESOLVED,
-            reviewer=resolved_by,
-            reviewer_role=current_role,
-            reviewer_note=note
+            resolved_by=resolved_by,
+            adopted_source=adopted_source,
+            resolved_value=resolved_value,
+            note=note,
+            decision_type=decision_type
         )
         if success:
-            return jsonify({"status": "success", "message": "Issue marked as resolved"}), 200
+            return jsonify({
+                "status": "success",
+                "message": f"Discrepancy #{issue_id} successfully resolved.",
+                "resolved_value": resolved_value,
+                "adopted_source": adopted_source
+            }), 200
         return jsonify({"status": "error", "message": "Failed to resolve issue"}), 400
     except Exception as e:
         logger.error(f"Error resolving issue {issue_id}: {e}")

@@ -85,15 +85,23 @@ CREATE TABLE IF NOT EXISTS queries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. Generated Reports Table
+-- 6. Generated Reports Table (with Multi-Version & Shared Run Support)
 CREATE TABLE IF NOT EXISTS reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id_str TEXT,
+    run_id TEXT,
+    version_number INTEGER DEFAULT 1,
+    document_id INTEGER,
     title TEXT NOT NULL,
     report_type TEXT NOT NULL,
     reporting_period TEXT,
     subsidiary TEXT,
     mine TEXT,
     status TEXT DEFAULT 'GENERATED',
+    quality_gate_status TEXT DEFAULT 'PASSED',
+    human_review_status TEXT DEFAULT 'NOT_REQUIRED',
+    discrepancy_count INTEGER DEFAULT 0,
+    evidence_count INTEGER DEFAULT 0,
     summary TEXT,
     content_json TEXT,
     html_content TEXT,
@@ -101,7 +109,9 @@ CREATE TABLE IF NOT EXISTS reports (
     docx_path TEXT,
     human_approved INTEGER DEFAULT 0,
     approved_by TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE SET NULL
 );
 
 -- 7. Government & Parliamentary Inquiries Table
@@ -146,10 +156,12 @@ CREATE TABLE IF NOT EXISTS validation_issues (
     FOREIGN KEY(doc_b_id) REFERENCES documents(id) ON DELETE SET NULL
 );
 
--- 9. Agent Workflows Table (8-Agent Orchestration)
+-- 9. Agent Workflows Table (8-Agent Orchestration & Single Shared Processing Runs)
 CREATE TABLE IF NOT EXISTS agent_workflows (
     id TEXT PRIMARY KEY,
     workflow_type TEXT NOT NULL,
+    document_id INTEGER,
+    document_name TEXT,
     initial_prompt TEXT,
     status TEXT DEFAULT 'RUNNING',
     start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -161,7 +173,8 @@ CREATE TABLE IF NOT EXISTS agent_workflows (
     paused_reason TEXT,
     resume_state_json TEXT,
     quality_report_json TEXT,
-    provenance_dag_json TEXT
+    provenance_dag_json TEXT,
+    FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE SET NULL
 );
 
 -- 10. Agent Tasks Table (DAG and Dependency Tracking)
@@ -333,15 +346,23 @@ CREATE TABLE IF NOT EXISTS queries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. Generated Reports Table
+-- 6. Generated Reports Table (with Multi-Version & Shared Run Support)
 CREATE TABLE IF NOT EXISTS reports (
     id SERIAL PRIMARY KEY,
+    report_id_str VARCHAR(128),
+    run_id VARCHAR(128),
+    version_number INTEGER DEFAULT 1,
+    document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL,
     title VARCHAR(512) NOT NULL,
     report_type VARCHAR(128) NOT NULL,
     reporting_period VARCHAR(64),
     subsidiary VARCHAR(64),
     mine VARCHAR(128),
     status VARCHAR(64) DEFAULT 'GENERATED',
+    quality_gate_status VARCHAR(64) DEFAULT 'PASSED',
+    human_review_status VARCHAR(64) DEFAULT 'NOT_REQUIRED',
+    discrepancy_count INTEGER DEFAULT 0,
+    evidence_count INTEGER DEFAULT 0,
     summary TEXT,
     content_json TEXT,
     html_content TEXT,
@@ -349,7 +370,8 @@ CREATE TABLE IF NOT EXISTS reports (
     docx_path VARCHAR(1024),
     human_approved INTEGER DEFAULT 0,
     approved_by VARCHAR(128),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 7. Government & Parliamentary Inquiries Table
@@ -392,10 +414,12 @@ CREATE TABLE IF NOT EXISTS validation_issues (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 9. Agent Workflows Table (8-Agent Orchestration)
+-- 9. Agent Workflows Table (8-Agent Orchestration & Single Shared Processing Runs)
 CREATE TABLE IF NOT EXISTS agent_workflows (
     id VARCHAR(128) PRIMARY KEY,
     workflow_type VARCHAR(128) NOT NULL,
+    document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL,
+    document_name VARCHAR(512),
     initial_prompt TEXT,
     status VARCHAR(64) DEFAULT 'RUNNING',
     start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

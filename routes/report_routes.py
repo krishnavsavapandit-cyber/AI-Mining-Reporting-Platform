@@ -1,6 +1,6 @@
 """
-Automated Report Generation REST Routes for SIH26023.
-Handles report generation, inspection, approval, and file downloads (PDF/DOCX).
+Automated Report Generation & Versioning REST Routes for SIH26023 (GeoNexus).
+Handles multi-version report retrieval, inspection, version history, approval, and file downloads (PDF/DOCX).
 """
 
 import os
@@ -9,12 +9,14 @@ import logging
 from pathlib import Path
 from flask import Blueprint, request, jsonify, send_from_directory
 from agents.manager_agent import manager_agent
+from services.report_service import report_service
 from config.settings import GENERATED_REPORTS_DIR
 from database.db import get_db, log_audit
 from routes.auth_middleware import require_role, get_current_user_role
 
 logger = logging.getLogger(__name__)
 report_bp = Blueprint("reports", __name__, url_prefix="/api/reports")
+
 
 @report_bp.route("/generate", methods=["POST"])
 @require_role(["ADMIN", "OFFICER", "ANALYST"])
@@ -46,12 +48,28 @@ def generate_report():
         logger.error(f"Failed to generate report: {e}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
 @report_bp.route("", methods=["GET"])
 def list_reports():
-    """List all generated reports with metadata."""
+    """
+    List reports grouped by logical report identity or distinct version instances.
+    Includes report_id_str, run_id, version_number, discrepancy_count, and quality gate status.
+    """
     try:
         with get_db() as conn:
-            reports = conn.execute("SELECT id, title, report_type, reporting_period, subsidiary, status, summary, file_path, docx_path, human_approved, approved_by, created_at FROM reports ORDER BY id DESC").fetchall()
+            # Query all report records with version metadata
+            reports = conn.execute(
+                """
+                SELECT id, report_id_str, run_id, version_number, document_id,
+                       title, report_type, reporting_period, subsidiary,
+                       status, quality_gate_status, human_review_status,
+                       discrepancy_count, evidence_count, summary,
+                       file_path, docx_path, human_approved, approved_by, created_at, updated_at
+                FROM reports 
+                ORDER BY id DESC
+                """
+            ).fetchall()
+
             return jsonify({
                 "status": "success",
                 "count": len(reports),
@@ -61,24 +79,55 @@ def list_reports():
         logger.error(f"Failed to list reports: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
 @report_bp.route("/<int:report_id>", methods=["GET"])
 def get_report(report_id: int):
-    """Retrieve full report content and HTML rendering."""
+    """Retrieve full report record, content model, version history, and download URLs."""
     try:
         with get_db() as conn:
             report = conn.execute("SELECT * FROM reports WHERE id = ?", (report_id,)).fetchone()
             if not report:
                 return jsonify({"status": "error", "message": "Report not found"}), 404
 
-            # Parse content JSON if string
+            # Parse content JSON if present
             content = json.loads(report["content_json"]) if report.get("content_json") else {}
             pdf_filename = Path(report["file_path"]).name if report.get("file_path") else None
             docx_filename = Path(report["docx_path"]).name if report.get("docx_path") else None
+
+            # Fetch all versions sharing the same report_id_str (or title if null)
+            report_id_str = report.get("report_id_str")
+            version_history = []
+            if report_id_str:
+                history_rows = conn.execute(
+                    """
+                    SELECT id, report_id_str, run_id, version_number, status, quality_gate_status,
+                           discrepancy_count, file_path, docx_path, human_approved, created_at
+                    FROM reports
+                    WHERE report_id_str = ?
+                    ORDER BY version_number DESC
+                    """,
+                    (report_id_str,)
+                ).fetchall()
+                for h in history_rows:
+                    h_pdf = Path(h["file_path"]).name if h.get("file_path") else None
+                    h_docx = Path(h["docx_path"]).name if h.get("docx_path") else None
+                    version_history.append({
+                        "id": h["id"],
+                        "version_number": h["version_number"] or 1,
+                        "run_id": h["run_id"],
+                        "status": h["status"],
+                        "quality_gate_status": h["quality_gate_status"],
+                        "discrepancy_count": h["discrepancy_count"] or 0,
+                        "created_at": h["created_at"],
+                        "pdf_url": f"/api/reports/download/{h_pdf}" if h_pdf else None,
+                        "docx_url": f"/api/reports/download/{h_docx}" if h_docx else None
+                    })
 
             return jsonify({
                 "status": "success",
                 "report": report,
                 "content": content,
+                "version_history": version_history,
                 "pdf_url": f"/api/reports/download/{pdf_filename}" if pdf_filename else None,
                 "docx_url": f"/api/reports/download/{docx_filename}" if docx_filename else None
             }), 200
@@ -86,18 +135,63 @@ def get_report(report_id: int):
         logger.error(f"Failed to fetch report {report_id}: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+@report_bp.route("/<string:report_id_str>/versions", methods=["GET"])
+def get_report_versions(report_id_str: str):
+    """Retrieve full version lineage for a logical report ID (e.g. RPT-001)."""
+    try:
+        with get_db() as conn:
+            versions = conn.execute(
+                """
+                SELECT id, report_id_str, run_id, version_number, title, report_type,
+                       reporting_period, subsidiary, status, quality_gate_status,
+                       discrepancy_count, file_path, docx_path, human_approved, created_at
+                FROM reports
+                WHERE report_id_str = ?
+                ORDER BY version_number DESC
+                """,
+                (report_id_str,)
+            ).fetchall()
+
+            formatted_versions = []
+            for v in versions:
+                v_pdf = Path(v["file_path"]).name if v.get("file_path") else None
+                v_docx = Path(v["docx_path"]).name if v.get("docx_path") else None
+                formatted_versions.append({
+                    "id": v["id"],
+                    "version_number": v["version_number"] or 1,
+                    "run_id": v["run_id"],
+                    "title": v["title"],
+                    "status": v["status"],
+                    "quality_gate_status": v["quality_gate_status"],
+                    "discrepancy_count": v["discrepancy_count"] or 0,
+                    "created_at": v["created_at"],
+                    "pdf_url": f"/api/reports/download/{v_pdf}" if v_pdf else None,
+                    "docx_url": f"/api/reports/download/{v_docx}" if v_docx else None
+                })
+
+            return jsonify({
+                "status": "success",
+                "report_id_str": report_id_str,
+                "count": len(formatted_versions),
+                "versions": formatted_versions
+            }), 200
+    except Exception as e:
+        logger.error(f"Failed to list report versions for {report_id_str}: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @report_bp.route("/download/<path:filename>", methods=["GET"])
 def download_report_file(filename: str):
-    """Serve generated PDF or DOCX file with strict path sanitization."""
+    """Serve specific report version PDF or DOCX file with strict path sanitization."""
     try:
         safe_filename = Path(filename).name
         target_path = (GENERATED_REPORTS_DIR / safe_filename).resolve()
         reports_dir = GENERATED_REPORTS_DIR.resolve()
-        
-        # Verify file exists inside the reports directory
+
         if not target_path.exists() or not str(target_path).startswith(str(reports_dir)):
-            return jsonify({"status": "error", "message": "File not found"}), 404
-            
+            return jsonify({"status": "error", "message": f"File '{safe_filename}' not found on server."}), 404
+
         return send_from_directory(str(reports_dir), safe_filename, as_attachment=True)
     except Exception as e:
         logger.error(f"Failed to download report file {filename}: {e}")
@@ -115,7 +209,7 @@ def approve_report(report_id: int):
     try:
         with get_db() as conn:
             conn.execute(
-                "UPDATE reports SET human_approved = 1, approved_by = ?, status = 'OFFICIALLY_APPROVED' WHERE id = ?",
+                "UPDATE reports SET human_approved = 1, approved_by = ?, status = 'OFFICIALLY_APPROVED', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 (approved_by, report_id)
             )
             log_audit("REPORT_HUMAN_APPROVED", user_role=current_role, resource_type="report", resource_id=report_id, details={"approved_by": approved_by})
@@ -125,6 +219,7 @@ def approve_report(report_id: int):
         logger.error(f"Failed to approve report {report_id}: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
 @report_bp.route("/<int:report_id>/revoke", methods=["POST"])
 @require_role(["ADMIN", "OFFICER"])
 def revoke_report_approval(report_id: int):
@@ -133,7 +228,7 @@ def revoke_report_approval(report_id: int):
     try:
         with get_db() as conn:
             conn.execute(
-                "UPDATE reports SET human_approved = 0, approved_by = NULL, status = 'DRAFT' WHERE id = ?",
+                "UPDATE reports SET human_approved = 0, approved_by = NULL, status = 'DRAFT', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 (report_id,)
             )
             log_audit("REPORT_APPROVAL_REVOKED", user_role=current_role, resource_type="report", resource_id=report_id, details={"action": "Revoked to Draft"})
@@ -142,6 +237,7 @@ def revoke_report_approval(report_id: int):
     except Exception as e:
         logger.error(f"Failed to revoke approval for report {report_id}: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @report_bp.route("/<int:report_id>", methods=["DELETE"])
 @require_role(["ADMIN", "OFFICER"])
@@ -157,4 +253,3 @@ def delete_report(report_id: int):
     except Exception as e:
         logger.error(f"Failed to delete report {report_id}: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
-

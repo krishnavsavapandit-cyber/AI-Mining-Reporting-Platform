@@ -8,15 +8,14 @@ import {
   ShieldCheck,
   FileText,
   Search,
-  Bot,
+  Cpu,
   ShieldAlert,
-  FileCheck,
+  FileCheck2,
   Landmark,
-  ArrowRight,
-  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { AgentMinecartTrack } from '@/components/agents/AgentMinecartTrack';
 import { agentService, documentService } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/ToastContext';
@@ -27,7 +26,7 @@ interface AgentMonitorPageProps {
 }
 
 interface AgentMetadataDetails {
-  tier: 'Orchestration' | 'Ingestion & Extraction' | 'Validation & Governance' | 'Synthesis & Output';
+  tier: 'Orchestration' | 'Ingestion & Extraction' | 'Validation & Governance' | 'Synthesis & Output' | 'Mining Intelligence' | 'Validation' | 'Parliamentary Inquiry';
   inputs: string[];
   outputs: string[];
   dependencies: string[];
@@ -41,64 +40,72 @@ const AGENT_SPEC_MAP: Record<string, AgentMetadataDetails> = {
     inputs: ['User prompt / API query', 'Subsidiary filter', 'Task DAG specification'],
     outputs: ['Task execution graph', 'Worker assignments', 'Aggregated pipeline result'],
     dependencies: ['None (Root DAG Planner)'],
-    roleDescription: 'Primary orchestrator responsible for task decomposition, dependency sequencing, and worker dispatch.',
+    roleDescription:
+      'Coordinates 8 specialized agents, schedules dependency DAGs, executes concurrent tasks, enforces quality gates, and tracks full provenance.',
     icon: Network,
   },
   DocumentIntelligenceAgent: {
     tier: 'Ingestion & Extraction',
     inputs: ['Raw PDF, DOCX, XLSX files', 'Scanned image payloads'],
-    outputs: ['Extracted plaintext', 'Chunked passages (512 tokens)', 'SHA-256 hashes'],
+    outputs: ['Deterministic parsed text', 'Chunked passages', 'SHA-256 provenance'],
     dependencies: ['ManagerAgent'],
-    roleDescription: 'Ingests statutory mining documents, executes multi-format parsing & OCR, and generates structured document chunks.',
+    roleDescription:
+      'Performs deterministic document parsing, OCR, entity extraction, chunking, and indexing.',
     icon: FileText,
   },
-  SemanticRetrievalAgent: {
+  RetrievalAgent: {
     tier: 'Ingestion & Extraction',
     inputs: ['Query terms', 'Subsidiary filters', 'Document vector indices'],
     outputs: ['RRF Ranked evidence chunks', 'Cosine similarity scores', 'Page provenance'],
     dependencies: ['DocumentIntelligenceAgent'],
-    roleDescription: 'Executes hybrid reciprocal rank fusion (sublinear TF-IDF + dense cosine vector embeddings).',
+    roleDescription:
+      'Performs domain-expanded hybrid keyword and semantic retrieval, ranking grounded evidence chunks.',
     icon: Search,
   },
   MiningIntelligenceAgent: {
-    tier: 'Ingestion & Extraction',
+    tier: 'Mining Intelligence',
     inputs: ['Retrieved chunks', 'Geological schemas', 'Production entities'],
-    outputs: ['Structured mining facts (Coal MT, OBR, Seams)', 'Normalized metrics'],
-    dependencies: ['SemanticRetrievalAgent'],
-    roleDescription: 'Domain-specialized extraction agent extracting production targets, HEMM availability, and DGMS safety metrics.',
-    icon: Bot,
+    outputs: ['Mining entities', 'Normalized units', 'Stripping ratios & LTIFR', 'Coal grades'],
+    dependencies: ['RetrievalAgent'],
+    roleDescription:
+      'Extracts mining entities, normalizes units, calculates stripping ratios, LTIFR, coal grades, HEMM metrics, validates physical plausibility, and structures domain facts.',
+    icon: Cpu,
   },
-  DiscrepancyAgent: {
-    tier: 'Validation & Governance',
+  ValidationAgent: {
+    tier: 'Validation',
     inputs: ['Extracted facts across multiple documents', 'Time-series invariants'],
     outputs: ['Flagged numerical conflicts', 'Variance percentage', 'Source A vs B comparison'],
     dependencies: ['MiningIntelligenceAgent'],
-    roleDescription: 'Cross-document anomaly detector comparing monthly summaries, statutory returns, and survey reports.',
+    roleDescription:
+      'Analyzes cross-document figures, detects numerical discrepancies, and flags data inconsistencies.',
     icon: ShieldAlert,
-  },
-  QualityGovernanceAgent: {
-    tier: 'Validation & Governance',
-    inputs: ['Synthesized answers', 'Discrepancy records', 'ISO/IEC 25010 benchmarks'],
-    outputs: ['PASS / WARNING / FAIL decision', 'Evidence sufficiency score', 'Grounding verdict'],
-    dependencies: ['DiscrepancyAgent'],
-    roleDescription: 'Enforces evidence-grounded response gating, factual consistency, and ISO 25010 compliance before synthesis.',
-    icon: ShieldCheck,
   },
   ReportGenerationAgent: {
     tier: 'Synthesis & Output',
     inputs: ['Approved mining facts', 'Quality gate tokens', 'Report templates'],
-    outputs: ['Formal Executive Report draft', 'PDF/DOCX artifact', 'Watermark ready payload'],
+    outputs: ['Multi-section executive mining report', 'PDF artifact', 'DOCX artifact'],
     dependencies: ['QualityGovernanceAgent'],
-    roleDescription: 'Synthesizes executive narratives, tables, and comparative charts into formal CIL reporting documents.',
-    icon: FileCheck,
+    roleDescription:
+      'Compiles multi-section executive mining reports with tables, validation caveats, and PDF/DOCX exports.',
+    icon: FileCheck2,
   },
-  ParliamentaryInquiryAgent: {
-    tier: 'Synthesis & Output',
+  GovernmentInquiryAgent: {
+    tier: 'Parliamentary Inquiry',
     inputs: ['Starred/Unstarred question text', 'Ministry body metadata', 'Ground truth facts'],
-    outputs: ['Drafted parliamentary response', 'Evidence citations', 'Officer sign-off block'],
+    outputs: ['Decomposed parliamentary question', 'Aggregated grounded evidence', 'Drafted response'],
     dependencies: ['QualityGovernanceAgent'],
-    roleDescription: 'Formulates precise, evidence-grounded answers for Lok Sabha / Rajya Sabha Ministry of Coal inquiries.',
+    roleDescription:
+      'Decomposes parliamentary questions, aggregates grounded evidence, flags conflicts, and formats draft answers.',
     icon: Landmark,
+  },
+  QualityGovernanceAgent: {
+    tier: 'Validation & Governance',
+    inputs: ['Synthesized answers', 'Discrepancy records', 'ISO/IEC 25010 benchmarks'],
+    outputs: ['Release gate verdict (PASS/WARNING/REJECT)', 'Evidence verification', 'Calculation checks'],
+    dependencies: ['ValidationAgent'],
+    roleDescription:
+      'Release gatekeeper performing evidence verification, schema validation, calculation checks, and governance release gating.',
+    icon: ShieldCheck,
   },
 };
 
@@ -282,70 +289,12 @@ export const AgentMonitorPage: React.FC<AgentMonitorPageProps> = ({ onInspectWor
         </div>
       </div>
 
-      {/* 1. Coordinated Intelligence Pipeline Stages Banner */}
-      <div
-        style={{
-          padding: '18px 20px',
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-hairline)',
-          borderRadius: 'var(--radius-md)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 14,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Zap size={16} style={{ color: 'var(--accent-primary)' }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
-              AUTONOMOUS DAG ORCHESTRATION PIPELINE
-            </span>
-          </div>
-          <Badge variant="teal">DETERMINISTIC HANDOFFS</Badge>
-        </div>
-
-        {/* Step-by-step Flow Visualizer */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: 10,
-            alignItems: 'stretch',
-          }}
-        >
-          {[
-            { step: '01', title: 'Task Ingestion', subtitle: 'Query / Upload Trigger', color: 'var(--text-muted)' },
-            { step: '02', title: 'Manager Planner', subtitle: 'Task DAG Decomposition', color: 'var(--accent-primary)' },
-            { step: '03', title: 'Extraction & Search', subtitle: 'OCR, Vector RRF, Mining Facts', color: 'var(--accent-teal)' },
-            { step: '04', title: 'Discrepancy Audit', subtitle: 'Cross-Doc Invariant Scan', color: 'var(--status-warning)' },
-            { step: '05', title: 'Quality Gate', subtitle: 'ISO/IEC 25010 Verification', color: 'var(--accent-primary)' },
-            { step: '06', title: 'Synthesis & Sign-Off', subtitle: 'Reports / Parliamentary PQ', color: 'var(--text-primary)' },
-          ].map((st, i) => (
-            <div
-              key={st.step}
-              style={{
-                padding: '10px 12px',
-                backgroundColor: 'var(--bg-surface-2)',
-                border: '1px solid var(--border-hairline)',
-                borderRadius: 'var(--radius-sm)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 4,
-                position: 'relative',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span className="text-mono" style={{ fontSize: 10, fontWeight: 700, color: st.color }}>
-                  STAGE {st.step}
-                </span>
-                {i < 5 && <ArrowRight size={11} style={{ color: 'var(--text-muted)' }} />}
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{st.title}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{st.subtitle}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* 1. 8-Agent Subterranean Minecart Autonomous Pipeline Visualization */}
+      <AgentMinecartTrack
+        agents={agents}
+        selectedAgentName={selectedAgentName}
+        onSelectAgent={(agName) => setSelectedAgentName(agName)}
+      />
 
       {/* 2. Progressive Disclosure: 8 Registered Agents + Deep Agent Inspector */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(360px, 1fr)', gap: 24 }}>

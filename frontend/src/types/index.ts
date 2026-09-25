@@ -308,20 +308,44 @@ export interface ChatMessage {
 // ==========================================
 // REPORTS & PARLIAMENTARY INQUIRIES
 // ==========================================
+export interface ReportVersionItem {
+  id: number;
+  report_id_str?: string;
+  run_id?: string;
+  version_number: number;
+  title?: string;
+  status: string;
+  quality_gate_status?: string;
+  discrepancy_count?: number;
+  created_at: string;
+  pdf_url?: string | null;
+  docx_url?: string | null;
+}
+
 export interface ReportRecord {
   id: number;
+  report_id_str?: string;
+  run_id?: string;
+  version_number?: number;
+  document_id?: number;
   title: string;
   report_type: string;
   reporting_period: string;
   subsidiary: string;
   status: string;
+  quality_gate_status?: string;
+  human_review_status?: string;
+  discrepancy_count?: number;
+  evidence_count?: number;
   summary: string;
   file_path: string;
   docx_path?: string;
   content_json?: string;
+  html_content?: string;
   human_approved: number;
   approved_by?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface InquiryRecord {
@@ -373,6 +397,9 @@ export interface DiscrepancyIssue {
   reviewer_note?: string;
   resolved_by?: string;
   resolved_note?: string;
+  adopted_source?: string;
+  resolved_value?: string;
+  decision_type?: string;
   resolved_at?: string;
   updated_at?: string;
   created_at?: string;

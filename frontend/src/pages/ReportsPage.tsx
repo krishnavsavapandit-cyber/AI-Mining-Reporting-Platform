@@ -5,12 +5,13 @@ import {
   RefreshCw,
   Eye,
   CheckCircle2,
-  ShieldCheck,
   Clock,
   ArrowRight,
   Zap,
   RotateCcw,
   Trash2,
+  History,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -18,7 +19,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { reportService } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/ToastContext';
-import { ReportRecord } from '@/types';
+import { ReportRecord, ReportVersionItem } from '@/types';
 
 interface ReportsPageProps {
   onInspectReport?: (id: number) => void;
@@ -35,6 +36,12 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [showGenerateForm, setShowGenerateForm] = useState(false);
+  
+  // Selected Version Lineage Modal / Popover State
+  const [selectedVersionLineage, setSelectedVersionLineage] = useState<{
+    reportCode: string;
+    versions: ReportVersionItem[];
+  } | null>(null);
 
   // Form State
   const [reportType, setReportType] = useState('Monthly Production Summary');
@@ -65,7 +72,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setGenerating(true);
-    toast.info('Synthesizing Report', 'Extracting facts and compiling executive narrative...');
+    toast.info('Synthesizing Executive Report', 'Extracting domain facts and compiling 16-section executive report...');
     try {
       const res = await reportService.generateReport({
         report_type: reportType,
@@ -123,6 +130,20 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Delete failed';
       toast.error('Delete Error', msg);
+    }
+  };
+
+  const handleOpenVersions = async (report: ReportRecord, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const reportCode = report.report_id_str || `RPT-${report.id}`;
+    try {
+      const res = await reportService.getReportVersions(reportCode);
+      setSelectedVersionLineage({
+        reportCode,
+        versions: res.versions || [],
+      });
+    } catch (err: unknown) {
+      toast.error('Version Fetch Error', 'Unable to retrieve version history for report.');
     }
   };
 
@@ -206,10 +227,10 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
           </div>
           <div>
             <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              Executive Report Center & Statutory Sign-Off
+              Executive Report Center & Versioning Archive
             </h2>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              Synthesize multi-source geological and production records into formal executive reports with Reviewing Officer cryptographic watermarking.
+              Deterministic 16-section executive synthesis, version lineage (v1, v2, v3), cross-document validation, and multi-format PDF & DOCX generation.
             </span>
           </div>
         </div>
@@ -260,7 +281,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Zap size={16} style={{ color: 'var(--accent-primary)' }} />
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
-              EXECUTIVE REPORT LIFECYCLE & SIGN-OFF WORKFLOW
+              EXECUTIVE REPORT LIFECYCLE & VERSION GOVERNANCE
             </span>
           </div>
           <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-muted)' }}>
@@ -278,11 +299,11 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
           }}
         >
           {[
-            { step: '01', title: 'Draft Config', desc: 'Template & Subsidiary Scope' },
-            { step: '02', title: 'Fact Extraction', desc: 'Ground-Truth Multi-Source Pull' },
-            { step: '03', title: 'Quality Gate', desc: 'Evidence Grounding Verification' },
-            { step: '04', title: 'Officer Sign-Off', desc: 'Cryptographic Review & Seal' },
-            { step: '05', title: 'Publication', desc: 'PDF / DOCX Distribution Ready' },
+            { step: '01', title: 'Data Ingestion & Run', desc: '8-Agent Unified Processing Run' },
+            { step: '02', title: 'Fact Normalization', desc: 'Strict Value / Unit Separation' },
+            { step: '03', title: 'Validation Audit', desc: 'Cross-Doc Invariant Conflict Check' },
+            { step: '04', title: 'Versioned Synthesis', desc: 'Immutable v1/v2/v3 Increment' },
+            { step: '05', title: 'Publication & Seal', desc: 'Clean PDF / DOCX Distribution' },
           ].map((st, idx) => (
             <div
               key={st.step}
@@ -500,115 +521,259 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ onInspectReport }) => 
             <table className="app-table">
               <thead>
                 <tr>
-                  <th style={{ width: 45 }}>ID</th>
-                  <th>Report Title</th>
+                  <th style={{ width: 65 }}>Report ID</th>
+                  <th>Report Title & Run</th>
+                  <th>Latest Version</th>
                   <th>Type</th>
                   <th>Subsidiary</th>
-                  <th>Period</th>
-                  <th>Quality Gate</th>
+                  <th>Discrepancies</th>
                   <th>Approval State</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredReports.map((rep) => (
-                  <tr
-                    key={rep.id}
-                    onClick={() => onInspectReport && onInspectReport(rep.id)}
-                    style={{ cursor: onInspectReport ? 'pointer' : 'default' }}
-                  >
-                    <td className="text-mono" style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>
-                      #{rep.id}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <FileCheck size={15} style={{ color: 'var(--accent-teal)', flexShrink: 0 }} />
-                        <strong style={{ color: 'var(--text-primary)', fontSize: 13 }}>
-                          {rep.title}
-                        </strong>
-                      </div>
-                    </td>
-                    <td>
-                      <Badge variant="teal">{rep.report_type}</Badge>
-                    </td>
-                    <td>
-                      <Badge variant="slate">{rep.subsidiary}</Badge>
-                    </td>
-                    <td className="text-mono" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      {rep.reporting_period}
-                    </td>
-                    <td>
-                      <Badge variant="primary" icon={<ShieldCheck size={11} />}>
-                        PASS (ISO 25010)
-                      </Badge>
-                    </td>
-                    <td>
-                      {rep.human_approved ? (
-                        <Badge variant="primary" icon={<CheckCircle2 size={11} />}>
-                          SEALED ({rep.approved_by?.split(' ')[0] || 'Officer'})
-                        </Badge>
-                      ) : (
-                        <Badge variant="warning" icon={<Clock size={11} />}>
-                          AWAITING SEAL
-                        </Badge>
-                      )}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', gap: 6 }}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onInspectReport && onInspectReport(rep.id);
-                          }}
-                          icon={<Eye size={12} />}
-                          style={{ padding: '3px 8px' }}
-                        >
-                          View
-                        </Button>
+                {filteredReports.map((rep) => {
+                  const reportCode = rep.report_id_str || `RPT-${rep.id}`;
+                  const versionNum = rep.version_number || 1;
+                  const discCount = rep.discrepancy_count || 0;
 
-                        {!rep.human_approved && canApprove && (
+                  return (
+                    <tr
+                      key={rep.id}
+                      onClick={() => onInspectReport && onInspectReport(rep.id)}
+                      style={{ cursor: onInspectReport ? 'pointer' : 'default' }}
+                    >
+                      <td className="text-mono" style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
+                        {reportCode}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <FileCheck size={15} style={{ color: 'var(--accent-teal)', flexShrink: 0 }} />
+                            <strong style={{ color: 'var(--text-primary)', fontSize: 13 }}>
+                              {rep.title}
+                            </strong>
+                          </div>
+                          {rep.run_id && (
+                            <span className="text-mono" style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                              Run: {rep.run_id}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <Badge variant="teal" icon={<History size={11} />}>
+                          v{versionNum}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge variant="slate">{rep.report_type}</Badge>
+                      </td>
+                      <td>
+                        <Badge variant="slate">{rep.subsidiary}</Badge>
+                      </td>
+                      <td>
+                        {discCount === 0 ? (
+                          <Badge variant="primary">0 Conflicts</Badge>
+                        ) : (
+                          <Badge variant="warning">
+                            {discCount} Conflicts
+                          </Badge>
+                        )}
+                      </td>
+                      <td>
+                        {rep.human_approved ? (
+                          <Badge variant="primary" icon={<CheckCircle2 size={11} />}>
+                            SEALED ({rep.approved_by?.split(' ')[0] || 'Officer'})
+                          </Badge>
+                        ) : (
+                          <Badge variant="warning" icon={<Clock size={11} />}>
+                            DRAFT
+                          </Badge>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', gap: 6 }}>
                           <Button
-                            variant="primary"
+                            variant="outline"
                             size="sm"
-                            onClick={(e) => handleApprove(rep.id, e)}
-                            icon={<CheckCircle2 size={12} />}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onInspectReport && onInspectReport(rep.id);
+                            }}
+                            icon={<Eye size={12} />}
                             style={{ padding: '3px 8px' }}
                           >
-                            Approve
+                            View
                           </Button>
-                        )}
 
-                        {rep.human_approved && canApprove && (
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
-                            onClick={(e) => handleRevoke(rep.id, e)}
-                            icon={<RotateCcw size={12} style={{ color: 'var(--status-warning)' }} />}
-                            style={{ padding: '3px 8px', color: 'var(--status-warning)', borderColor: 'rgba(245, 158, 11, 0.4)' }}
-                            title="Revert accidental approval back to Draft"
+                            onClick={(e) => handleOpenVersions(rep, e)}
+                            icon={<History size={12} />}
+                            style={{ padding: '3px 8px' }}
+                            title="View all versions"
                           >
-                            Revoke
+                            Versions
                           </Button>
-                        )}
 
-                        {canApprove && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => handleDelete(rep.id, e)}
-                            icon={<Trash2 size={12} style={{ color: 'var(--status-error)' }} />}
-                            style={{ padding: '3px 8px', color: 'var(--status-error)', borderColor: 'rgba(239, 68, 68, 0.4)' }}
-                            title="Permanently delete report"
-                          />
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {rep.file_path && (
+                            <a
+                              href={reportService.getDownloadUrl(rep.file_path.split('/').pop() || rep.file_path)}
+                              download
+                              onClick={(e) => e.stopPropagation()}
+                              className="btn btn-outline btn-sm"
+                              style={{ padding: '3px 8px' }}
+                              title="Download PDF"
+                            >
+                              <Download size={12} style={{ color: 'var(--accent-primary)' }} />
+                            </a>
+                          )}
+
+                          {!rep.human_approved && canApprove && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={(e) => handleApprove(rep.id, e)}
+                              icon={<CheckCircle2 size={12} />}
+                              style={{ padding: '3px 8px' }}
+                            >
+                              Approve
+                            </Button>
+                          )}
+
+                          {rep.human_approved && canApprove && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleRevoke(rep.id, e)}
+                              icon={<RotateCcw size={12} style={{ color: 'var(--status-warning)' }} />}
+                              style={{ padding: '3px 8px', color: 'var(--status-warning)', borderColor: 'rgba(245, 158, 11, 0.4)' }}
+                              title="Revert accidental approval back to Draft"
+                            >
+                              Revoke
+                            </Button>
+                          )}
+
+                          {canApprove && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleDelete(rep.id, e)}
+                              icon={<Trash2 size={12} style={{ color: 'var(--status-error)' }} />}
+                              style={{ padding: '3px 8px', color: 'var(--status-error)', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                              title="Permanently delete report"
+                            />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Version History Modal */}
+      {selectedVersionLineage && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: 20,
+          }}
+          onClick={() => setSelectedVersionLineage(null)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 640,
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-hairline)',
+              borderRadius: 'var(--radius-md)',
+              padding: 24,
+              boxShadow: 'var(--shadow-level-2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <History size={18} style={{ color: 'var(--accent-teal)' }} />
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Version Lineage for {selectedVersionLineage.reportCode}
+                </h3>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setSelectedVersionLineage(null)}>
+                Close
+              </Button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 400, overflowY: 'auto' }}>
+              {selectedVersionLineage.versions.map((v) => (
+                <div
+                  key={v.id}
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: 'var(--bg-surface-2)',
+                    border: '1px solid var(--border-hairline)',
+                    borderRadius: 'var(--radius-sm)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="text-mono" style={{ fontSize: 14, fontWeight: 800, color: 'var(--accent-teal)' }}>
+                        v{v.version_number}
+                      </span>
+                      <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>
+                        {v.title || selectedVersionLineage.reportCode}
+                      </strong>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                      Generated: {v.created_at} | Run: <span className="text-mono">{v.run_id || 'System'}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Badge variant={v.discrepancy_count === 0 ? 'primary' : 'warning'}>
+                      {v.discrepancy_count === 0 ? 'Clean' : `${v.discrepancy_count} Conflicts`}
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedVersionLineage(null);
+                        onInspectReport && onInspectReport(v.id);
+                      }}
+                    >
+                      View
+                    </Button>
+                    {v.pdf_url && (
+                      <a href={v.pdf_url} download className="btn btn-outline btn-sm" style={{ padding: '4px 8px' }}>
+                        PDF
+                      </a>
+                    )}
+                    {v.docx_url && (
+                      <a href={v.docx_url} download className="btn btn-outline btn-sm" style={{ padding: '4px 8px' }}>
+                        DOCX
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

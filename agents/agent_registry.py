@@ -253,15 +253,17 @@ class AgentRegistry:
                 conn.execute(
                     """
                     INSERT INTO agent_workflows
-                    (id, workflow_type, initial_prompt, status, start_time, created_by)
-                    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+                    (id, workflow_type, document_id, document_name, initial_prompt, status, start_time, created_by)
+                    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
                     ON CONFLICT (id) DO UPDATE SET
                         workflow_type = EXCLUDED.workflow_type,
+                        document_id = COALESCE(EXCLUDED.document_id, agent_workflows.document_id),
+                        document_name = COALESCE(EXCLUDED.document_name, agent_workflows.document_name),
                         initial_prompt = EXCLUDED.initial_prompt,
                         status = EXCLUDED.status,
                         created_by = EXCLUDED.created_by
                     """,
-                    (context.workflow_id, context.workflow_type, context.initial_prompt, context.status, context.created_by)
+                    (context.workflow_id, context.workflow_type, context.document_id, context.document_name, context.initial_prompt, context.status, context.created_by)
                 )
         except Exception as e:
             logger.error(f"Failed to persist workflow start {context.workflow_id}: {e}")
@@ -274,7 +276,8 @@ class AgentRegistry:
                     """
                     UPDATE agent_workflows
                     SET status = ?, end_time = CURRENT_TIMESTAMP, error_message = ?, provenance_summary = ?,
-                        quality_decision = ?, paused_reason = ?, resume_state_json = ?, quality_report_json = ?, provenance_dag_json = ?
+                        quality_decision = ?, paused_reason = ?, resume_state_json = ?, quality_report_json = ?, provenance_dag_json = ?,
+                        document_id = COALESCE(?, document_id), document_name = COALESCE(?, document_name)
                     WHERE id = ?
                     """,
                     (
@@ -286,6 +289,8 @@ class AgentRegistry:
                         json.dumps(context.resume_state) if context.resume_state else None,
                         json.dumps(context.quality_report) if context.quality_report else None,
                         json.dumps(context.provenance_dag),
+                        context.document_id,
+                        context.document_name,
                         context.workflow_id
                     )
                 )

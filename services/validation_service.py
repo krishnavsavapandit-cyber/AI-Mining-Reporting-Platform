@@ -146,10 +146,20 @@ class ValidationService:
             logger.error(f"Failed to fetch validation issues: {e}")
             return []
 
-    def update_issue_lifecycle(self, issue_id: int, new_status: str, reviewer: str = "Analyst", reviewer_role: str = "Analyst", reviewer_note: Optional[str] = None) -> bool:
+    def update_issue_lifecycle(
+        self,
+        issue_id: int,
+        new_status: str,
+        reviewer: str = "Analyst",
+        reviewer_role: str = "Analyst",
+        reviewer_note: Optional[str] = None,
+        adopted_source: Optional[str] = None,
+        resolved_value: Optional[str] = None,
+        decision_type: Optional[str] = None
+    ) -> bool:
         """
         Transition discrepancy along lifecycle: UNRESOLVED -> UNDER_REVIEW -> RESOLVED / DISMISSED.
-        Records reviewer identity, reviewer role, note, and timestamp.
+        Records reviewer identity, reviewer role, note, adopted source, certified value, and timestamp.
         """
         allowed = {
             DiscrepancyLifecycleStatus.UNRESOLVED,
@@ -166,24 +176,51 @@ class ValidationService:
                 cur = conn.execute(
                     """
                     UPDATE validation_issues 
-                    SET status = ?, resolved_by = ?, resolved_note = ?, resolved_at = CURRENT_TIMESTAMP 
+                    SET status = ?, 
+                        resolved_by = ?, 
+                        resolved_note = ?, 
+                        adopted_source = COALESCE(?, adopted_source),
+                        resolved_value = COALESCE(?, resolved_value),
+                        decision_type = COALESCE(?, decision_type),
+                        resolved_at = CURRENT_TIMESTAMP 
                     WHERE id = ?
                     """,
-                    (new_status, reviewer, reviewer_note, issue_id)
+                    (new_status, reviewer, reviewer_note, adopted_source, resolved_value, decision_type, issue_id)
                 )
                 if cur.rowcount == 0:
                     return False
                 log_audit(f"VALIDATION_ISSUE_{new_status}", user_role=reviewer_role, resource_type="validation", resource_id=issue_id, details={
-                    "status": new_status, "reviewer": reviewer, "note": reviewer_note
+                    "status": new_status,
+                    "reviewer": reviewer,
+                    "note": reviewer_note,
+                    "adopted_source": adopted_source,
+                    "resolved_value": resolved_value,
+                    "decision_type": decision_type
                 })
                 return True
         except Exception as e:
             logger.error(f"Failed to update validation issue {issue_id}: {e}")
             return False
 
-    def resolve_issue(self, issue_id: int, resolved_by: str = "Analyst") -> bool:
-        """Backwards-compatible convenience alias to mark issue RESOLVED."""
-        return self.update_issue_lifecycle(issue_id, DiscrepancyLifecycleStatus.RESOLVED, reviewer=resolved_by)
+    def resolve_issue(
+        self,
+        issue_id: int,
+        resolved_by: str = "Analyst",
+        adopted_source: Optional[str] = None,
+        resolved_value: Optional[str] = None,
+        note: Optional[str] = None,
+        decision_type: Optional[str] = None
+    ) -> bool:
+        """Convenience method to mark issue RESOLVED with officer determinations."""
+        return self.update_issue_lifecycle(
+            issue_id=issue_id,
+            new_status=DiscrepancyLifecycleStatus.RESOLVED,
+            reviewer=resolved_by,
+            reviewer_note=note,
+            adopted_source=adopted_source,
+            resolved_value=resolved_value,
+            decision_type=decision_type
+        )
 
 # Global validation service
 validation_service = ValidationService()

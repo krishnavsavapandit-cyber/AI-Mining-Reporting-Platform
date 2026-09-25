@@ -15,6 +15,7 @@ import type {
   SearchResultItem,
   ChatMessage,
   ReportRecord,
+  ReportVersionItem,
   InquiryRecord,
   DiscrepancyIssue,
   DiscrepancyLifecycleStatus,
@@ -211,9 +212,18 @@ export const reportService = {
       status: string;
       report: ReportRecord;
       content: Record<string, unknown>;
+      version_history?: ReportVersionItem[];
       pdf_url?: string | null;
       docx_url?: string | null;
     }>(`/api/reports/${reportId}`),
+
+  getReportVersions: (reportIdStr: string) =>
+    apiClient.get<{
+      status: string;
+      report_id_str: string;
+      count: number;
+      versions: ReportVersionItem[];
+    }>(`/api/reports/${encodeURIComponent(reportIdStr)}/versions`),
 
   approveReport: (reportId: number, data?: { approved_by?: string }) =>
     apiClient.post<{ status: string; message: string }>(
@@ -288,18 +298,34 @@ export const validationService = {
       status: DiscrepancyLifecycleStatus;
       reviewer?: string;
       note?: string;
+      adopted_source?: string;
+      resolved_value?: string;
+      decision_type?: string;
     }
   ) =>
-    apiClient.post<{ status: string; message: string }>(
-      `/api/validation/issues/${issueId}/lifecycle`,
-      data
-    ),
+    apiClient.post<{
+      status: string;
+      message: string;
+      adopted_source?: string;
+      resolved_value?: string;
+    }>(`/api/validation/issues/${issueId}/lifecycle`, data),
 
-  resolveIssue: (issueId: number, data?: { resolved_by?: string; note?: string }) =>
-    apiClient.post<{ status: string; message: string }>(
-      `/api/validation/issues/${issueId}/resolve`,
-      data || {}
-    ),
+  resolveIssue: (
+    issueId: number,
+    data?: {
+      resolved_by?: string;
+      note?: string;
+      adopted_source?: string;
+      resolved_value?: string;
+      decision_type?: string;
+    }
+  ) =>
+    apiClient.post<{
+      status: string;
+      message: string;
+      adopted_source?: string;
+      resolved_value?: string;
+    }>(`/api/validation/issues/${issueId}/resolve`, data || {}),
 };
 
 // ==========================================

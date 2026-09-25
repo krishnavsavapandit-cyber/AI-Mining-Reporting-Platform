@@ -148,6 +148,8 @@ class WorkflowContext:
     workflow_id: str
     workflow_type: str
     initial_prompt: str
+    document_id: Optional[int] = None
+    document_name: Optional[str] = None
     status: str = WorkflowStatus.RUNNING
     current_step: int = 0
     total_steps: int = 0
@@ -202,6 +204,8 @@ class WorkflowContext:
             "workflow_id": self.workflow_id,
             "workflow_type": self.workflow_type,
             "initial_prompt": self.initial_prompt,
+            "document_id": self.document_id,
+            "document_name": self.document_name,
             "status": self.status,
             "current_step": self.current_step,
             "total_steps": self.total_steps,

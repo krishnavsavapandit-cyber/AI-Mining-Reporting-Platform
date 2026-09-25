@@ -62,14 +62,23 @@ class ManagerAgent(BaseAgent):
         logger.info("Successfully registered all 8 logical agents.")
 
     def _execute(self, task: AgentTask, context: WorkflowContext) -> AgentResult:
-        """Fallback implementation if manager is invoked as a subtask."""
+        """Execution record for ManagerAgent DAG planning and coordination."""
+        total_planned_steps = context.total_steps or len(context.tasks) or 8
         return AgentResult(
             task_id=task.task_id,
             workflow_id=task.workflow_id,
             agent_name=self.name,
-            agent_id="manager",
+            agent_id="ManagerAgent",
             status="SUCCESS",
-            result_data={"message": "Manager coordinator ready."}
+            result_data={
+                "task_dag_created": True,
+                "total_tasks_scheduled": total_planned_steps,
+                "workflow_type": context.workflow_type,
+                "orchestration_mode": "Deterministic Dependency DAG"
+            },
+            summary=f"Task DAG created: {total_planned_steps} tasks scheduled across 8 specialized agents.",
+            confidence=1.0,
+            metrics={"planned_tasks": total_planned_steps, "active_agents": 8}
         )
 
     # -------------------------------------------------------------------------
@@ -255,20 +264,47 @@ class ManagerAgent(BaseAgent):
         return False
 
     # -------------------------------------------------------------------------
-    # 1. Document Ingestion Workflow (8-Agent Upgraded)
+    # 1. Document Ingestion Workflow (Full 8-Agent Unified Processing Run)
     # -------------------------------------------------------------------------
     def run_document_processing_workflow(self, file_path_str: str, original_filename: str, document_id: Optional[int] = None) -> Dict[str, Any]:
-        """Workflow: Manager -> DocumentIntelligenceAgent -> QualityGovernanceAgent."""
-        workflow_id = f"wf_doc_{int(time.time())}_{uuid.uuid4().hex[:6]}"
+        """
+        Unified 8-Agent Document Processing Run:
+        1. ManagerAgent (Task DAG creation & run coordination)
+        2. DocumentIntelligenceAgent (OCR, parsing, layout extraction, chunking, checksum)
+        3. RetrievalAgent (Index build & hybrid evidence indexing verification)
+        4. MiningIntelligenceAgent (Domain entity extraction, stripping ratios, G1-G17 grades, HEMM figures)
+        5. ValidationAgent (Cross-document consistency check & conflict identification)
+        6. QualityGovernanceAgent (ISO/IEC 25010 grounding & release gate audit)
+        7. ReportGenerationAgent (Executive statutory report synthesis, PDF & DOCX generation)
+        8. GovernmentInquiryAgent (Parliamentary readiness & draft inquiry check / conditional)
+        """
+        # Generate clean human-readable shared run_id: RUN-YYYY-MM-DD-XXX or wf_doc_...
+        date_str = time.strftime("%Y-%m-%d")
+        unique_suffix = uuid.uuid4().hex[:4].upper()
+        workflow_id = f"RUN-{date_str}-{unique_suffix}"
+
         context = WorkflowContext(
             workflow_id=workflow_id,
             workflow_type="DOCUMENT_INGESTION",
-            initial_prompt=f"Ingest and process document: {original_filename}",
-            total_steps=2
+            initial_prompt=f"Ingest, validate, and compile executive intelligence for document: {original_filename}",
+            document_id=document_id,
+            document_name=original_filename,
+            total_steps=8
         )
         agent_registry.persist_workflow_start(context)
 
-        # Task 1: Ingestion
+        # 1. Manager Agent Task (Self execution record)
+        t_mgr = AgentTask(
+            task_id=f"task_mgr_{uuid.uuid4().hex[:6]}",
+            workflow_id=workflow_id,
+            source_agent=self.name,
+            destination_agent="ManagerAgent",
+            task_type="PLAN_ORCHESTRATION_DAG",
+            input_data={"file_path": file_path_str, "original_filename": original_filename, "document_id": document_id},
+            dependencies=[]
+        )
+
+        # 2. Document Intelligence Task (Ingest, OCR, Chunk)
         t_doc = AgentTask(
             task_id=f"task_doc_{uuid.uuid4().hex[:6]}",
             workflow_id=workflow_id,
@@ -276,27 +312,100 @@ class ManagerAgent(BaseAgent):
             destination_agent="DocumentIntelligenceAgent",
             task_type="PROCESS_DOCUMENT",
             input_data={"file_path": file_path_str, "original_filename": original_filename, "document_id": document_id},
-            dependencies=[]
+            dependencies=[t_mgr.task_id]
         )
 
-        # Task 2: Quality Gate
+        # 3. Retrieval Agent Task (Evidence indexing & search verification)
+        t_ret = AgentTask(
+            task_id=f"task_ret_{uuid.uuid4().hex[:6]}",
+            workflow_id=workflow_id,
+            source_agent=self.name,
+            destination_agent="RetrievalAgent",
+            task_type="RETRIEVE_EVIDENCE",
+            input_data={"query": f"{original_filename} production excavation overburden geology", "top_k": 10},
+            dependencies=[t_doc.task_id]
+        )
+
+        # 4. Mining Intelligence Task (Extract domain facts, stripping ratios, HEMM availability)
+        t_mine = AgentTask(
+            task_id=f"task_mine_{uuid.uuid4().hex[:6]}",
+            workflow_id=workflow_id,
+            source_agent=self.name,
+            destination_agent="MiningIntelligenceAgent",
+            task_type="EXTRACT_AND_NORMALIZE_FACTS",
+            input_data={"document_id": document_id, "document_name": original_filename},
+            dependencies=[t_doc.task_id]
+        )
+
+        # 5. Validation Agent Task (Cross-document consistency & conflict detection)
+        t_val = AgentTask(
+            task_id=f"task_val_{uuid.uuid4().hex[:6]}",
+            workflow_id=workflow_id,
+            source_agent=self.name,
+            destination_agent="ValidationAgent",
+            task_type="CHECK_CONSISTENCY",
+            input_data={},
+            dependencies=[t_ret.task_id, t_mine.task_id]
+        )
+
+        # 6. Quality Governance Agent Task (ISO/IEC 25010 Grounding & Release Gate)
         t_qual = AgentTask(
             task_id=f"task_qual_{uuid.uuid4().hex[:6]}",
             workflow_id=workflow_id,
             source_agent=self.name,
             destination_agent="QualityGovernanceAgent",
             task_type="AUDIT_RELEASE_GATE",
-            dependencies=[t_doc.task_id]
+            dependencies=[t_val.task_id]
         )
 
-        self.execute_dag([t_doc, t_qual], context)
+        # 7. Report Generation Agent Task (Compile Executive Report, PDF, DOCX)
+        t_rep = AgentTask(
+            task_id=f"task_rep_{uuid.uuid4().hex[:6]}",
+            workflow_id=workflow_id,
+            source_agent=self.name,
+            destination_agent="ReportGenerationAgent",
+            task_type="GENERATE_REPORT",
+            input_data={
+                "report_type": "Executive Operational & Geological Audit",
+                "title": f"Operational Intelligence Audit -- {original_filename}",
+                "instructions": "Synthesize comprehensive findings, operational figures, and cross-document validation review."
+            },
+            dependencies=[t_qual.task_id]
+        )
+
+        # 8. Government Inquiry Task (Evaluate parliamentary readiness / conditional)
+        t_inq = AgentTask(
+            task_id=f"task_inq_{uuid.uuid4().hex[:6]}",
+            workflow_id=workflow_id,
+            source_agent=self.name,
+            destination_agent="GovernmentInquiryAgent",
+            task_type="DRAFT_INQUIRY_RESPONSE",
+            input_data={
+                "question_text": f"Production performance and statutory compliance for {original_filename}",
+                "inquiry_ref": f"INQ-{unique_suffix}-2026",
+                "ministry_body": "Ministry of Coal / Rajya Sabha"
+            },
+            dependencies=[t_qual.task_id]
+        )
+
+        self.execute_dag([t_mgr, t_doc, t_ret, t_mine, t_val, t_qual, t_rep, t_inq], context)
 
         doc_res = context.results.get(t_doc.task_id)
+        val_res = context.results.get(t_val.task_id)
         qual_res = context.results.get(t_qual.task_id)
+        rep_res = context.results.get(t_rep.task_id)
+        inq_res = context.results.get(t_inq.task_id)
+
+        # Determine doc_id from doc_res if not supplied initially
+        if not context.document_id and doc_res and doc_res.result_data:
+            context.document_id = doc_res.result_data.get("document_id")
 
         if qual_res and qual_res.status == "REJECTED":
             context.status = WorkflowStatus.REJECTED
             context.error = "; ".join(qual_res.errors)
+        elif val_res and val_res.status == "REQUIRES_HUMAN_REVIEW":
+            context.status = WorkflowStatus.REQUIRES_HUMAN_REVIEW
+            context.final_output = doc_res.result_data if doc_res else {}
         elif doc_res and doc_res.status == "SUCCESS":
             context.status = WorkflowStatus.COMPLETED
             context.final_output = doc_res.result_data
@@ -308,7 +417,10 @@ class ManagerAgent(BaseAgent):
         agent_registry.persist_workflow_end(context)
         return {
             "workflow": context.to_dict(),
+            "run_id": workflow_id,
+            "document_id": context.document_id,
             "result": doc_res.to_dict() if doc_res else {},
+            "report": rep_res.result_data if rep_res else {},
             "quality_decision": context.quality_decision,
             "quality_report": context.quality_report
         }

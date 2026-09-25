@@ -277,8 +277,22 @@ class PostgresAdapter(BaseDatabaseAdapter):
             ("agent_workflows", "resume_state_json", "TEXT"),
             ("agent_workflows", "quality_report_json", "TEXT"),
             ("agent_workflows", "provenance_dag_json", "TEXT"),
+            ("agent_workflows", "document_id", "INTEGER"),
+            ("agent_workflows", "document_name", "VARCHAR(512)"),
             ("validation_issues", "resolved_by", "VARCHAR(128)"),
             ("validation_issues", "resolved_note", "TEXT"),
+            ("validation_issues", "adopted_source", "VARCHAR(64)"),
+            ("validation_issues", "resolved_value", "VARCHAR(256)"),
+            ("validation_issues", "decision_type", "VARCHAR(64)"),
+            ("reports", "report_id_str", "VARCHAR(128)"),
+            ("reports", "run_id", "VARCHAR(128)"),
+            ("reports", "version_number", "INTEGER DEFAULT 1"),
+            ("reports", "document_id", "INTEGER"),
+            ("reports", "quality_gate_status", "VARCHAR(64) DEFAULT 'PASSED'"),
+            ("reports", "human_review_status", "VARCHAR(64) DEFAULT 'NOT_REQUIRED'"),
+            ("reports", "discrepancy_count", "INTEGER DEFAULT 0"),
+            ("reports", "evidence_count", "INTEGER DEFAULT 0"),
+            ("reports", "updated_at", "TIMESTAMP"),
         ]
         for table, column, col_type in migrations:
             try:
